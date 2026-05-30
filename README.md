@@ -1,4 +1,4 @@
-# Da Cecot Food Inc — Website
+# da Cecot Food Inc — Website
 
 A custom static rebuild of [dacecotfood.com](https://www.dacecotfood.com/) — an authentic Italian
 comfort food pasta bar and street food kitchen in Edmonton, AB. Production-ready: full SEO/AIO,
@@ -54,7 +54,7 @@ node .claude/build.js     # regenerates all 13 pages + 404 + sitemap + robots + 
 - JSON-LD: `Restaurant` (home), `Restaurant`+`LocalBusiness` (contact), `Event` (classes/drop-in),
   `Service` (experiences/private events/catering), `FAQPage` (where FAQs exist), `BreadcrumbList`
 - Direct "What is…" answer paragraphs + FAQ accordions for AI Overviews / featured snippets
-- Entity-rich copy (Edmonton, Italian cuisine, Da Cecot Food), internal linking, clean slugs
+- Entity-rich copy (Edmonton, Italian cuisine, da Cecot Food), internal linking, clean slugs
 - `sitemap.xml` + `robots.txt`, minified CSS (`styles.min.css`)
 
 ## Structure

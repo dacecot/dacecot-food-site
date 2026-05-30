@@ -7,21 +7,36 @@
   document.documentElement.classList.add('js');
 
   document.addEventListener('DOMContentLoaded', function () {
-    /* ---- Mobile nav toggle ---- */
+    /* ---- Mobile nav drawer (toggle, close button, backdrop, Esc) ---- */
     var toggle = document.querySelector('.nav-toggle');
     var links = document.querySelector('.nav-links');
+    var backdrop = document.querySelector('.nav-backdrop');
+    var closeBtn = document.querySelector('.nav-close');
+
+    function setNav(open) {
+      if (!links || !toggle) return;
+      links.classList.toggle('open', open);
+      toggle.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      document.body.classList.toggle('nav-open', open);
+      if (backdrop) {
+        backdrop.classList.toggle('show', open);
+        if (open) backdrop.removeAttribute('hidden');
+      }
+    }
+
     if (toggle && links) {
       toggle.addEventListener('click', function () {
-        var open = links.classList.toggle('open');
-        toggle.classList.toggle('open', open);
-        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        setNav(!links.classList.contains('open'));
       });
+      if (closeBtn) closeBtn.addEventListener('click', function () { setNav(false); });
+      if (backdrop) backdrop.addEventListener('click', function () { setNav(false); });
       links.querySelectorAll('a').forEach(function (a) {
-        a.addEventListener('click', function () {
-          links.classList.remove('open');
-          toggle.classList.remove('open');
-          toggle.setAttribute('aria-expanded', 'false');
-        });
+        a.addEventListener('click', function () { setNav(false); });
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && links.classList.contains('open')) setNav(false);
       });
     }
 

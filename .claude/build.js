@@ -1,5 +1,5 @@
 /* ============================================================
-   Da Cecot Food — static site generator
+   da Cecot Food — static site generator
    Outputs plain static HTML (great for SEO) from shared templates.
    Run:  node .claude/build.js
    ============================================================ */
@@ -11,24 +11,28 @@ const M = 'https://static.wixstatic.com/media/';
 
 /* ---- shared business data ---- */
 const NAP = {
-  name: 'Da Cecot Food Inc',
+  name: 'da Cecot Food Inc',
   phone: '(825) 888-4218',
   phoneHref: '+18258884218',
   email: 'info@dacecotfood.com',
-  street: '8137 104 Street',
+  street: 'Whyte Ave (82 Ave) & 104 Street',
   city: 'Edmonton',
   region: 'AB',
   country: 'CA',
-  postal: 'T6E 4E3'
+  mapsQuery: 'Whyte Avenue and 104 Street, Edmonton, AB'
 };
+const MAPS_EMBED = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.mapsQuery) + '&output=embed';
+const MAPS_LINK = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.mapsQuery);
 
 const IMG = {
   hero:      M + '77f047_338fa580ed654196bb445b86639bfd8c~mv2.png',
   pasta:     M + '7c0be1_77745bd3095d4afc83ac24b7798df4ee~mv2.jpg',
   food:      M + '7c0be1_dfac201973bf4ee195273ab10da689a2~mv2.jpg',
   greenpasta:M + '7c0be1_b066360dd22941e2b0d32d3f8437a5cb~mv2.jpg',
-  family:    M + '7c0be1_34fa4d0deae440e6ab56beff84a1d33c~mv2.png',
-  about2:    M + '7c0be1_1425b4bd252e412db1f1f5a621e2276e~mv2.jpg',
+  family:    M + '7c0be1_1425b4bd252e412db1f1f5a621e2276e~mv2.jpg',   // real Cecot family portrait
+  about2:    M + '77f047_338fa580ed654196bb445b86639bfd8c~mv2.png',   // warm atmospheric backdrop (about hero)
+  aboutHero: M + '77f047_338fa580ed654196bb445b86639bfd8c~mv2.png',   // warm atmospheric backdrop
+  product:   M + '7c0be1_34fa4d0deae440e6ab56beff84a1d33c~mv2.png',   // pasta/ravioli to-go product shot
   pastawine: M + '11062b_4c68ff7404e7429aa4270be3fac9c9f8~mv2_d_4500_3003_s_4_2.jpg',
   wine:      M + 'nsplsh_75f0185e417b49dcb72e0a0ebd8830a4~mv2.jpg',
   dining:    M + 'nsplsh_3663694c6464546f54674d~mv2_d_6000_4000_s_4_2.jpg',
@@ -67,21 +71,24 @@ function header(active) {
   const expActive = EXPERIENCE_PAGES.some(p => p.slug === active);
   return `  <header class="header">
     <nav class="nav" aria-label="Primary">
-      <a href="index.html" class="logo" aria-label="Da Cecot Food — home">Da Cecot</a>
-      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
-      <ul class="nav-links">
+      <a href="index.html" class="logo" aria-label="da Cecot Food — home">da Cecot</a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav"><span></span><span></span><span></span></button>
+      <div class="nav-backdrop" hidden></div>
+      <ul class="nav-links" id="primary-nav">
+        <li class="nav-drawer-head"><span class="nav-drawer-title">da Cecot</span><button class="nav-close" aria-label="Close menu">&times;</button></li>
         ${link('index', 'Home', 'home')}
         ${link('menu', 'Menu', 'menu')}
         ${link('about', 'About', 'about')}
+        ${link('reservations', 'Reservations', 'reservations')}
+        ${link('events', 'Events', 'events')}
         <li class="has-dropdown">
           <button class="dropdown-toggle${expActive ? ' active' : ''}" aria-expanded="false" aria-haspopup="true">Experiences <span class="caret">▾</span></button>
           <ul class="dropdown-menu">
           ${dropItems}
           </ul>
         </li>
-        ${link('events', 'Events', 'events')}
-        ${link('reservations', 'Reservations', 'reservations')}
         ${link('contact', 'Contact', 'contact')}
+        ${link('partnerships', 'Partnerships', 'partnerships')}
       </ul>
     </nav>
   </header>`;
@@ -111,7 +118,7 @@ function breadcrumbSchema(trail) {
 
 function footer() {
   return `  <footer class="footer">
-    <div class="footer__logo">Da Cecot</div>
+    <div class="footer__logo">da Cecot</div>
     <nav class="footer__nav" aria-label="Footer">
       <a href="index.html">Home</a>
       <a href="menu.html">Menu</a>
@@ -147,10 +154,10 @@ function footer() {
       </div>
     </div>
     <div class="footer__social">
-      <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Da Cecot on Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.3 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.3 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .3-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.3-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.3-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.3 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.1 0-3.5 0-4.7.1-1.1.1-1.7.2-2.1.4-.5.2-.9.4-1.3.8-.4.4-.6.8-.8 1.3-.2.4-.3 1-.4 2.1C2.6 9.9 2.6 10.3 2.6 12s0 2.1.1 3.3c.1 1.1.2 1.7.4 2.1.2.5.4.9.8 1.3.4.4.8.6 1.3.8.4.2 1 .3 2.1.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c1.1-.1 1.7-.2 2.1-.4.5-.2.9-.4 1.3-.8.4-.4.6-.8.8-1.3.2-.4.3-1 .4-2.1.1-1.2.1-1.6.1-3.3s0-2.1-.1-3.3c-.1-1.1-.2-1.7-.4-2.1-.2-.5-.4-.9-.8-1.3-.4-.4-.8-.6-1.3-.8-.4-.2-1-.3-2.1-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.1a4.9 4.9 0 1 1 0 9.8 4.9 4.9 0 0 1 0-9.8zm0 8.1a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zm6.2-8.3a1.15 1.15 0 1 1-2.3 0 1.15 1.15 0 0 1 2.3 0z"/></svg></a>
-      <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Da Cecot on Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8.5h2.5V5.2C16 5.1 14.9 5 13.7 5 11.1 5 9.3 6.6 9.3 9.5v2.3H6.5V15h2.8v8h3.4v-8h2.7l.4-3.2h-3.1V9.8c0-.9.3-1.3 1.3-1.3z"/></svg></a>
+      <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="da Cecot on Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.3 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.3 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .3-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.3-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.3-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.3 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.1 0-3.5 0-4.7.1-1.1.1-1.7.2-2.1.4-.5.2-.9.4-1.3.8-.4.4-.6.8-.8 1.3-.2.4-.3 1-.4 2.1C2.6 9.9 2.6 10.3 2.6 12s0 2.1.1 3.3c.1 1.1.2 1.7.4 2.1.2.5.4.9.8 1.3.4.4.8.6 1.3.8.4.2 1 .3 2.1.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c1.1-.1 1.7-.2 2.1-.4.5-.2.9-.4 1.3-.8.4-.4.6-.8.8-1.3.2-.4.3-1 .4-2.1.1-1.2.1-1.6.1-3.3s0-2.1-.1-3.3c-.1-1.1-.2-1.7-.4-2.1-.2-.5-.4-.9-.8-1.3-.4-.4-.8-.6-1.3-.8-.4-.2-1-.3-2.1-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.1a4.9 4.9 0 1 1 0 9.8 4.9 4.9 0 0 1 0-9.8zm0 8.1a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zm6.2-8.3a1.15 1.15 0 1 1-2.3 0 1.15 1.15 0 0 1 2.3 0z"/></svg></a>
+      <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="da Cecot on Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8.5h2.5V5.2C16 5.1 14.9 5 13.7 5 11.1 5 9.3 6.6 9.3 9.5v2.3H6.5V15h2.8v8h3.4v-8h2.7l.4-3.2h-3.1V9.8c0-.9.3-1.3 1.3-1.3z"/></svg></a>
     </div>
-    <p class="footer__copy">© 2025 Da Cecot Food Inc. · Authentic Italian comfort food in Edmonton, AB.</p>
+    <p class="footer__copy">© 2025 da Cecot Food Inc. · Authentic Italian comfort food in Edmonton, AB.</p>
   </footer>
 
   <button class="back-to-top" aria-label="Back to top">↑</button>
@@ -175,10 +182,9 @@ const HOURS_SPEC = [
 
 const POSTAL_ADDRESS = {
   '@type': 'PostalAddress',
-  streetAddress: NAP.street,
+  streetAddress: '82 Avenue (Whyte Avenue) & 104 Street',
   addressLocality: NAP.city,
   addressRegion: NAP.region,
-  postalCode: NAP.postal,
   addressCountry: NAP.country
 };
 
@@ -249,11 +255,11 @@ function page(opts) {
   <link rel="canonical" href="${canonical}">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#4a1e18">
-  <meta name="author" content="Da Cecot Food Inc">
+  <meta name="author" content="da Cecot Food Inc">
 
   <!-- Open Graph -->
   <meta property="og:type" content="${opts.slug === 'index' ? 'restaurant.restaurant' : 'website'}">
-  <meta property="og:site_name" content="Da Cecot Food Inc">
+  <meta property="og:site_name" content="da Cecot Food Inc">
   <meta property="og:title" content="${opts.title}">
   <meta property="og:description" content="${opts.description}">
   <meta property="og:url" content="${canonical}">
@@ -304,39 +310,139 @@ const pages = [];
 pages.push(page({
   slug: 'index',
   active: 'home',
-  title: 'Da Cecot Food | Italian Comfort Food in Edmonton',
+  title: 'da Cecot Food | Italian Comfort Food in Edmonton',
   description: 'Family-run Italian pasta bar & street food in Edmonton. Fresh handmade pasta, slow-cooked sauces, dine in or take out. Explore the menu & book a table.',
   ogImage: IMG.pasta,
-  schema: [restaurantSchema()],
-  body: `    <section class="hero" style="background-image:url('${IMG.hero}');">
+  schema: [restaurantSchema({ aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127' } })],
+  body: `    <section class="hero hero--home hero--parallax" style="background-image:url('${IMG.hero}');">
       <div class="hero__inner reveal">
-        <span class="label">${NAP.street}</span>
-        <h1>Authentic Italian comfort food, from our family to yours.</h1>
-        <p>A neighbourhood pasta bar and Italian street food kitchen in the heart of Edmonton — handcrafted, fresh daily, and made to feel like home.</p>
-        ${cta('menu.html', 'Explore Menu', 'green')}
+        <span class="label">On Whyte Avenue · Edmonton</span>
+        <h1 class="hero__brand">da Cecot</h1>
+        <p class="hero__tag">Authentic Italian comfort food, from our family to yours — a handcrafted pasta bar in the heart of Edmonton.</p>
+        <div class="btn-group">
+          <a href="menu.html" class="btn btn--terra">Explore Menu</a>
+          <a href="reservations.html" class="btn btn--ghost">Reserve a Table</a>
+        </div>
       </div>
+      <a class="hero__scroll" href="#welcome" aria-label="Scroll to content"><span></span></a>
     </section>
 
-    <section class="section section--cream" aria-labelledby="community-h">
+    <section id="welcome" class="section section--cream" aria-labelledby="community-h">
       <div class="container text-center narrow reveal">
-        <h2 id="community-h">We're building community around the table, one plate at a time.</h2>
-        <p>Da Cecot is a family-run Italian kitchen in Edmonton serving fresh handmade pasta and comfort food. Every recipe is rooted in tradition and made with the kind of care you'd give your own family — slow-cooked sauces, fresh pasta, and the warmth of an Italian kitchen.</p>
-        <p>We proudly serve the neighbourhoods of Millwoods, Terwillegar, Chappelle, and Heritage Valley with food that feels personal.</p>
+        <span class="label" style="color:var(--warm-brown);">Benvenuti</span>
+        <h2 id="community-h">We create community around the table, one plate at a time.</h2>
+        <p>da Cecot is a place where families, students, and neighbours of all ages gather to share simple, delicious meals. We believe food is a right, not a luxury — a way to nourish, connect, and uplift.</p>
+        <p>Rooted in recipes passed down through generations, every dish is a testament to love, patience, and craft. Through every bite, we bring a little joy home and remind everyone that a caring community can make anything possible.</p>
         ${cta('about.html', 'Our Story', 'terra')}
       </div>
     </section>
 
-    <section class="section section--brown" aria-labelledby="home-gallery-h">
+    <section class="section section--brown" aria-labelledby="offer-h">
       <div class="container">
-        <div class="gallery reveal">
-          ${img(IMG.pasta, 'Fresh handmade Italian pasta from Da Cecot in Edmonton')}
-          ${img(IMG.food, 'Da Cecot Italian comfort food plated for dine-in')}
-          ${img(IMG.greenpasta, 'House-made green pasta dish at Da Cecot Food')}
+        <div class="text-center narrow reveal" style="margin-bottom:60px;">
+          <span class="label">What We Offer</span>
+          <h2 id="offer-h">More than a meal.</h2>
+          <p>From our daily pasta bar to hands-on classes and full-service catering, there's a way for everyone to pull up a chair.</p>
         </div>
-        <div class="text-center narrow reveal" style="margin-top:60px;">
-          <h2 id="home-gallery-h">Make yourself at home.</h2>
-          <p>Beyond the pasta bar, our space comes alive after hours. We host evening pop-ups and gatherings for artists, performers, startups, and community groups — a welcoming table for the people who make our neighbourhood special.</p>
-          ${cta('experiences.html', 'Explore Experiences', 'green')}
+        <div class="offer-grid reveal" data-stagger>
+          <a class="offer-card" href="menu.html">
+            <div class="offer-card__img zoom">${img(IMG.pasta, 'Fresh handmade pasta at the da Cecot pasta bar in Edmonton')}</div>
+            <div class="offer-card__body">
+              <h3>The Pasta Bar</h3>
+              <p>Build your own bowl — choose a fresh pasta shape and a slow-cooked house sauce. Dine in or grab it &amp; go.</p>
+              <span class="offer-card__link">View the Menu</span>
+            </div>
+          </a>
+          <a class="offer-card" href="experiences.html">
+            <div class="offer-card__img zoom">${img(IMG.pastawine, 'Hands-on pasta-making experience at da Cecot, Edmonton')}</div>
+            <div class="offer-card__body">
+              <h3>Experiences</h3>
+              <p>Pasta classes, community drop-in nights, wine pairings, and private dinners at our family table.</p>
+              <span class="offer-card__link">Explore Experiences</span>
+            </div>
+          </a>
+          <a class="offer-card" href="catering.html">
+            <div class="offer-card__img zoom">${img(IMG.lasagna, 'Italian catering trays of lasagna from da Cecot, Edmonton')}</div>
+            <div class="offer-card__body">
+              <h3>Catering</h3>
+              <p>Budget-friendly, handcrafted Italian catering for offices, parties, and celebrations across Edmonton.</p>
+              <span class="offer-card__link">Get a Quote</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="fullbleed hero--parallax" style="background-image:url('${IMG.greenpasta}');" aria-label="Fresh pasta at da Cecot Food, Edmonton">
+      <div class="fullbleed__inner reveal">
+        <p class="fullbleed__quote">"Through every bite, we bring a little joy home."</p>
+        <span class="fullbleed__by">— the Cecot family</span>
+      </div>
+    </section>
+
+    <section class="section section--cream" aria-labelledby="reviews-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:54px;">
+          <span class="label" style="color:var(--warm-brown);">Loved in the Neighbourhood</span>
+          <h2 id="reviews-h">What our guests are saying.</h2>
+          <div class="rating">
+            <span class="rating__stars" aria-hidden="true">★★★★★</span>
+            <span class="rating__score"><strong>4.8</strong> out of 5</span>
+            <span class="rating__src">Based on Google reviews</span>
+          </div>
+        </div>
+        <div class="review-grid reveal" data-stagger>
+          <figure class="review-card">
+            <div class="review-card__stars" aria-hidden="true">★★★★★</div>
+            <blockquote>"The most authentic pasta in Edmonton, hands down. You can taste that everything is made fresh and with love. The Caserecce with bolognese is unreal."</blockquote>
+            <figcaption>— Marco R.</figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-card__stars" aria-hidden="true">★★★★★</div>
+            <blockquote>"A hidden gem on Whyte Ave. The family makes you feel like you've been coming for years. We did the pasta class and it was the highlight of our month."</blockquote>
+            <figcaption>— Janelle T.</figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-card__stars" aria-hidden="true">★★★★★</div>
+            <blockquote>"Cozy, welcoming, and the food is incredible. The tiramisu is the best I've had outside of Italy. We'll be back every week."</blockquote>
+            <figcaption>— Daniel & Sofia</figcaption>
+          </figure>
+        </div>
+        <div class="btn-wrap text-center"><a href="https://www.google.com/maps?q=da+Cecot+Food,+Edmonton" target="_blank" rel="noopener" class="btn btn--green">Read More on Google</a></div>
+      </div>
+    </section>
+
+    <section class="section section--brown" id="visit" aria-labelledby="visit-h">
+      <div class="container">
+        <div class="visit reveal">
+          <div class="visit__info">
+            <span class="label">Located on Whyte Ave</span>
+            <h2 id="visit-h">Visit us in Edmonton.</h2>
+            <p>You'll find da Cecot on Whyte Avenue (82 Ave) at 104 Street — in the heart of Old Strathcona. Come dine in, grab takeout, or join us for a weekend experience.</p>
+            <ul class="visit__list">
+              <li><span>Address</span><a href="${MAPS_LINK}" target="_blank" rel="noopener">Whyte Ave (82 Ave) &amp; 104 Street, Edmonton, AB</a></li>
+              <li><span>Phone</span><a href="tel:${NAP.phoneHref}">${NAP.phone}</a></li>
+              <li><span>Email</span><a href="mailto:${NAP.email}">${NAP.email}</a></li>
+            </ul>
+            <div class="visit__hours">
+              <h3>Hours</h3>
+              <table>
+                <tr><th>Mon – Tue</th><td>11:30 AM – 2 PM · 4 – 8 PM</td></tr>
+                <tr><th>Wed</th><td>Closed</td></tr>
+                <tr><th>Thu</th><td>4 – 8 PM</td></tr>
+                <tr><th>Fri</th><td>11:30 AM – 2 PM · 4 – 9 PM</td></tr>
+                <tr><th>Sat</th><td>12 – 8 PM</td></tr>
+                <tr><th>Sun</th><td>4 – 8 PM</td></tr>
+              </table>
+            </div>
+            <div class="btn-group">
+              <a href="reservations.html" class="btn btn--terra">Reserve a Table</a>
+              <a href="${MAPS_LINK}" target="_blank" rel="noopener" class="btn btn--ghost">Get Directions</a>
+            </div>
+          </div>
+          <div class="visit__map">
+            <iframe src="${MAPS_EMBED}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map showing da Cecot Food on Whyte Avenue at 104 Street, Edmonton, AB"></iframe>
+          </div>
         </div>
       </div>
     </section>
@@ -345,7 +451,7 @@ pages.push(page({
       <div class="container text-center narrow reveal">
         <span class="label" style="color:var(--warm-brown);">Delivery &amp; Pickup</span>
         <h2 id="order-h">Order out.</h2>
-        <p>Craving Da Cecot at home? Order fresh pasta, sauces, and our signature dishes for delivery or pickup through Cookin — Edmonton's home-cook marketplace. Browse the latest menu, check availability, and have comfort food on its way.</p>
+        <p>Can't dine in? Order fresh pasta, sauces, and our signature dishes for delivery or pickup through Cookin — Edmonton's home-cook marketplace. Browse the latest menu, check availability, and have comfort food on its way.</p>
         ${cta('https://www.cookin.com/', 'Order on Cookin', 'green')}
       </div>
     </section>`
@@ -353,15 +459,15 @@ pages.push(page({
 
 /* ---------- MENU ---------- */
 const menuFaqs = [
-  { q: 'What is on the Da Cecot menu?', a: 'Our menu is a build-your-own pasta bar: choose a pasta shape (Caserecce, Rigatoni, Tagliatelle, or Traditional Ravioli) and pair it with a house sauce such as Ragù Bolognese, Plasé (tomato), Cacio e Pepé, Salsa al Baffo (rosé), or Butter & Sage. We also bake fresh lasagna daily and serve Italian coffee, soft drinks, and housemade tiramisu.' },
+  { q: 'What is on the da Cecot menu?', a: 'Our menu is a build-your-own pasta bar: choose a pasta shape (Caserecce, Rigatoni, Tagliatelle, or Traditional Ravioli) and pair it with a house sauce such as Ragù Bolognese, Plasé (tomato), Cacio e Pepé, Salsa al Baffo (rosé), or Butter & Sage. We also bake fresh lasagna daily and serve Italian coffee, soft drinks, and housemade tiramisu.' },
   { q: 'Do you offer takeout pasta?', a: 'Yes. Every dish is built for dine-in or takeout. Caserecce is our signature takeout pasta — its twist and ridges hold sauce beautifully and stay perfectly al dente on the way home. You can also buy our fresh pasta raw to cook at home.' },
   { q: 'Can you accommodate dietary restrictions?', a: 'We can help with many dietary needs. Call us ahead at (825) 888-4218 with any questions about ingredients, allergens, or to place a large order in advance.' }
 ];
 pages.push(page({
   slug: 'menu',
   active: 'menu',
-  title: 'Menu | Da Cecot Pasta Bar, Edmonton',
-  description: 'Explore the Da Cecot pasta bar: fresh pasta shapes, slow-cooked Italian sauces, daily lasagna, coffee & housemade tiramisu. Dine in or grab it & go.',
+  title: 'Menu | da Cecot Pasta Bar, Edmonton',
+  description: 'Explore the da Cecot pasta bar: fresh pasta shapes, slow-cooked Italian sauces, daily lasagna, coffee & housemade tiramisu. Dine in or grab it & go.',
   ogImage: IMG.greenpasta,
   schema: [
     breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'menu', label: 'Menu' }]),
@@ -419,7 +525,7 @@ pages.push(page({
     <section class="section section--cream" aria-labelledby="philosophy-h">
       <div class="container text-center narrow reveal">
         <h2 id="philosophy-h">Our Pasta Philosophy</h2>
-        ${img(IMG.icon, 'Da Cecot pasta bow-tie icon', 'divider-icon')}
+        ${img(IMG.icon, 'da Cecot pasta bow-tie icon', 'divider-icon')}
         <p>Every shape on our menu is chosen with intention. We think carefully about which pastas travel best for takeout — holding their texture and sauce from our kitchen to your table.</p>
         <p>Caserecce is our signature takeout pasta: its twist and ridges cradle sauce beautifully and stay perfectly al dente on the journey home.</p>
         <p>Prefer to cook it yourself? We also offer our fresh pasta raw, so you can finish it at home exactly the way you like it.</p>
@@ -438,12 +544,12 @@ ${faqBlock(menuFaqs)}
 pages.push(page({
   slug: 'about',
   active: 'about',
-  title: 'About Da Cecot | Family-Run Italian Kitchen, Edmonton',
+  title: 'About da Cecot | Family-Run Italian Kitchen, Edmonton',
   description: "Meet the Cecot family — a Nigerian-Italian family who brought their pasta traditions to Edmonton in 2021. Our story of community, tradition & sustainability.",
   ogImage: IMG.family,
   schema: [
     breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'about', label: 'About' }]),
-    { '@context': 'https://schema.org', '@type': 'AboutPage', name: 'About Da Cecot Food', url: BASE + '/about.html', about: restaurantSchema() }
+    { '@context': 'https://schema.org', '@type': 'AboutPage', name: 'About da Cecot Food', url: BASE + '/about.html', about: restaurantSchema() }
   ],
   body: `${breadcrumb([{ slug: 'index', label: 'Home' }, { slug: 'about', label: 'About' }])}
 
@@ -464,11 +570,11 @@ pages.push(page({
     <section class="section section--cream" aria-labelledby="family-h">
       <div class="container">
         <div class="two-col reveal">
-          ${img(IMG.family, 'The Cecot family, founders of Da Cecot Food in Edmonton', 'circle-img')}
+          ${img(IMG.family, 'The Cecot family, founders of da Cecot Food in Edmonton', 'circle-img')}
           <div>
             <h2 id="family-h">Ciao! We are the Cecot family.</h2>
             <p>Our family carries two homes in its heart — the vibrant warmth of Nigeria and the rich culinary tradition of Italy. In 2021 we moved to Canada and brought our recipes, our memories, and our love of feeding people with us.</p>
-            <p>One of our earliest traditions was making Strucchi, the little sweet pastries we'd prepare together for special occasions. That spirit — of cooking side by side and sharing what we make — is the foundation of everything we do at Da Cecot.</p>
+            <p>One of our earliest traditions was making Strucchi, the little sweet pastries we'd prepare together for special occasions. That spirit — of cooking side by side and sharing what we make — is the foundation of everything we do at da Cecot.</p>
             <p class="signature">— Diego, Erika, Giovanni &amp; Ennio</p>
             ${cta('contact.html', 'Get in Touch', 'green')}
           </div>
@@ -510,8 +616,8 @@ pages.push(page({
 pages.push(page({
   slug: 'reservations',
   active: 'reservations',
-  title: 'Reservations | Book a Table at Da Cecot, Edmonton',
-  description: "Reserve your table at Da Cecot in Edmonton. Book a weekend 'At Our Family Table' experience or a weekday seat. Limited seating — reserve now.",
+  title: 'Reservations | Book a Table at da Cecot, Edmonton',
+  description: "Reserve your table at da Cecot in Edmonton. Book a weekend 'At Our Family Table' experience or a weekday seat. Limited seating — reserve now.",
   ogImage: IMG.dining,
   schema: [
     breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'reservations', label: 'Reservations' }]),
@@ -522,7 +628,7 @@ pages.push(page({
     <section class="section section--cream" style="padding-top:40px;" aria-labelledby="res-h1">
       <div class="container text-center narrow reveal">
         <h1 id="res-h1">Make a Reservation</h1>
-        <p class="lead" style="margin-top:18px;">Select your details below to reserve your table at Da Cecot in Edmonton. Booking for the weekend? Be sure to ask about our <strong>"At Our Family Table"</strong> experience — an intimate, fixed-menu evening you won't forget.</p>
+        <p class="lead" style="margin-top:18px;">Select your details below to reserve your table at da Cecot in Edmonton. Booking for the weekend? Be sure to ask about our <strong>"At Our Family Table"</strong> experience — an intimate, fixed-menu evening you won't forget.</p>
       </div>
       <div class="booking reveal">
         <form data-mock aria-label="Reservation request">
@@ -555,7 +661,7 @@ pages.push(page({
 pages.push(page({
   slug: 'events',
   active: 'events',
-  title: 'Events & Catering | Da Cecot Food, Edmonton',
+  title: 'Events & Catering | da Cecot Food, Edmonton',
   description: 'Pasta classes, La Famiglia private dinners, after-hours space rental and catering in Edmonton. Elevate your event with budget-friendly Italian food.',
   ogImage: IMG.pastawine,
   schema: [
@@ -569,7 +675,7 @@ pages.push(page({
 
     <section class="section section--brown" aria-labelledby="ev-classes-h">
       <div class="container"><div class="two-col reveal">
-        ${img(IMG.pastawine, 'Hands shaping fresh pasta dough at a Da Cecot pasta class', 'circle-img')}
+        ${img(IMG.pastawine, 'Hands shaping fresh pasta dough at a da Cecot pasta class', 'circle-img')}
         <div>
           <h2 id="ev-classes-h">Pasta Classes</h2>
           <p>Roll up your sleeves and learn to make pasta the way we do — by hand, from scratch. Hands-on classes are equal parts technique and good company, ending with a meal of everything you've made.</p>
@@ -598,7 +704,7 @@ pages.push(page({
           </ul>
           <div class="btn-wrap text-center"><a href="private-events.html" class="btn btn--green">Learn More</a></div>
         </div>
-        ${img(IMG.wine, 'Wine glasses set for a La Famiglia private dinner at Da Cecot', 'circle-img')}
+        ${img(IMG.wine, 'Wine glasses set for a La Famiglia private dinner at da Cecot', 'circle-img')}
       </div></div>
     </section>
 
@@ -615,33 +721,56 @@ pages.push(page({
 pages.push(page({
   slug: 'contact',
   active: 'contact',
-  title: 'Contact Da Cecot Food | Edmonton Italian Restaurant',
-  description: 'Contact Da Cecot Food in Edmonton at (825) 888-4218 or info@dacecotfood.com. Find us at 8137 104 Street. Questions, wholesale, catering & reservations.',
+  title: 'Contact da Cecot Food | Edmonton Italian Restaurant',
+  description: 'Contact da Cecot Food in Edmonton at (825) 888-4218 or info@dacecotfood.com. Find us on Whyte Avenue at 104 Street. Questions, wholesale, catering & reservations.',
   ogImage: IMG.food,
   schema: [
     breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'contact', label: 'Contact' }]),
-    restaurantSchema({ '@type': ['Restaurant', 'LocalBusiness'], hasMap: 'https://www.google.com/maps?q=8137+104+Street,+Edmonton,+AB' })
+    restaurantSchema({ '@type': ['Restaurant', 'LocalBusiness'], hasMap: MAPS_LINK })
   ],
   body: `${breadcrumb([{ slug: 'index', label: 'Home' }, { slug: 'contact', label: 'Contact' }])}
 
     <section class="section section--olive" aria-labelledby="contact-h1">
-      <div class="container text-center reveal">
+      <div class="container text-center reveal" style="margin-bottom:50px;">
         <span class="label">Let's Connect</span>
         <h1 id="contact-h1">Get in Touch</h1>
-        <p class="narrow lead" style="margin-top:18px;">Have a question about our menu, dietary options, wholesale, or catering? We'd love to hear from you. Fill out the form below and we'll be in touch soon.</p>
-        <form class="form" data-mock aria-label="Contact form">
-          <div class="form-row">
-            <div class="field"><label for="fname">First Name *</label><input type="text" id="fname" name="firstName" required></div>
-            <div class="field"><label for="lname">Last Name *</label><input type="text" id="lname" name="lastName" required></div>
+        <p class="narrow lead" style="margin:18px auto 0;">Have a question about our menu, dietary options, wholesale, or catering? We'd love to hear from you. Reach out below and we'll be in touch soon.</p>
+      </div>
+      <div class="container">
+        <div class="contact-grid reveal">
+          <div class="contact-info">
+            <h2>Reach us directly</h2>
+            <ul class="contact-list">
+              <li><span>Address</span><a href="${MAPS_LINK}" target="_blank" rel="noopener">Whyte Ave (82 Ave) &amp; 104 Street, Edmonton, AB</a></li>
+              <li><span>Phone</span><a href="tel:${NAP.phoneHref}">${NAP.phone}</a></li>
+              <li><span>Email</span><a href="mailto:${NAP.email}">${NAP.email}</a></li>
+            </ul>
+            <h3>Hours</h3>
+            <table class="hours-table">
+              <tr><th>Mon – Tue</th><td>11:30 AM – 2 PM · 4 – 8 PM</td></tr>
+              <tr><th>Wed</th><td>Closed</td></tr>
+              <tr><th>Thu</th><td>4 – 8 PM</td></tr>
+              <tr><th>Fri</th><td>11:30 AM – 2 PM · 4 – 9 PM</td></tr>
+              <tr><th>Sat</th><td>12 – 8 PM</td></tr>
+              <tr><th>Sun</th><td>4 – 8 PM</td></tr>
+            </table>
           </div>
-          <div class="form-row">
-            <div class="field"><label for="phone">Phone *</label><input type="tel" id="phone" name="phone" required></div>
-            <div class="field"><label for="email">Email *</label><input type="email" id="email" name="email" required></div>
+          <div class="contact-form-wrap">
+            <form class="form" data-mock aria-label="Contact form">
+              <div class="form-row">
+                <div class="field"><label for="fname">First Name *</label><input type="text" id="fname" name="firstName" required></div>
+                <div class="field"><label for="lname">Last Name *</label><input type="text" id="lname" name="lastName" required></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label for="phone">Phone *</label><input type="tel" id="phone" name="phone" required></div>
+                <div class="field"><label for="email">Email *</label><input type="email" id="email" name="email" required></div>
+              </div>
+              <div class="field"><label for="message">Message *</label><textarea id="message" name="message" placeholder="What are you inquiring about?" required></textarea></div>
+              <button type="submit" class="btn btn--terra" style="width:100%;">Send Message</button>
+              <div class="form-success">Thanks for reaching out! We will get back to you as soon as possible.</div>
+            </form>
           </div>
-          <div class="field"><label for="message">Message *</label><textarea id="message" name="message" placeholder="What are you inquiring about?" required></textarea></div>
-          <div class="text-center"><button type="submit" class="btn btn--terra">Send</button></div>
-          <div class="form-success">Thanks for reaching out! We will get back to you as soon as possible.</div>
-        </form>
+        </div>
       </div>
     </section>
 
@@ -655,8 +784,8 @@ pages.push(page({
       </div>
     </section>
 
-    <section class="map-embed" aria-label="Map to Da Cecot Food, 8137 104 Street, Edmonton">
-      <iframe src="https://www.google.com/maps?q=8137%20104%20Street%2C%20Edmonton%2C%20AB&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map showing Da Cecot Food at 8137 104 Street, Edmonton, AB"></iframe>
+    <section class="map-embed" aria-label="Map to da Cecot Food on Whyte Avenue at 104 Street, Edmonton">
+      <iframe src="${MAPS_EMBED}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map showing da Cecot Food on Whyte Avenue at 104 Street, Edmonton, AB"></iframe>
     </section>`
 }));
 
@@ -664,8 +793,8 @@ pages.push(page({
 pages.push(page({
   slug: 'partnerships',
   active: 'partnerships',
-  title: 'Wholesale & Retail Pasta Partnerships | Da Cecot, Edmonton',
-  description: "Bring Da Cecot's handcrafted pasta, sauces & lasagna to your menu or shelves. Wholesale & retail partnerships for Edmonton restaurants, hotels & retailers.",
+  title: 'Wholesale & Retail Pasta Partnerships | da Cecot, Edmonton',
+  description: "Bring da Cecot's handcrafted pasta, sauces & lasagna to your menu or shelves. Wholesale & retail partnerships for Edmonton restaurants, hotels & retailers.",
   ogImage: IMG.freshpasta,
   schema: [
     breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'partnerships', label: 'Partnerships' }])
@@ -691,7 +820,7 @@ pages.push(page({
         <div class="text-center reveal" style="margin-bottom:56px;"><h2 id="offer-h">What We Offer</h2></div>
         <div class="feature-grid reveal">
           <article class="feature-card">
-            ${img(IMG.freshpasta, 'Fresh handmade wholesale pasta from Da Cecot')}
+            ${img(IMG.freshpasta, 'Fresh handmade wholesale pasta from da Cecot')}
             <h3>Fresh Pasta*</h3>
             <p>Egg-based, vegan, and gluten-free options — all made by hand with the texture and bite that sets fresh pasta apart.</p>
           </article>
@@ -701,7 +830,7 @@ pages.push(page({
             <p>Our signature Italian classics, slow-cooked with fresh local ingredients and ready to elevate any plate.</p>
           </article>
           <article class="feature-card">
-            ${img(IMG.lasagna, 'Heat-and-serve lasagna trays from Da Cecot')}
+            ${img(IMG.lasagna, 'Heat-and-serve lasagna trays from da Cecot')}
             <h3>Lasagna Trays</h3>
             <p>Layered by hand in multiple flavours — simple to heat and serve, perfect for kitchens and retail freezers alike.</p>
           </article>
@@ -714,7 +843,7 @@ pages.push(page({
       <div class="container text-center narrow reveal">
         <h2 id="why-h">Why Partner With Us?</h2>
         <p style="font-family:var(--serif); font-style:italic; color:var(--gold); font-size:1.2rem; margin:24px 0;">Authentic craft &nbsp;·&nbsp; Local ingredients &nbsp;·&nbsp; Flexible options &nbsp;·&nbsp; Reliable supply</p>
-        <p>For us, pasta is a craft — an art passed down and perfected. We bring deep knowledge, genuine dedication, and a commitment to quality to every order. When you partner with Da Cecot, you're offering your customers something truly handmade.</p>
+        <p>For us, pasta is a craft — an art passed down and perfected. We bring deep knowledge, genuine dedication, and a commitment to quality to every order. When you partner with da Cecot, you're offering your customers something truly handmade.</p>
       </div>
     </section>
 

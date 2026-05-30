@@ -43,12 +43,12 @@ Usable food photos (`https://drive.google.com/file/d/<ID>/view`):
 | Plasé (pomodoro sauce) | `dacecot_Plasé(PomodoroSauce).jpg` | `1729sfanXW3wCkng1_qixTG-svOoEYTUt` |
 | Ragù alla Bolognese | `dacecot_RagùAllaBolognese.jpg` | `1PmTv4ks9D3UFrw0MTo8CFz26BmWmXOE4` |
 | Logo (terracotta circle) | `DaCecot_CircleLogo_Terracotta.png` | `1S8iGeugKu9TVBMKaMYPVtEGyfl_9hwAt` |
-| Sauce label — meat | `Da Cecot - Meat-Based Sauce Label.png` | `1tcqmInFIDiuHEIgg9FxriaABK6GU3c7N` |
-| Sauce label — dairy | `Da Cecot - Dairy-Cheese-Based Sauce Label.png` | `1a27Ky6iXCFv1wzQyAaR5-rQYgs1yUWsf` |
-| Sauce label — vegetarian | `Da Cecot - Vegetarian Sauce Label.png` | `1lqSpgd7axNUFvUHJrIy8e0M8dYJ4pb47` |
-| Pasta type label | `Da Cecot - Pasta Type 1 Label.png` | `1w_NiU82qc7MCIbKQrHpnsBunpJynsGTQ` |
+| Sauce label — meat | `da Cecot - Meat-Based Sauce Label.png` | `1tcqmInFIDiuHEIgg9FxriaABK6GU3c7N` |
+| Sauce label — dairy | `da Cecot - Dairy-Cheese-Based Sauce Label.png` | `1a27Ky6iXCFv1wzQyAaR5-rQYgs1yUWsf` |
+| Sauce label — vegetarian | `da Cecot - Vegetarian Sauce Label.png` | `1lqSpgd7axNUFvUHJrIy8e0M8dYJ4pb47` |
+| Pasta type label | `da Cecot - Pasta Type 1 Label.png` | `1w_NiU82qc7MCIbKQrHpnsBunpJynsGTQ` |
 | Misc photo | `a1fd8637-…​.jpg` | `1tn1s60ks-mtp9xGjx7COiLIhFRWzCW9G` |
 
 The folder also contains **subfolders** with more photography (not yet enumerated):
-`Pasta Class (Oct 7)`, `Pasta Class 2 (Oct 31)`, `Pasta Class 3`, `Photo generali Da Cecot`,
+`Pasta Class (Oct 7)`, `Pasta Class 2 (Oct 31)`, `Pasta Class 3`, `Photo generali da Cecot`,
 `food photos`, `Da decot Erica`. These would be ideal for the pasta-class / experiences pages.

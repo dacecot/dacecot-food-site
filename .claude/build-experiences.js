@@ -84,15 +84,16 @@ const hubCards = [
 pages.push(page({
   slug: 'experiences',
   active: 'experiences',
-  title: 'Experiences | Pasta Classes & Italian Dining, Edmonton',
+  title: 'Pasta Classes & Experiences | da Cecot, Edmonton',
   description: 'Discover da Cecot experiences in Edmonton: Sunday pasta classes, Thursday drop-in nights, wine pairings, private La Famiglia dinners & catering. Reserve now.',
-  ogImage: IMG.dining,
+  ogImage: IMG.pastawine,
   schema: [breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'experiences', label: 'Experiences' }]), faqSchema(hubFaqs)],
   body: `${breadcrumb([{ slug: 'index', label: 'Home' }, { slug: 'experiences', label: 'Experiences' }])}
 
-    <section class="hero hero--page" style="background-image:url('${IMG.dining}');" aria-labelledby="xp-h1">
+    <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('${IMG.pastawine}');" aria-labelledby="xp-h1">
       <div class="hero__inner reveal">
-        <h1 id="xp-h1">Experiences</h1>
+        <span class="label">Gather With Us</span>
+        <h1 id="xp-h1">Pasta Classes &amp; Experiences</h1>
         <p>From hands-on pasta classes to private dinners at our family table — here's how to share a little Italian magic with us in Edmonton.</p>
       </div>
     </section>
@@ -258,7 +259,7 @@ ${expHero('drop-h1', 'Public Pasta Drop-In', 'Our casual Thursday community past
       <div class="container text-center narrow reveal">
         <h2 id="drop-how-h">How to join</h2>
         <p>Just show up on Thursday between 4 PM and 8 PM — no booking required. Bringing a bigger group? Give us a call at <a href="tel:+18258884218">(825) 888-4218</a> so we can save room for everyone.</p>
-        ${cta('contact.html', 'Call Ahead for Groups', 'green')}
+        ${cta('visit-us.html', 'Call Ahead for Groups', 'green')}
       </div>
     </section>
 
@@ -321,7 +322,7 @@ ${expHero('fd-h1', 'Food &amp; Drink Experiences', 'Curated tasting evenings and
       <div class="container text-center narrow reveal">
         <h2 id="fd-how-h">How to reserve</h2>
         <p>Seats are limited and these evenings book up. Contact us for upcoming dates, menus, and pricing, and we'll save you a place at the table.</p>
-        ${cta('contact.html', 'Inquire About Dates', 'green')}
+        ${cta('visit-us.html', 'Inquire About Dates', 'green')}
       </div>
     </section>
 
@@ -385,7 +386,7 @@ ${expHero('pe-h1', 'Private Events', 'Gather your people at our family table for
       <div class="container text-center narrow reveal">
         <h2 id="pe-how-h">How to book a private event</h2>
         <p>Tell us your date, group size, and what you're celebrating. We'll craft a menu to match and confirm your evening with a 50% deposit. Reach us at <a href="tel:+18258884218">(825) 888-4218</a> or through our contact form.</p>
-        ${cta('contact.html', 'Inquire Now', 'green')}
+        ${cta('visit-us.html', 'Inquire Now', 'green')}
       </div>
     </section>
 
@@ -449,7 +450,7 @@ ${expHero('cat-h1', 'Catering', 'Bring da Cecot to your table — budget-friendl
       <div class="container text-center narrow reveal">
         <h2 id="cat-how-h">How to order catering</h2>
         <p>Tell us your date, headcount, and the kind of menu you have in mind, and we'll send a custom quote. Reach us at <a href="tel:+18258884218">(825) 888-4218</a> or <a href="mailto:info@dacecotfood.com">info@dacecotfood.com</a>, or use our contact form.</p>
-        ${cta('contact.html', 'Request a Quote', 'green')}
+        ${cta('visit-us.html', 'Request a Quote', 'green')}
       </div>
     </section>
 
@@ -465,9 +466,9 @@ ${faqBlock(catFaqs)}
    FINAL WRITE: pages, favicon, robots, sitemap, 404, min css
    ============================================================ */
 const ALL_SLUGS = [
-  'index', 'menu', 'about', 'experiences', 'sunday-pasta-classes', 'pasta-drop-in',
-  'food-drink-experiences', 'private-events', 'catering', 'events', 'reservations',
-  'contact', 'partnerships'
+  'index', 'menu', 'experiences', 'sunday-pasta-classes', 'pasta-drop-in',
+  'food-drink-experiences', 'private-events', 'catering', 'pasta-shop',
+  'our-story', 'visit-us', 'reservations', 'partnerships'
 ];
 
 // pages array order matches push order; write each
@@ -499,7 +500,7 @@ fs.writeFileSync(path.join(ROOT, 'robots.txt'), robots, 'utf8');
 
 /* sitemap.xml */
 const today = '2026-05-30';
-const priority = (s) => s === 'index' ? '1.0' : (['menu', 'experiences', 'contact', 'reservations'].includes(s) ? '0.9' : '0.8');
+const priority = (s) => s === 'index' ? '1.0' : (['menu', 'experiences', 'pasta-shop', 'visit-us', 'reservations'].includes(s) ? '0.9' : '0.8');
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${ALL_SLUGS.map(s => `  <url>
@@ -526,7 +527,7 @@ const notFound = page({
         <h1>This page wandered off.</h1>
         <p>The page you're looking for can't be found — but there's still plenty of pasta to discover. Let's get you back to the table.</p>
         <div class="btn-wrap"><a href="index.html" class="btn btn--terra">Back to Home</a></div>
-        <p style="margin-top:30px;"><a href="menu.html" style="color:var(--gold); text-decoration:underline;">View the Menu</a> &nbsp;·&nbsp; <a href="experiences.html" style="color:var(--gold); text-decoration:underline;">Experiences</a> &nbsp;·&nbsp; <a href="contact.html" style="color:var(--gold); text-decoration:underline;">Contact</a></p>
+        <p style="margin-top:30px;"><a href="menu.html" style="color:var(--gold); text-decoration:underline;">View the Menu</a> &nbsp;·&nbsp; <a href="experiences.html" style="color:var(--gold); text-decoration:underline;">Experiences</a> &nbsp;·&nbsp; <a href="visit-us.html" style="color:var(--gold); text-decoration:underline;">Visit Us</a></p>
       </div>
     </section>`
 });

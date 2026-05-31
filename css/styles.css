@@ -278,17 +278,23 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
   justify-content: space-between;
   width: 28px;
   height: 20px;
+  padding: 13px;                /* enlarge touch target to 54x46 (>44px min) */
+  box-sizing: content-box;
+  margin: -13px -13px -13px 0;   /* keep visual alignment */
   background: none;
   border: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .nav-toggle span {
   display: block;
   height: 2px;
-  width: 100%;
+  width: 28px;
   background: var(--brown);
   border-radius: 2px;
   transition: transform 0.3s ease, opacity 0.3s ease;
+  pointer-events: none;          /* taps always land on the button, not a bar */
 }
 .nav-toggle.open span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
 .nav-toggle.open span:nth-child(2) { opacity: 0; }
@@ -338,8 +344,9 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
   color: var(--cream);
 }
 .hero--home::before {
-  background: linear-gradient(180deg, rgba(25,18,12,0.34) 0%, rgba(25,18,12,0.30) 45%, rgba(25,18,12,0.62) 100%);
+  background: linear-gradient(180deg, rgba(25,18,12,0.55) 0%, rgba(25,18,12,0.50) 42%, rgba(25,18,12,0.74) 100%);
 }
+.hero--home .hero__inner { text-shadow: 0 2px 18px rgba(0,0,0,0.55); }
 .hero--home .label { color: var(--gold); }
 .hero__brand {
   font-family: var(--serif);
@@ -1201,6 +1208,59 @@ body.nav-open { overflow: hidden; }
 .offer-grid--2 { grid-template-columns: repeat(2, 1fr); max-width: 880px; margin: 0 auto; }
 
 /* ===========================================================
+   Award seal + Featured (Our Story)
+   =========================================================== */
+.award-seal { width: 132px; height: auto; display: block; margin: 0 auto 18px; }
+.award-cat {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--gold);
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  margin-top: 8px !important;
+}
+.award-section h2 { margin-bottom: 4px; }
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.featured-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  background: var(--brown);
+  color: var(--cream);
+  border-radius: 16px;
+  padding: 44px 28px;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.featured-card:hover { transform: translateY(-6px); box-shadow: 0 22px 48px rgba(0,0,0,0.26); }
+.featured-card__icon {
+  width: 66px; height: 66px;
+  border-radius: 50%;
+  background: var(--terracotta);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+  transition: background 0.3s ease;
+}
+.featured-card:hover .featured-card__icon { background: var(--terra-dark); }
+.featured-card__icon svg { width: 30px; height: 30px; fill: #fff; }
+.featured-card__plat { font-family: var(--serif); font-size: 1.35rem; line-height: 1.2; }
+.featured-card__sub { font-size: 0.85rem; opacity: 0.72; letter-spacing: 0.5px; }
+.featured-card__cta {
+  margin-top: 8px;
+  font-family: var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* ===========================================================
    Responsive
    =========================================================== */
 @media (max-width: 900px) {
@@ -1236,7 +1296,7 @@ body.nav-open { overflow: hidden; }
     border-bottom: 1px solid rgba(74,30,24,0.12);
   }
 
-  .offer-grid, .review-grid, .visit, .contact-grid { grid-template-columns: 1fr; }
+  .offer-grid, .review-grid, .visit, .contact-grid, .featured-grid { grid-template-columns: 1fr; }
   .contact-grid { text-align: left; }
   .visit__map { min-height: 300px; }
   .visit__hours td, .hours-table td { text-align: right; }

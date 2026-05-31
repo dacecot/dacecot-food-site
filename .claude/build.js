@@ -8,6 +8,9 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const BASE = 'https://www.dacecotfood.com';
 const M = 'https://static.wixstatic.com/media/';
+// Cache-busting build version — appended to CSS/JS so browsers (esp. mobile
+// Safari) always fetch the latest assets after each deploy instead of stale cache.
+const VERSION = Date.now();
 
 /* ---- shared business data ---- */
 const NAP = {
@@ -179,7 +182,7 @@ function footer() {
   </footer>
 
   <button class="back-to-top" aria-label="Back to top">↑</button>
-  <script src="js/main.js"></script>`;
+  <script src="js/main.js?v=${VERSION}"></script>`;
 }
 
 /* ---- opening hours for schema ---- */
@@ -223,6 +226,7 @@ function restaurantSchema(extra) {
     areaServed: ['Millwoods', 'Terwillegar', 'Chappelle', 'Heritage Valley', 'Edmonton'],
     openingHoursSpecification: HOURS_SPEC,
     acceptsReservations: 'True',
+    award: 'Winner — Canadian Choice Award 2026, Italian Restaurants',
     menu: BASE + '/menu.html',
     sameAs: ['https://www.instagram.com/', 'https://www.facebook.com/']
   }, extra || {});
@@ -295,7 +299,7 @@ function page(opts) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://static.wixstatic.com">
-  <link rel="stylesheet" href="css/styles.min.css">
+  <link rel="stylesheet" href="css/styles.min.css?v=${VERSION}">
 ${schemaBlocks}
 </head>
 <body>
@@ -700,6 +704,50 @@ pages.push(page({
         <div class="btn-group" style="justify-content:center;">
           <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
           <a href="visit-us.html" class="btn btn--outline">Visit Us</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--brown award-section" aria-labelledby="award-h">
+      <div class="container text-center narrow reveal">
+        <svg class="award-seal" viewBox="0 0 140 120" role="img" aria-label="Canadian Choice Award 2026 Winner seal">
+          <circle cx="70" cy="58" r="50" fill="#3F512E" stroke="#C7A45A" stroke-width="3"/>
+          <circle cx="70" cy="58" r="41" fill="none" stroke="#C7A45A" stroke-width="1.5"/>
+          <path d="M70 26 l5.1 10.3 11.4 1.7 -8.3 8 1.9 11.3 -10.1 -5.3 -10.1 5.3 1.9 -11.3 -8.3 -8 11.4 -1.7 Z" fill="#C7A45A"/>
+          <text x="70" y="78" text-anchor="middle" fill="#F4F0E8" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="2.5">WINNER</text>
+          <text x="70" y="97" text-anchor="middle" fill="#C7A45A" font-family="Georgia,'Times New Roman',serif" font-size="16" font-weight="700">2026</text>
+        </svg>
+        <span class="label">Award-Winning</span>
+        <h2 id="award-h">Canadian Choice Award 2026</h2>
+        <p class="award-cat">Winner · Italian Restaurants</p>
+        <p>We're honoured to be named a 2026 Canadian Choice Award winner in the Italian Restaurants category — a recognition we share with the community that has welcomed us to Whyte Avenue.</p>
+      </div>
+    </section>
+
+    <section class="section section--linen" aria-labelledby="featured-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:46px;">
+          <span class="label" style="color:var(--terracotta);">Featured</span>
+          <h2 id="featured-h">Catch us in action.</h2>
+          <p>From handmade pasta to community nights, here's da Cecot out in the world. Tap to watch.</p>
+        </div>
+        <div class="featured-grid reveal" data-stagger>
+          <a class="featured-card" href="https://www.instagram.com/reels/DR3nWvPDfmW/" target="_blank" rel="noopener">
+            <span class="featured-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.3 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.3 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .3-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.3-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.3-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.3 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 3.6a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zm0 10.2a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-10.4a1.45 1.45 0 1 1-2.9 0 1.45 1.45 0 0 1 2.9 0z"/></svg></span>
+            <span class="featured-card__plat">Instagram Reel</span>
+            <span class="featured-card__cta">Watch on Instagram →</span>
+          </a>
+          <a class="featured-card" href="https://www.instagram.com/reels/DO1IW-qkY38/" target="_blank" rel="noopener">
+            <span class="featured-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.3 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.3 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .3-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.3-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.3-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.3 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 3.6a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zm0 10.2a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-10.4a1.45 1.45 0 1 1-2.9 0 1.45 1.45 0 0 1 2.9 0z"/></svg></span>
+            <span class="featured-card__plat">Instagram Reel</span>
+            <span class="featured-card__cta">Watch on Instagram →</span>
+          </a>
+          <a class="featured-card" href="https://www.tiktok.com/@maybasmunchies/video/7556833403992116488" target="_blank" rel="noopener">
+            <span class="featured-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.7 2h-3.1v13.1a2.5 2.5 0 1 1-2-2.45V9.5a5.6 5.6 0 1 0 5.1 5.57V8.3a7.6 7.6 0 0 0 4.3 1.33V6.5a4.4 4.4 0 0 1-4.3-4.5z"/></svg></span>
+            <span class="featured-card__plat">Featured on TikTok</span>
+            <span class="featured-card__sub">@maybasmunchies</span>
+            <span class="featured-card__cta">Watch on TikTok →</span>
+          </a>
         </div>
       </div>
     </section>`

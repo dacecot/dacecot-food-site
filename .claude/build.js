@@ -89,7 +89,12 @@ function header(active) {
         </li>
         ${link('pasta-shop', 'Pasta Shop', 'pasta-shop')}
         ${link('our-story', 'Our Story', 'our-story')}
+        ${link('reservations', 'Reserve', 'reservations')}
         ${link('visit-us', 'Visit Us', 'visit-us')}
+        <li class="nav-drawer-foot">
+          <a class="nav-drawer-phone" href="tel:${NAP.phoneHref}">${NAP.phone}</a>
+          <a class="btn btn--green nav-drawer-cta" href="reservations.html">Book a Reservation</a>
+        </li>
       </ul>
     </nav>
   </header>`;
@@ -722,30 +727,7 @@ pages.push(page({
         <p class="award-cat">Winner · Italian Restaurants</p>
         <p>We're honoured to be named a 2026 Canadian Choice Award winner in the Italian Restaurants category — a recognition we share with the community that has welcomed us to Whyte Avenue.</p>
       </div>
-    </section>
-
-    <section class="section section--linen" aria-labelledby="featured-h">
-      <div class="container">
-        <div class="text-center narrow reveal" style="margin-bottom:46px;">
-          <span class="label" style="color:var(--terracotta);">Featured</span>
-          <h2 id="featured-h">Catch us in action.</h2>
-          <p>From handmade pasta to community nights, here's da Cecot out in the world. Tap to watch.</p>
-        </div>
-        <div class="featured-embeds reveal">
-          <div class="featured-embed">
-            <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DR3nWvPDfmW/" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DR3nWvPDfmW/" target="_blank" rel="noopener">Watch this reel on Instagram</a></blockquote>
-          </div>
-          <div class="featured-embed">
-            <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DO1IW-qkY38/" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DO1IW-qkY38/" target="_blank" rel="noopener">Watch this reel on Instagram</a></blockquote>
-          </div>
-          <div class="featured-embed">
-            <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@maybasmunchies/video/7556833403992116488" data-video-id="7556833403992116488"><section><a href="https://www.tiktok.com/@maybasmunchies/video/7556833403992116488" target="_blank" rel="noopener">Watch @maybasmunchies on TikTok</a></section></blockquote>
-          </div>
-        </div>
-      </div>
-    </section>
-    <script async src="https://www.instagram.com/embed.js"></script>
-    <script async src="https://www.tiktok.com/embed.js"></script>`
+    </section>`
 }));
 
 /* ---------- RESERVATIONS ---------- */

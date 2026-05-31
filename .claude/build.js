@@ -845,7 +845,7 @@ pages.push(page({
         <h1 id="shop-h1">Fresh Pasta for Home</h1>
         <p>The same handmade pasta we serve, ready for your own kitchen. Pre-order ahead or grab it &amp; go on Whyte Ave.</p>
         <div class="btn-group">
-          <a href="https://www.cookin.com/" class="btn btn--terra">Order on Cookin</a>
+          <a href="https://www.cookin.com/cooks/dacecotfoodinc" target="_blank" rel="noopener" class="btn btn--terra">Order on Cookin</a>
           <a href="tel:${NAP.phoneHref}" class="btn btn--outline">Call to Pre-Order</a>
         </div>
       </div>
@@ -883,7 +883,7 @@ pages.push(page({
             <div class="offer-card__body">
               <h3>Order Ahead</h3>
               <p>Pre-order for pickup so your pasta is ready when you are. Order online, or call us for larger orders.</p>
-              <a href="https://www.cookin.com/" class="btn btn--terra" style="margin-top:6px;">Order on Cookin</a>
+              <a href="https://www.cookin.com/cooks/dacecotfoodinc" target="_blank" rel="noopener" class="btn btn--terra" style="margin-top:6px;">Order on Cookin</a>
             </div>
           </article>
         </div>

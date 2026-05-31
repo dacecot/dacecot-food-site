@@ -51,16 +51,20 @@ a { color: inherit; text-decoration: none; }
 h1, h2, h3, h4 {
   font-family: var(--serif);
   font-weight: 500;
-  line-height: 1.12;
+  line-height: 1.2;
   letter-spacing: -0.3px;
 }
 
-h1 { font-size: clamp(2.7rem, 6.2vw, 3.875rem); font-weight: 600; }  /* up to 62px */
+h1 { font-size: clamp(2.7rem, 6.2vw, 3.875rem); font-weight: 600; line-height: 1.12; }  /* up to 62px */
 h2 { font-size: clamp(2rem, 4.6vw, 2.75rem); }                       /* up to 44px */
 h3 { font-size: clamp(1.4rem, 2.6vw, 1.75rem); }                     /* up to 28px */
 
 p { margin-bottom: 1.1em; }
 p:last-child { margin-bottom: 0; }
+
+/* breathing room between a heading and the text that follows it (spec: ~20px) */
+h1 + p, h2 + p, h3 + p { margin-top: 20px; }
+.menu-copy h2 + .menu-list, .menu-copy h3 + .menu-list { margin-top: 18px; }
 
 /* ---------- Layout Helpers ---------- */
 .container { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
@@ -307,7 +311,8 @@ p:last-child { margin-bottom: 0; }
   background: linear-gradient(180deg, rgba(244,240,232,0.66), rgba(244,240,232,0.82));
 }
 .hero--dark { color: var(--cream); }
-.hero--dark::before { background: linear-gradient(180deg, rgba(25,18,12,0.30) 0%, rgba(25,18,12,0.34) 55%, rgba(25,18,12,0.52) 100%); }
+.hero--dark::before { background: linear-gradient(180deg, rgba(25,18,12,0.48) 0%, rgba(25,18,12,0.46) 50%, rgba(25,18,12,0.66) 100%); }
+.hero--dark .hero__inner { text-shadow: 0 2px 18px rgba(25,18,12,0.45); }
 
 .hero__inner { position: relative; z-index: 2; max-width: 880px; }
 .hero h1 { margin-bottom: 22px; }
@@ -451,6 +456,7 @@ p:last-child { margin-bottom: 0; }
   gap: 36px;
 }
 .feature-card { text-align: center; }
+.feature-card > img { margin-bottom: 24px; }
 .feature-card .zoom { margin-bottom: 24px; border-radius: 12px; }
 .feature-card img, .feature-card .zoom img {
   width: 100%;
@@ -791,8 +797,8 @@ p:last-child { margin-bottom: 0; }
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  padding: 22px 24px;
+  gap: 10px 18px;
+  padding: 26px 24px;
 }
 .footer__bottom p { font-size: 0.8rem; opacity: 0.72; letter-spacing: 0.3px; margin: 0; }
 .footer__bottom-links a { color: var(--gold); }

@@ -63,10 +63,20 @@
     /* ---- Header shadow + back-to-top on scroll ---- */
     var header = document.querySelector('.header');
     var toTop = document.querySelector('.back-to-top');
+    var footerEl = document.querySelector('.footer');
+    var footerVisible = false;
+    // Hide the back-to-top button once the footer is in view so it never
+    // overlaps the footer text.
+    if (footerEl && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        footerVisible = entries[0].isIntersecting;
+        onScroll();
+      }, { rootMargin: '0px 0px -40px 0px' }).observe(footerEl);
+    }
     function onScroll() {
       var y = window.scrollY || window.pageYOffset;
       if (header) header.classList.toggle('scrolled', y > 10);
-      if (toTop) toTop.classList.toggle('show', y > 420);
+      if (toTop) toTop.classList.toggle('show', y > 420 && !footerVisible);
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();

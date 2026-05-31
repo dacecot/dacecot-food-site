@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://static.wixstatic.com">
-  <link rel="stylesheet" href="css/styles.min.css?v=1780189266181">
+  <link rel="stylesheet" href="css/styles.min.css?v=1780196341442">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.dacecotfood.com/"},{"@type":"ListItem","position":2,"name":"Experiences","item":"https://www.dacecotfood.com/experiences.html"},{"@type":"ListItem","position":3,"name":"Public Pasta Drop-In","item":"https://www.dacecotfood.com/pasta-drop-in.html"}]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Event","name":"Public Pasta Drop-In","description":"Casual weekly walk-in pasta night at da Cecot in Edmonton, every Thursday evening.","image":"https://static.wixstatic.com/media/7c0be1_b066360dd22941e2b0d32d3f8437a5cb~mv2.jpg","eventAttendanceMode":"https://schema.org/OfflineEventAttendanceMode","eventStatus":"https://schema.org/EventScheduled","location":{"@type":"Place","name":"da Cecot Food Inc","address":{"@type":"PostalAddress","streetAddress":"82 Avenue (Whyte Avenue) & 104 Street","addressLocality":"Edmonton","addressRegion":"AB","addressCountry":"CA"}},"organizer":{"@type":"Organization","name":"da Cecot Food Inc","url":"https://www.dacecotfood.com"},"eventSchedule":{"@type":"Schedule","repeatFrequency":"P1W","byDay":"https://schema.org/Thursday","startTime":"16:00"},"offers":{"@type":"Offer","price":"0","priceCurrency":"CAD","availability":"https://schema.org/InStock","url":"https://www.dacecotfood.com/pasta-drop-in.html"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do I need a reservation for the pasta drop-in?","acceptedAnswer":{"@type":"Answer","text":"No reservation is required. The Public Pasta Drop-In is a casual, walk-in night — just show up on Thursday between 4 PM and 8 PM and grab a seat. For larger groups, a quick call ahead helps us be ready for you."}},{"@type":"Question","name":"When is the pasta drop-in?","acceptedAnswer":{"@type":"Answer","text":"Our Public Pasta Drop-In runs every Thursday from 4 PM to 8 PM on Whyte Avenue (82 Ave) at 104 Street in Edmonton. It is our weekly community pasta night."}},{"@type":"Question","name":"What can I order at the drop-in?","acceptedAnswer":{"@type":"Answer","text":"Choose from our pasta bar — a rotating selection of fresh pasta shapes and house sauces, including our signature Caserecce — plus tiramisu and drinks. Everything is available to dine in or take to go."}},{"@type":"Question","name":"Is the drop-in family-friendly?","acceptedAnswer":{"@type":"Answer","text":"Absolutely. The drop-in is relaxed and welcoming for all ages, families, and solo diners alike — exactly the kind of easy weeknight meal we love to share."}}]}</script>
@@ -45,7 +45,13 @@
       <ul class="nav-links" id="primary-nav">
         <li class="nav-drawer-head"><span class="nav-drawer-title">da Cecot</span><button class="nav-close" aria-label="Close menu">&times;</button></li>
         <li><a href="index.html">Home</a></li>
-        <li><a href="menu.html">Menu</a></li>
+        <li class="has-dropdown">
+          <button class="dropdown-toggle" aria-expanded="false" aria-haspopup="true">Menu <span class="caret">▾</span></button>
+          <ul class="dropdown-menu">
+          <li><a href="menu.html">Our Menu</a></li>
+          <li><a href="catering.html">Catering</a></li>
+          </ul>
+        </li>
         <li class="has-dropdown">
           <button class="dropdown-toggle active" aria-expanded="false" aria-haspopup="true">Experiences <span class="caret">▾</span></button>
           <ul class="dropdown-menu">
@@ -54,7 +60,6 @@
           <li><a href="pasta-drop-in.html" class="active" aria-current="page">Public Pasta Drop-In</a></li>
           <li><a href="food-drink-experiences.html">Food & Drink Experiences</a></li>
           <li><a href="private-events.html">Private Events</a></li>
-          <li><a href="catering.html">Catering</a></li>
           </ul>
         </li>
         <li><a href="pasta-shop.html">Pasta Shop</a></li>
@@ -103,10 +108,37 @@
     </section>
 
     <section class="section section--cream" aria-labelledby="drop-how-h">
-      <div class="container text-center narrow reveal">
-        <h2 id="drop-how-h">How to join</h2>
-        <p>Just show up on Thursday between 4 PM and 8 PM — no booking required. Bringing a bigger group? Give us a call at <a href="tel:+18258884218">(825) 888-4218</a> so we can save room for everyone.</p>
-        <div class="btn-wrap"><a href="visit-us.html" class="btn btn--green">Call Ahead for Groups</a></div>
+      <div class="container narrow reveal">
+        <div class="text-center">
+          <h2 id="drop-how-h">How to join</h2>
+          <p>No reservation needed — just walk in on Thursday between 4 PM and 8 PM. Bringing a group of 5 or more? Let us know below so we can have seats ready for you.</p>
+        </div>
+        <div class="booking">
+          <form data-mock aria-label="Drop-in group notification">
+            <div class="form-row">
+              <div class="field">
+                <label for="drop-size">Group size</label>
+                <select id="drop-size" name="group_size">
+                  <option>5–8 guests</option><option>9–12 guests</option><option>13–16 guests</option><option>17+ guests</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="drop-date">Thursday date</label>
+                <input type="date" id="drop-date" name="visit_date" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="drop-name">Name</label><input type="text" id="drop-name" name="name" required></div>
+              <div class="field"><label for="drop-phone">Phone</label><input type="tel" id="drop-phone" name="phone" required></div>
+            </div>
+            <div class="field">
+              <label for="drop-notes">Any notes? <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="drop-notes" name="notes" placeholder="Dietary needs, arrival time, or anything else…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Let Us Know You're Coming</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Perfect! We'll have space ready for your group — see you Thursday.</div>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -197,6 +229,6 @@
   </footer>
 
   <button class="back-to-top" aria-label="Back to top">↑</button>
-  <script src="js/main.js?v=1780189266181"></script>
+  <script src="js/main.js?v=1780196341442"></script>
 </body>
 </html>

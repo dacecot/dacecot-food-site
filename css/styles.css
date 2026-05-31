@@ -35,6 +35,7 @@
 
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
+html { overflow-x: hidden; }
 body {
   font-family: var(--sans);
   color: var(--brown);
@@ -1404,6 +1405,8 @@ body.nav-open { overflow: hidden; }
   .footer__top { grid-template-columns: 1fr; }
   .footer__brand { max-width: none; }
   .footer__bottom-inner { flex-direction: column; text-align: center; }
+  .menu-list li { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .menu-list li span { white-space: normal; }
 }
 
 @media (max-width: 520px) {

@@ -55,7 +55,11 @@ const EXPERIENCE_PAGES = [
   { slug: 'pasta-drop-in',         label: 'Public Pasta Drop-In' },
   { slug: 'food-drink-experiences',label: 'Food & Drink Experiences' },
   { slug: 'private-events',        label: 'Private Events' },
-  { slug: 'catering',              label: 'Catering' }
+];
+
+const MENU_PAGES = [
+  { slug: 'menu',     label: 'Our Menu' },
+  { slug: 'catering', label: 'Catering' },
 ];
 
 /* ============================================================
@@ -68,7 +72,11 @@ function img(src, alt, cls, extra) {
 function header(active) {
   const link = (slug, label, key) =>
     `<li><a href="${slug}.html"${active === key ? ' class="active" aria-current="page"' : ''}>${label}</a></li>`;
-  const dropItems = EXPERIENCE_PAGES.map(p =>
+  const menuItems = MENU_PAGES.map(p =>
+    `<li><a href="${p.slug}.html"${active === p.slug ? ' class="active" aria-current="page"' : ''}>${p.label}</a></li>`
+  ).join('\n          ');
+  const menuActive = MENU_PAGES.some(p => p.slug === active);
+  const expItems = EXPERIENCE_PAGES.map(p =>
     `<li><a href="${p.slug}.html"${active === p.slug ? ' class="active" aria-current="page"' : ''}>${p.label}</a></li>`
   ).join('\n          ');
   const expActive = EXPERIENCE_PAGES.some(p => p.slug === active);
@@ -80,11 +88,16 @@ function header(active) {
       <ul class="nav-links" id="primary-nav">
         <li class="nav-drawer-head"><span class="nav-drawer-title">da Cecot</span><button class="nav-close" aria-label="Close menu">&times;</button></li>
         ${link('index', 'Home', 'home')}
-        ${link('menu', 'Menu', 'menu')}
+        <li class="has-dropdown">
+          <button class="dropdown-toggle${menuActive ? ' active' : ''}" aria-expanded="false" aria-haspopup="true">Menu <span class="caret">▾</span></button>
+          <ul class="dropdown-menu">
+          ${menuItems}
+          </ul>
+        </li>
         <li class="has-dropdown">
           <button class="dropdown-toggle${expActive ? ' active' : ''}" aria-expanded="false" aria-haspopup="true">Experiences <span class="caret">▾</span></button>
           <ul class="dropdown-menu">
-          ${dropItems}
+          ${expItems}
           </ul>
         </li>
         ${link('pasta-shop', 'Pasta Shop', 'pasta-shop')}
@@ -527,8 +540,8 @@ pages.push(page({
           <p>Three simple steps to your perfect bowl.</p>
         </div>
         <div class="steps reveal" data-stagger>
-          <div class="step"><span class="step__num">1</span><h3>Choose Pasta</h3><p>Pick your shape — Tagliatelle, Rigatoni, or Ravioli, all made fresh by hand.</p></div>
-          <div class="step"><span class="step__num">2</span><h3>Choose Sauce</h3><p>Pair it with a house sauce: Pomodoro, Ragù, Cacio e Pepe, or Pesto.</p></div>
+          <div class="step"><span class="step__num">1</span><h3>Choose Pasta</h3><p>Pick your shape — Caserecce, Rigatoni, Tagliatelle, Ravioli, and rotating specials, all made fresh daily.</p></div>
+          <div class="step"><span class="step__num">2</span><h3>Choose Sauce</h3><p>Pair it with a house sauce: Ragù Bolognese, Plasé, Cacio e Pepé, Salsa al Baffo, or Butter &amp; Sage.</p></div>
           <div class="step"><span class="step__num">3</span><h3>Add Extras</h3><p>Finish with cheese, fresh herbs, and the little touches that make it yours.</p></div>
         </div>
       </div>
@@ -541,10 +554,18 @@ pages.push(page({
           <div class="menu-copy">
             <span class="label">Choose Your Pasta</span>
             <h2 id="pasta-h">Fresh Pasta</h2>
+            <p style="font-size:0.8em;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;margin-bottom:8px;font-weight:600;">Always Available</p>
             <ul class="menu-list">
-              <li>Tagliatelle <span>Egg ribbons</span></li>
+              <li>Caserecce <span>Short twisted pasta · our signature shape</span></li>
               <li>Rigatoni <span>Ridged tubes</span></li>
-              <li>Ravioli <span>Hand-filled</span></li>
+              <li>Tagliatelle <span>Egg ribbons</span></li>
+              <li>Traditional Ravioli <span>Hand-filled parcels</span></li>
+            </ul>
+            <p style="font-size:0.8em;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;margin-top:18px;margin-bottom:8px;font-weight:600;">Rotating — Based on Availability</p>
+            <ul class="menu-list">
+              <li>Radiatori</li>
+              <li>Mafalde</li>
+              <li>Spaghetti</li>
             </ul>
           </div>
         </div>
@@ -565,10 +586,11 @@ pages.push(page({
             <span class="label" style="color:var(--terracotta);">Choose Your Sauce</span>
             <h2 id="sauces-h">House Sauces</h2>
             <ul class="menu-list">
-              <li>Pomodoro <span>Classic tomato</span></li>
-              <li>Ragù <span>Slow-cooked meat</span></li>
-              <li>Cacio e Pepe <span>Pecorino &amp; pepper</span></li>
-              <li>Pesto <span>Basil &amp; pine nut</span></li>
+              <li>Ragù Bolognese <span>Slow-cooked meat sauce</span></li>
+              <li>Plasé <span>Tomato sauce</span></li>
+              <li>Cacio e Pepé <span>Pecorino &amp; black pepper</span></li>
+              <li>Salsa al Baffo <span>Rosé sauce</span></li>
+              <li>Butter &amp; Sage Sauce</li>
             </ul>
           </div>
         </div>
@@ -584,13 +606,25 @@ pages.push(page({
         <div class="offer-grid offer-grid--2 reveal" data-stagger>
           <article class="offer-card">
             <div class="offer-card__img zoom">${img(IMG.lasagna, 'Hand-layered lasagna baked fresh daily at da Cecot, Edmonton')}</div>
-            <div class="offer-card__body"><h3>Lasagna</h3><p>Layered by hand with slow-cooked ragù, silky béchamel, and Italian cheeses — baked fresh every morning.</p></div>
+            <div class="offer-card__body"><h3>Lasagna</h3><p>Layered by hand with slow-cooked ragù, silky béchamel, and Italian cheeses — baked fresh every morning. Always available — baked fresh daily with seasonal ingredients. Available for dine-in and takeout.</p></div>
           </article>
           <article class="offer-card">
             <div class="offer-card__img zoom">${img(IMG.product, 'Fresh hand-filled ravioli at da Cecot, Edmonton')}</div>
             <div class="offer-card__body"><h3>Ravioli</h3><p>Delicate hand-filled parcels with seasonal fillings, finished simply with butter &amp; sage or our house sauces.</p></div>
           </article>
         </div>
+      </div>
+    </section>
+
+    <section class="section section--cream" aria-labelledby="philosophy-h">
+      <div class="container narrow reveal">
+        <div class="text-center" style="margin-bottom:36px;">
+          <span class="label" style="color:var(--terracotta);">Our Pasta Philosophy</span>
+          <h2 id="philosophy-h">Made fresh. Best enjoyed now.</h2>
+        </div>
+        <p>Not every pasta shape holds up well once it leaves our kitchen. Fresh egg-based pastas, filled pastas like ravioli, or delicate hand-folded shapes can lose their texture and integrity during transport. They are best enjoyed immediately, in-house.</p>
+        <p style="margin-top:16px;">For this reason, we've chosen Caserecce as our signature takeout/delivery pasta. It maintains its bite, holds sauce beautifully, and delivers the same quality experience at home as it does at the table.</p>
+        <p style="margin-top:16px;">That said, you can still enjoy our other pasta varieties through delivery or pickup — perfect to surprise loved ones or to bring a wholesome, freshly prepared meal to your family. By bringing home our raw fresh pasta, you can have a healthy, authentic Italian meal cooked in just five minutes. At Da Cecot, we produce pasta fresh every day, so whether you dine in, take out, or cook at home, you'll always taste the difference.</p>
       </div>
     </section>
 

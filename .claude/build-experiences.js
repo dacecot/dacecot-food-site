@@ -193,12 +193,79 @@ ${expHero('spc-h1', 'Sunday Pasta Classes', 'Roll up your sleeves and learn to m
     </section>
 
     <section class="section section--cream" aria-labelledby="spc-book-h">
-      <div class="container text-center narrow reveal">
-        <h2 id="spc-book-h">How to book a class</h2>
-        <p>Classes are small and fill quickly. Reserve your spot online, or contact us at <a href="tel:+18258884218">(825) 888-4218</a> or <a href="mailto:info@dacecotfood.com">info@dacecotfood.com</a> for the next available Sunday dates and group bookings.</p>
-        ${cta('reservations.html', 'Book Your Spot', 'green')}
+      <div class="container narrow reveal">
+        <div class="text-center">
+          <h2 id="spc-book-h">Reserve your class spot</h2>
+          <p>Classes fill quickly — spots are limited to 15 guests. Pick a Sunday below and we'll confirm your seat, or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+        </div>
+        <div class="booking">
+          <form data-mock aria-label="Sunday Pasta Class booking request">
+            <div class="form-row">
+              <div class="field">
+                <label for="spc-type">Booking type</label>
+                <select id="spc-type" name="booking_type">
+                  <option>Solo — $95/person</option>
+                  <option>Couple — $185</option>
+                  <option>Group (3+)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="spc-guests">Number of guests</label>
+                <select id="spc-guests" name="guests">
+                  <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="spc-date">Choose a Sunday</label>
+              <input type="date" id="spc-date" name="preferred_date" required>
+              <small style="display:block;margin-top:6px;opacity:0.65;font-size:0.82em;">Sundays only — select any upcoming Sunday</small>
+            </div>
+            <div class="field">
+              <label for="spc-time">Afternoon time slot</label>
+              <select id="spc-time" name="start_time" required>
+                <option value="">Select a start time</option>
+                <option>4:00 PM</option>
+                <option>4:30 PM</option>
+                <option>5:00 PM</option>
+                <option>5:30 PM</option>
+              </select>
+              <small style="display:block;margin-top:6px;opacity:0.65;font-size:0.82em;">Classes run approx. 2.5–3 hrs · Last start 5:30 PM · Done by 8 PM</small>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="spc-name">Name</label><input type="text" id="spc-name" name="name" required></div>
+              <div class="field"><label for="spc-phone">Phone</label><input type="tel" id="spc-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="spc-email">Email</label><input type="email" id="spc-email" name="email" required></div>
+            <div class="field">
+              <label for="spc-notes">Dietary needs or notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="spc-notes" name="notes" placeholder="Allergies, dietary restrictions, or anything else we should know…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Request a Class Spot</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've received your class request and will confirm your spot within 24 hours.</div>
+          </form>
+        </div>
       </div>
     </section>
+    <script>
+    (function () {
+      var input = document.getElementById('spc-date');
+      if (!input) return;
+      var today = new Date();
+      input.min = today.toISOString().split('T')[0];
+      input.addEventListener('change', function () {
+        if (!this.value) return;
+        var d = new Date(this.value + 'T00:00:00');
+        if (d.getDay() !== 0) {
+          this.setCustomValidity('Please choose a Sunday.');
+          this.reportValidity();
+          this.value = '';
+        } else {
+          this.setCustomValidity('');
+        }
+      });
+    })();
+    </script>
 
     <section class="section section--brown" aria-labelledby="spc-faq-h">
       <div class="container">
@@ -256,10 +323,37 @@ ${expHero('drop-h1', 'Public Pasta Drop-In', 'Our casual Thursday community past
     </section>
 
     <section class="section section--cream" aria-labelledby="drop-how-h">
-      <div class="container text-center narrow reveal">
-        <h2 id="drop-how-h">How to join</h2>
-        <p>Just show up on Thursday between 4 PM and 8 PM — no booking required. Bringing a bigger group? Give us a call at <a href="tel:+18258884218">(825) 888-4218</a> so we can save room for everyone.</p>
-        ${cta('visit-us.html', 'Call Ahead for Groups', 'green')}
+      <div class="container narrow reveal">
+        <div class="text-center">
+          <h2 id="drop-how-h">How to join</h2>
+          <p>No reservation needed — just walk in on Thursday between 4 PM and 8 PM. Bringing a group of 5 or more? Let us know below so we can have seats ready for you.</p>
+        </div>
+        <div class="booking">
+          <form data-mock aria-label="Drop-in group notification">
+            <div class="form-row">
+              <div class="field">
+                <label for="drop-size">Group size</label>
+                <select id="drop-size" name="group_size">
+                  <option>5–8 guests</option><option>9–12 guests</option><option>13–16 guests</option><option>17+ guests</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="drop-date">Thursday date</label>
+                <input type="date" id="drop-date" name="visit_date" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="drop-name">Name</label><input type="text" id="drop-name" name="name" required></div>
+              <div class="field"><label for="drop-phone">Phone</label><input type="tel" id="drop-phone" name="phone" required></div>
+            </div>
+            <div class="field">
+              <label for="drop-notes">Any notes? <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="drop-notes" name="notes" placeholder="Dietary needs, arrival time, or anything else…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Let Us Know You're Coming</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Perfect! We'll have space ready for your group — see you Thursday.</div>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -319,10 +413,38 @@ ${expHero('fd-h1', 'Food &amp; Drink Experiences', 'Curated tasting evenings and
     </section>
 
     <section class="section section--cream" aria-labelledby="fd-how-h">
-      <div class="container text-center narrow reveal">
-        <h2 id="fd-how-h">How to reserve</h2>
-        <p>Seats are limited and these evenings book up. Contact us for upcoming dates, menus, and pricing, and we'll save you a place at the table.</p>
-        ${cta('visit-us.html', 'Inquire About Dates', 'green')}
+      <div class="container narrow reveal">
+        <div class="text-center">
+          <h2 id="fd-how-h">Reserve your seat</h2>
+          <p>Seats are limited and these evenings book up fast. Fill in the form below and we'll reach out with upcoming dates, menus, and pricing.</p>
+        </div>
+        <div class="booking">
+          <form data-mock aria-label="Food &amp; Drink experience reservation inquiry">
+            <div class="form-row">
+              <div class="field">
+                <label for="fd-guests">Number of guests</label>
+                <select id="fd-guests" name="guests">
+                  <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="fd-date">Preferred date <span style="font-weight:400;opacity:0.7;">(if known)</span></label>
+                <input type="date" id="fd-date" name="preferred_date">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="fd-name">Name</label><input type="text" id="fd-name" name="name" required></div>
+              <div class="field"><label for="fd-phone">Phone</label><input type="tel" id="fd-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="fd-email">Email</label><input type="email" id="fd-email" name="email" required></div>
+            <div class="field">
+              <label for="fd-dietary">Dietary needs <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="fd-dietary" name="dietary_notes" placeholder="Allergies, dietary restrictions, or anything else we should know…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Request a Seat</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We'll be in touch soon with upcoming event details and pricing.</div>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -383,10 +505,45 @@ ${expHero('pe-h1', 'Private Events', 'Gather your people at our family table for
     </section>
 
     <section class="section section--cream" aria-labelledby="pe-how-h">
-      <div class="container text-center narrow reveal">
-        <h2 id="pe-how-h">How to book a private event</h2>
-        <p>Tell us your date, group size, and what you're celebrating. We'll craft a menu to match and confirm your evening with a 50% deposit. Reach us at <a href="tel:+18258884218">(825) 888-4218</a> or through our contact form.</p>
-        ${cta('visit-us.html', 'Inquire Now', 'green')}
+      <div class="container narrow reveal">
+        <div class="text-center">
+          <h2 id="pe-how-h">Book your private event</h2>
+          <p>Tell us your date, group size, and what you're celebrating — we'll craft a menu to match and confirm your evening with a 50% deposit.</p>
+        </div>
+        <div class="booking">
+          <form data-mock aria-label="Private event booking inquiry">
+            <div class="form-row">
+              <div class="field">
+                <label for="pe-occasion">Occasion</label>
+                <select id="pe-occasion" name="occasion">
+                  <option>Birthday</option><option>Anniversary</option><option>Corporate dinner</option>
+                  <option>Graduation</option><option>Celebration</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pe-date">Event date</label>
+                <input type="date" id="pe-date" name="event_date" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="pe-guests">Guest count</label>
+              <select id="pe-guests" name="guest_count">
+                <option>10–15 guests</option><option>16–20 guests</option><option>21–25 guests</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="pe-name">Name</label><input type="text" id="pe-name" name="name" required></div>
+              <div class="field"><label for="pe-phone">Phone</label><input type="tel" id="pe-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="pe-email">Email</label><input type="email" id="pe-email" name="email" required></div>
+            <div class="field">
+              <label for="pe-notes">Dietary needs &amp; notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="pe-notes" name="notes" placeholder="Allergies, menu preferences, or anything else that will help us plan your evening…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Send Your Inquiry</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've received your event inquiry and will be in touch within 24 hours.</div>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -415,11 +572,11 @@ pages.push(page({
   description: 'Budget-friendly Italian catering in Edmonton from da Cecot. Fresh pasta, lasagna trays & sauces for offices, parties & events. Heat-and-serve — get a quote.',
   ogImage: IMG.lasagna,
   schema: [
-    breadcrumbSchema(trail('Catering').map((t, i) => i === 2 ? { slug: 'catering', label: t.label } : t)),
+    breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'menu', label: 'Menu' }, { slug: 'catering', label: 'Catering' }]),
     serviceSchema({ slug: 'catering', name: 'Italian Catering', desc: 'Budget-friendly Italian catering in Edmonton: fresh pasta, lasagna trays, and sauces for events and offices.', image: IMG.lasagna, priceNote: 'Custom quote per event' }),
     faqSchema(catFaqs)
   ],
-  body: `${breadcrumb(trail('Catering').map((t, i) => i === 2 ? { slug: 'catering', label: t.label } : t))}
+  body: `${breadcrumb([{ slug: 'index', label: 'Home' }, { slug: 'menu', label: 'Menu' }, { slug: 'catering', label: 'Catering' }])}
 
 ${expHero('cat-h1', 'Catering', 'Bring da Cecot to your table — budget-friendly, handcrafted Italian catering for events across Edmonton.', IMG.lasagna, true)}
 
@@ -430,27 +587,162 @@ ${expHero('cat-h1', 'Catering', 'Bring da Cecot to your table — budget-friendl
       </div>
     </section>
 
-    <section class="section section--brown" aria-labelledby="cat-incl-h">
+    <section class="section section--cream" aria-labelledby="cat-pasta-h">
       <div class="container">
-        <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="cat-incl-h">What we offer</h2></div>
-        <div class="info-grid reveal">
-          <div><h3>Pasta trays</h3><p>Fresh pasta with your choice of our signature house sauces.</p></div>
-          <div><h3>Lasagna</h3><p>Hand-layered lasagna, baked and ready to heat and serve.</p></div>
-          <div><h3>Custom packages</h3><p>Menus scaled to your headcount, budget, and occasion.</p></div>
-          <div><h3>Dietary options</h3><p>Egg-based, vegan, and gluten-free pasta available.</p></div>
-        </div>
-        <div class="text-center" style="margin-top:30px;">
-          <p class="price-tag">Contact for a custom quote</p>
-          <p style="opacity:0.85;">Serving Edmonton &amp; surrounding neighbourhoods</p>
+        <div class="two-col menu-row reveal">
+          <figure class="menu-photo zoom">${img(IMG.pasta, 'Fresh handmade pasta catering tray at da Cecot, Edmonton')}</figure>
+          <div class="menu-copy">
+            <span class="label" style="color:var(--terracotta);">Fresh Pasta Trays</span>
+            <h2 id="cat-pasta-h">Pasta Trays</h2>
+            <p>Our fresh pasta trays are the centrepiece of any da Cecot catering spread. Each tray feeds 8–10 guests and comes with your choice of pasta and sauce.</p>
+            <p style="font-size:0.8em;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;margin-top:18px;margin-bottom:8px;font-weight:600;">Choose Your Pasta</p>
+            <ul class="menu-list">
+              <li>Caserecce <span>Our signature shape — best for takeout &amp; catering</span></li>
+              <li>Rigatoni <span>Ridged tubes</span></li>
+              <li>Tagliatelle <span>Egg ribbons</span></li>
+            </ul>
+            <p style="font-size:0.8em;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;margin-top:18px;margin-bottom:8px;font-weight:600;">Choose Your Sauce</p>
+            <ul class="menu-list">
+              <li>Ragù Bolognese <span>Slow-cooked meat sauce</span></li>
+              <li>Plasé <span>Tomato sauce</span></li>
+              <li>Cacio e Pepé <span>Pecorino &amp; black pepper</span></li>
+              <li>Salsa al Baffo <span>Rosé sauce</span></li>
+              <li>Butter &amp; Sage Sauce</li>
+            </ul>
+            <p style="margin-top:16px;opacity:0.8;font-size:0.9em;">Egg-based, vegan, and gluten-free pasta available on request.</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="section section--cream" aria-labelledby="cat-how-h">
-      <div class="container text-center narrow reveal">
-        <h2 id="cat-how-h">How to order catering</h2>
-        <p>Tell us your date, headcount, and the kind of menu you have in mind, and we'll send a custom quote. Reach us at <a href="tel:+18258884218">(825) 888-4218</a> or <a href="mailto:info@dacecotfood.com">info@dacecotfood.com</a>, or use our contact form.</p>
-        ${cta('visit-us.html', 'Request a Quote', 'green')}
+    <section class="section section--brown" aria-labelledby="cat-lasagna-h">
+      <div class="container">
+        <div class="two-col menu-row menu-row--rev reveal">
+          <figure class="menu-photo zoom">${img(IMG.lasagna, 'Freshly baked lasagna for catering at da Cecot, Edmonton')}</figure>
+          <div class="menu-copy">
+            <span class="label">Baked Dishes</span>
+            <h2 id="cat-lasagna-h">Lasagna &amp; Baked Dishes</h2>
+            <p>Our hand-layered lasagna is made fresh daily with slow-cooked ragù, silky béchamel, and Italian cheeses — ready to heat and serve at your venue.</p>
+            <ul class="menu-list" style="margin-top:16px;">
+              <li>Classic Lasagna <span>Ragù, béchamel &amp; Italian cheeses</span></li>
+              <li>Vegetarian Lasagna <span>Seasonal vegetables &amp; béchamel — on request</span></li>
+            </ul>
+            <p style="margin-top:16px;opacity:0.8;font-size:0.9em;">Trays serve 8–12 guests. Heat-and-serve delivery available across Edmonton.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--cream" aria-labelledby="cat-sides-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:40px;">
+          <span class="label" style="color:var(--terracotta);">Complete Your Spread</span>
+          <h2 id="cat-sides-h">Sides &amp; Dessert</h2>
+        </div>
+        <div class="three-col reveal" data-stagger>
+          <article class="menu-card menu-card--light">
+            <h3>Arugula Salad</h3>
+            <p>Fresh arugula with lemon dressing and shaved Parmigiano — a light, bright start to your catering table.</p>
+          </article>
+          <article class="menu-card menu-card--light">
+            <h3>Garlic Bread</h3>
+            <p>Warm, buttery, and perfect alongside any of our pasta trays or lasagna.</p>
+          </article>
+          <article class="menu-card menu-card--light">
+            <h3>Tiramisu</h3>
+            <p>Our housemade tiramisu — espresso-soaked, light, and made fresh. Available in individual portions or as a full tray for sharing.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--brown" aria-labelledby="cat-pkg-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:40px;">
+          <span class="label">Simple Pricing</span>
+          <h2 id="cat-pkg-h">Catering Packages</h2>
+          <p>Every order is quoted to your headcount and menu. Below are our most popular starting points.</p>
+        </div>
+        <div class="offer-grid offer-grid--2 reveal" data-stagger>
+          <article class="offer-card">
+            <div class="offer-card__body">
+              <h3>Office Lunch</h3>
+              <p>One pasta tray, one sauce, and garlic bread. Easy weekday catering for 8–15 guests.</p>
+              <p class="price-tag" style="margin-top:12px;">From $120</p>
+            </div>
+          </article>
+          <article class="offer-card">
+            <div class="offer-card__body">
+              <h3>Family Gathering</h3>
+              <p>Two pasta trays, lasagna, salad, and tiramisu for dessert. A complete meal for 16–25 guests.</p>
+              <p class="price-tag" style="margin-top:12px;">From $280</p>
+            </div>
+          </article>
+          <article class="offer-card">
+            <div class="offer-card__body">
+              <h3>Celebration Package</h3>
+              <p>Full spread — pasta trays, lasagna, sides, dessert, and a custom menu consultation for 25–40 guests.</p>
+              <p class="price-tag" style="margin-top:12px;">From $480</p>
+            </div>
+          </article>
+          <article class="offer-card">
+            <div class="offer-card__body">
+              <h3>Custom Quote</h3>
+              <p>Larger headcount, multiple menu options, or special dietary needs? We'll build a package to fit your event exactly.</p>
+              <p class="price-tag" style="margin-top:12px;">Contact us</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--cream" aria-labelledby="cat-quote-h">
+      <div class="container narrow reveal">
+        <div class="text-center">
+          <h2 id="cat-quote-h">Request a catering quote</h2>
+          <p>Tell us your date, headcount, and the kind of menu you have in mind — we'll get back to you with a custom quote within 24 hours. Or reach us directly at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+        </div>
+        <div class="booking">
+          <form data-mock aria-label="Catering quote request">
+            <div class="form-row">
+              <div class="field">
+                <label for="cat-guests">Guest count</label>
+                <select id="cat-guests" name="guest_count">
+                  <option>Under 15 guests</option>
+                  <option>15–25 guests</option>
+                  <option>26–40 guests</option>
+                  <option>41–60 guests</option>
+                  <option>60+ guests</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="cat-date">Event date</label>
+                <input type="date" id="cat-date" name="event_date" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="cat-menu">Menu interest</label>
+              <select id="cat-menu" name="menu_interest">
+                <option>Pasta trays only</option>
+                <option>Lasagna only</option>
+                <option>Pasta trays + lasagna</option>
+                <option>Full spread (pasta + lasagna + sides + dessert)</option>
+                <option>Not sure — please suggest</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="cat-name">Name</label><input type="text" id="cat-name" name="name" required></div>
+              <div class="field"><label for="cat-phone">Phone</label><input type="tel" id="cat-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="cat-email">Email</label><input type="email" id="cat-email" name="email" required></div>
+            <div class="field">
+              <label for="cat-notes">Event details &amp; dietary needs <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="cat-notes" name="notes" placeholder="Occasion, location, dietary restrictions, delivery address, or anything else that helps us quote accurately…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Request a Quote</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've received your catering request and will send a custom quote within 24 hours.</div>
+          </form>
+        </div>
       </div>
     </section>
 

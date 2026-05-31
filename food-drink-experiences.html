@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://static.wixstatic.com">
-  <link rel="stylesheet" href="css/styles.min.css?v=1780189266181">
+  <link rel="stylesheet" href="css/styles.min.css?v=1780196341442">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.dacecotfood.com/"},{"@type":"ListItem","position":2,"name":"Experiences","item":"https://www.dacecotfood.com/experiences.html"},{"@type":"ListItem","position":3,"name":"Food & Drink Experiences","item":"https://www.dacecotfood.com/food-drink-experiences.html"}]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","serviceType":"Food & Drink Special Experiences","name":"Food & Drink Special Experiences","description":"Curated multi-course tasting menus and wine-paired Italian dinners in Edmonton.","image":"https://static.wixstatic.com/media/nsplsh_75f0185e417b49dcb72e0a0ebd8830a4~mv2.jpg","provider":{"@type":"Restaurant","name":"da Cecot Food Inc","url":"https://www.dacecotfood.com","address":{"@type":"PostalAddress","streetAddress":"82 Avenue (Whyte Avenue) & 104 Street","addressLocality":"Edmonton","addressRegion":"AB","addressCountry":"CA"},"telephone":"(825) 888-4218"},"areaServed":{"@type":"City","name":"Edmonton"},"url":"https://www.dacecotfood.com/food-drink-experiences.html","offers":{"@type":"Offer","priceCurrency":"CAD","description":"Varies by event — contact for pricing","url":"https://www.dacecotfood.com/food-drink-experiences.html"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What are Food & Drink Experiences?","acceptedAnswer":{"@type":"Answer","text":"Food & Drink Experiences are da Cecot’s special ticketed evenings in Edmonton — multi-course tasting menus, wine-paired Italian dinners, Cicchetti small-bite nights, and seasonal themed events. Each is a hosted, curated occasion beyond our everyday pasta bar."}},{"@type":"Question","name":"What is included?","acceptedAnswer":{"@type":"Answer","text":"Depending on the evening, your ticket includes a multi-course menu, curated wine or beverage pairings, and a hosted experience guided by our family. Each event page or inquiry will outline exactly what is served."}},{"@type":"Question","name":"How much do these experiences cost?","acceptedAnswer":{"@type":"Answer","text":"Pricing varies by event and what is included. Contact us for current dates and pricing, and we will share the details for each upcoming experience."}},{"@type":"Question","name":"Can you accommodate dietary needs?","acceptedAnswer":{"@type":"Answer","text":"Yes — let us know about allergies or dietary preferences when you book and we will do our best to tailor your tasting. Reach us at (825) 888-4218 or info@dacecotfood.com."}}]}</script>
@@ -45,7 +45,13 @@
       <ul class="nav-links" id="primary-nav">
         <li class="nav-drawer-head"><span class="nav-drawer-title">da Cecot</span><button class="nav-close" aria-label="Close menu">&times;</button></li>
         <li><a href="index.html">Home</a></li>
-        <li><a href="menu.html">Menu</a></li>
+        <li class="has-dropdown">
+          <button class="dropdown-toggle" aria-expanded="false" aria-haspopup="true">Menu <span class="caret">▾</span></button>
+          <ul class="dropdown-menu">
+          <li><a href="menu.html">Our Menu</a></li>
+          <li><a href="catering.html">Catering</a></li>
+          </ul>
+        </li>
         <li class="has-dropdown">
           <button class="dropdown-toggle active" aria-expanded="false" aria-haspopup="true">Experiences <span class="caret">▾</span></button>
           <ul class="dropdown-menu">
@@ -54,7 +60,6 @@
           <li><a href="pasta-drop-in.html">Public Pasta Drop-In</a></li>
           <li><a href="food-drink-experiences.html" class="active" aria-current="page">Food & Drink Experiences</a></li>
           <li><a href="private-events.html">Private Events</a></li>
-          <li><a href="catering.html">Catering</a></li>
           </ul>
         </li>
         <li><a href="pasta-shop.html">Pasta Shop</a></li>
@@ -103,10 +108,38 @@
     </section>
 
     <section class="section section--cream" aria-labelledby="fd-how-h">
-      <div class="container text-center narrow reveal">
-        <h2 id="fd-how-h">How to reserve</h2>
-        <p>Seats are limited and these evenings book up. Contact us for upcoming dates, menus, and pricing, and we'll save you a place at the table.</p>
-        <div class="btn-wrap"><a href="visit-us.html" class="btn btn--green">Inquire About Dates</a></div>
+      <div class="container narrow reveal">
+        <div class="text-center">
+          <h2 id="fd-how-h">Reserve your seat</h2>
+          <p>Seats are limited and these evenings book up fast. Fill in the form below and we'll reach out with upcoming dates, menus, and pricing.</p>
+        </div>
+        <div class="booking">
+          <form data-mock aria-label="Food &amp; Drink experience reservation inquiry">
+            <div class="form-row">
+              <div class="field">
+                <label for="fd-guests">Number of guests</label>
+                <select id="fd-guests" name="guests">
+                  <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="fd-date">Preferred date <span style="font-weight:400;opacity:0.7;">(if known)</span></label>
+                <input type="date" id="fd-date" name="preferred_date">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="fd-name">Name</label><input type="text" id="fd-name" name="name" required></div>
+              <div class="field"><label for="fd-phone">Phone</label><input type="tel" id="fd-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="fd-email">Email</label><input type="email" id="fd-email" name="email" required></div>
+            <div class="field">
+              <label for="fd-dietary">Dietary needs <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="fd-dietary" name="dietary_notes" placeholder="Allergies, dietary restrictions, or anything else we should know…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Request a Seat</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We'll be in touch soon with upcoming event details and pricing.</div>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -197,6 +230,6 @@
   </footer>
 
   <button class="back-to-top" aria-label="Back to top">↑</button>
-  <script src="js/main.js?v=1780189266181"></script>
+  <script src="js/main.js?v=1780196341442"></script>
 </body>
 </html>

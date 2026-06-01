@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://static.wixstatic.com">
-  <link rel="stylesheet" href="css/styles.min.css?v=1780196341442">
+  <link rel="stylesheet" href="css/styles.min.css?v=1780274029413">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.dacecotfood.com/"},{"@type":"ListItem","position":2,"name":"Pasta Shop","item":"https://www.dacecotfood.com/pasta-shop.html"}]}</script>
 </head>
 <body>
@@ -198,13 +198,15 @@
       <div class="footer__col footer__news">
         <h4>Stay in the Loop</h4>
         <p>Fresh pasta drops, classes, and seasonal menus — straight to your inbox.</p>
-        <form class="newsletter" data-mock aria-label="Newsletter signup">
+        <form class="newsletter" data-formsubmit data-subject="Newsletter Signup — da Cecot" aria-label="Newsletter signup">
+          <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
           <label for="nl-email" class="sr-only">Email address</label>
           <div class="newsletter__row">
             <input type="email" id="nl-email" name="email" placeholder="Your email" required>
             <button type="submit" class="btn btn--terra">Subscribe</button>
           </div>
-          <div class="form-success">Grazie! You're on the list — check your inbox soon.</div>
+          <div class="form-success">Grazie! You're on the list — we'll be in touch soon.</div>
+          <div class="form-error">Something went wrong — please email us at info@dacecotfood.com.</div>
         </form>
       </div>
     </div>
@@ -217,6 +219,6 @@
   </footer>
 
   <button class="back-to-top" aria-label="Back to top">↑</button>
-  <script src="js/main.js?v=1780196341442"></script>
+  <script src="js/main.js?v=1780274029413"></script>
 </body>
 </html>

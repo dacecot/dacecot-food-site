@@ -584,7 +584,19 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
 }
 .form-success.show { display: block; }
 
-/* booking widget mock */
+.form-error {
+  display: none;
+  margin-top: 22px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: rgba(180,40,30,0.12);
+  border: 1px solid rgba(180,40,30,0.5);
+  color: var(--cream);
+  font-size: 0.95rem;
+}
+.form-error.show { display: block; }
+
+/* booking widget */
 .booking {
   max-width: 720px;
   margin: 40px auto 0;

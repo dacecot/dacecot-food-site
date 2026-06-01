@@ -199,7 +199,8 @@ ${expHero('spc-h1', 'Sunday Pasta Classes', 'Roll up your sleeves and learn to m
           <p>Classes fill quickly — spots are limited to 15 guests. Pick a Sunday below and we'll confirm your seat, or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
         <div class="booking">
-          <form data-mock aria-label="Sunday Pasta Class booking request">
+          <form data-formsubmit data-subject="Pasta Class Booking — da Cecot" aria-label="Sunday Pasta Class booking request">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
             <div class="form-row">
               <div class="field">
                 <label for="spc-type">Booking type</label>
@@ -243,6 +244,7 @@ ${expHero('spc-h1', 'Sunday Pasta Classes', 'Roll up your sleeves and learn to m
             </div>
             <button type="submit" class="btn btn--green" style="width:100%;">Request a Class Spot</button>
             <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've received your class request and will confirm your spot within 24 hours.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
           </form>
         </div>
       </div>
@@ -329,7 +331,8 @@ ${expHero('drop-h1', 'Public Pasta Drop-In', 'Our casual Thursday community past
           <p>No reservation needed — just walk in on Thursday between 4 PM and 8 PM. Bringing a group of 5 or more? Let us know below so we can have seats ready for you.</p>
         </div>
         <div class="booking">
-          <form data-mock aria-label="Drop-in group notification">
+          <form data-formsubmit data-subject="Drop-In Group Notification — da Cecot" aria-label="Drop-in group notification">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
             <div class="form-row">
               <div class="field">
                 <label for="drop-size">Group size</label>
@@ -352,6 +355,7 @@ ${expHero('drop-h1', 'Public Pasta Drop-In', 'Our casual Thursday community past
             </div>
             <button type="submit" class="btn btn--green" style="width:100%;">Let Us Know You're Coming</button>
             <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Perfect! We'll have space ready for your group — see you Thursday.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218.</div>
           </form>
         </div>
       </div>
@@ -419,7 +423,8 @@ ${expHero('fd-h1', 'Food &amp; Drink Experiences', 'Curated tasting evenings and
           <p>Seats are limited and these evenings book up fast. Fill in the form below and we'll reach out with upcoming dates, menus, and pricing.</p>
         </div>
         <div class="booking">
-          <form data-mock aria-label="Food &amp; Drink experience reservation inquiry">
+          <form data-formsubmit data-subject="Food &amp; Drink Experience Inquiry — da Cecot" aria-label="Food &amp; Drink experience reservation inquiry">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
             <div class="form-row">
               <div class="field">
                 <label for="fd-guests">Number of guests</label>
@@ -443,6 +448,7 @@ ${expHero('fd-h1', 'Food &amp; Drink Experiences', 'Curated tasting evenings and
             </div>
             <button type="submit" class="btn btn--green" style="width:100%;">Request a Seat</button>
             <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We'll be in touch soon with upcoming event details and pricing.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please email us at info@dacecotfood.com.</div>
           </form>
         </div>
       </div>
@@ -511,7 +517,8 @@ ${expHero('pe-h1', 'Private Events', 'Gather your people at our family table for
           <p>Tell us your date, group size, and what you're celebrating — we'll craft a menu to match and confirm your evening with a 50% deposit.</p>
         </div>
         <div class="booking">
-          <form data-mock aria-label="Private event booking inquiry">
+          <form data-formsubmit data-subject="Private Event Inquiry — da Cecot" aria-label="Private event booking inquiry">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
             <div class="form-row">
               <div class="field">
                 <label for="pe-occasion">Occasion</label>
@@ -542,6 +549,7 @@ ${expHero('pe-h1', 'Private Events', 'Gather your people at our family table for
             </div>
             <button type="submit" class="btn btn--green" style="width:100%;">Send Your Inquiry</button>
             <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've received your event inquiry and will be in touch within 24 hours.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
           </form>
         </div>
       </div>
@@ -703,7 +711,8 @@ ${expHero('cat-h1', 'Catering', 'Bring da Cecot to your table — budget-friendl
           <p>Tell us your date, headcount, and the kind of menu you have in mind — we'll get back to you with a custom quote within 24 hours. Or reach us directly at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
         <div class="booking">
-          <form data-mock aria-label="Catering quote request">
+          <form data-formsubmit data-subject="Catering Quote Request — da Cecot" aria-label="Catering quote request">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
             <div class="form-row">
               <div class="field">
                 <label for="cat-guests">Guest count</label>
@@ -741,6 +750,7 @@ ${expHero('cat-h1', 'Catering', 'Bring da Cecot to your table — budget-friendl
             </div>
             <button type="submit" class="btn btn--green" style="width:100%;">Request a Quote</button>
             <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've received your catering request and will send a custom quote within 24 hours.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
           </form>
         </div>
       </div>

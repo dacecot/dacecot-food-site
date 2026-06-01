@@ -109,18 +109,39 @@
       revealEls.forEach(function (el) { el.classList.add('visible'); });
     }
 
-    /* ---- Contact form (no backend — friendly client-side handling) ---- */
-    var form = document.querySelector('form[data-mock]');
-    if (form) {
+    /* ---- Form submission via Formsubmit AJAX ---- */
+    document.querySelectorAll('form[data-formsubmit]').forEach(function (form) {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         if (!form.checkValidity()) { form.reportValidity(); return; }
-        var msg = form.querySelector('.form-success');
-        if (msg) msg.classList.add('show');
-        form.querySelectorAll('input, textarea, select').forEach(function (f) {
-          if (f.type !== 'submit') f.value = '';
-        });
+
+        var btn = form.querySelector('button[type="submit"]');
+        var successEl = form.querySelector('.form-success');
+        var errorEl = form.querySelector('.form-error');
+        var label = btn ? btn.textContent : '';
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+        var payload = { _subject: form.dataset.subject || 'New message — da Cecot Food' };
+        new FormData(form).forEach(function (v, k) { if (k !== '_honey') payload[k] = v; });
+
+        fetch('https://formsubmit.co/ajax/info@dacecotfood.com', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (r) {
+            if (r.success === 'true' || r.success === true) {
+              if (successEl) successEl.classList.add('show');
+              form.querySelectorAll('input:not([type=hidden]), textarea, select').forEach(function (f) { f.value = ''; });
+            } else {
+              if (errorEl) errorEl.classList.add('show');
+            }
+          })
+          .catch(function () { if (errorEl) errorEl.classList.add('show'); })
+          .finally(function () { if (btn) { btn.disabled = false; btn.textContent = label; } });
       });
-    }
+    });
   });
 })();

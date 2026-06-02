@@ -784,31 +784,8 @@ pages.push(page({
         <h1 id="res-h1">Make a Reservation</h1>
         <p class="lead" style="margin-top:18px;">Select your details below to reserve your table at da Cecot in Edmonton. Booking for the weekend? Be sure to ask about our <strong>"At Our Family Table"</strong> experience — an intimate, fixed-menu evening you won't forget.</p>
       </div>
-      <div class="booking reveal">
-        <form data-formsubmit data-subject="New Reservation Request — da Cecot" aria-label="Reservation request">
-          <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
-          <div class="form-row">
-            <div class="field">
-              <label for="party">Party Size</label>
-              <select id="party" name="party">
-                <option>1 guest</option><option selected>2 guests</option><option>3 guests</option><option>4 guests</option><option>5 guests</option><option>6 guests</option><option>7+ guests</option>
-              </select>
-            </div>
-            <div class="field"><label for="date">Date</label><input type="date" id="date" name="date" required></div>
-          </div>
-          <div class="field">
-            <label for="time">Time</label>
-            <select id="time" name="time" required>
-              <option value="">Select a time</option>
-              <option>11:30 AM</option><option>12:00 PM</option><option>12:30 PM</option><option>1:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option>6:00 PM</option><option>7:00 PM</option><option>8:00 PM</option>
-            </select>
-          </div>
-          <div class="field"><label for="rname">Name</label><input type="text" id="rname" name="name" required></div>
-          <div class="field"><label for="rphone">Phone</label><input type="tel" id="rphone" name="phone" required></div>
-          <button type="submit" class="btn btn--green" style="width:100%;">Request Reservation</button>
-          <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Thanks! Your reservation request has been received — we'll confirm with you shortly.</div>
-          <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
-        </form>
+      <div class="container" style="max-width:760px; margin:0 auto; padding-bottom:60px;">
+        <!-- Start Square Appointments Embed Code --><script src='https://square.site/appointments/buyer/widget/cj1toniazzz1ms/LYPSZAFKKPK8Z.js'></script><!-- End Square Appointments Embed Code -->
       </div>
     </section>`
 }));

@@ -20,7 +20,7 @@ function eventSchema({ slug, name, desc, image, byDay, startTime, price }) {
     '@type': 'Event',
     name: name,
     description: desc,
-    image: image,
+    image: image.startsWith('http') ? image : `${BASE}/${image}`,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     eventStatus: 'https://schema.org/EventScheduled',
     location: { '@type': 'Place', name: NAP.name, address: POSTAL_ADDRESS },
@@ -47,7 +47,7 @@ function serviceSchema({ slug, name, desc, image, priceNote }) {
     serviceType: name,
     name: name,
     description: desc,
-    image: image,
+    image: image.startsWith('http') ? image : `${BASE}/${image}`,
     provider: { '@type': 'Restaurant', name: NAP.name, url: BASE, address: POSTAL_ADDRESS, telephone: NAP.phone },
     areaServed: { '@type': 'City', name: 'Edmonton' },
     url: `${BASE}/${slug}.html`,
@@ -268,6 +268,29 @@ ${expHero('spc-h1', 'Sunday Pasta Classes', 'Roll up your sleeves and learn to m
       });
     })();
     </script>
+
+    <section class="section section--linen" aria-labelledby="spc-gallery-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:48px;">
+          <span class="label" style="color:var(--terracotta);">From Past Classes</span>
+          <h2 id="spc-gallery-h">See what you'll make.</h2>
+          <p>Every class ends with a shared meal — pasta you shaped yourself, finished with our house sauces, eaten together at the table.</p>
+        </div>
+        <div class="gallery gallery--4 reveal">
+          <figure class="zoom"><img src="images/food/ravioli-butter-sage.jpg" alt="Ravioli with butter and sage made in a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/raw-pasta/tagliatelle.jpg" alt="Handmade tagliatelle from a da Cecot pasta class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/cacio-e-pepe.jpg" alt="Cacio e Pepé pasta finished in a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/raw-pasta/caserecce.jpg" alt="Fresh caserecce shaped in a da Cecot Sunday pasta class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/fresh-ravioli.jpg" alt="Fresh hand-filled ravioli from a da Cecot pasta class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/ragu.jpg" alt="Ragù Bolognese pasta from a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/raw-pasta/raw-pasta.jpg" alt="Freshly shaped pasta from a da Cecot Sunday class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/plase.jpg" alt="Plasé pasta finished in a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
+        </div>
+        <div class="btn-wrap text-center reveal" style="margin-top:36px;">
+          <a href="#spc-book-h" class="btn btn--terra">Book a Class</a>
+        </div>
+      </div>
+    </section>
 
     <section class="section section--brown" aria-labelledby="spc-faq-h">
       <div class="container">

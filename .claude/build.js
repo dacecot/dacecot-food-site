@@ -7,7 +7,6 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const BASE = 'https://www.dacecotfood.com';
-const M = 'https://static.wixstatic.com/media/';
 // Cache-busting build version — appended to CSS/JS so browsers (esp. mobile
 // Safari) always fetch the latest assets after each deploy instead of stale cache.
 const VERSION = Date.now();
@@ -28,23 +27,23 @@ const MAPS_EMBED = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.map
 const MAPS_LINK = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.mapsQuery);
 
 const IMG = {
-  hero:      M + '77f047_338fa580ed654196bb445b86639bfd8c~mv2.png',
-  pasta:     M + '7c0be1_77745bd3095d4afc83ac24b7798df4ee~mv2.jpg',
-  food:      M + '7c0be1_dfac201973bf4ee195273ab10da689a2~mv2.jpg',
-  greenpasta:M + '7c0be1_b066360dd22941e2b0d32d3f8437a5cb~mv2.jpg',
-  family:    M + '7c0be1_1425b4bd252e412db1f1f5a621e2276e~mv2.jpg',   // real Cecot family portrait
-  about2:    M + '77f047_338fa580ed654196bb445b86639bfd8c~mv2.png',   // warm atmospheric backdrop (about hero)
-  aboutHero: M + '77f047_338fa580ed654196bb445b86639bfd8c~mv2.png',   // warm atmospheric backdrop
-  product:   M + '7c0be1_34fa4d0deae440e6ab56beff84a1d33c~mv2.png',   // pasta/ravioli to-go product shot
-  pastawine: M + '11062b_4c68ff7404e7429aa4270be3fac9c9f8~mv2_d_4500_3003_s_4_2.jpg',
-  wine:      M + 'nsplsh_75f0185e417b49dcb72e0a0ebd8830a4~mv2.jpg',
-  dining:    M + 'nsplsh_3663694c6464546f54674d~mv2_d_6000_4000_s_4_2.jpg',
-  freshpasta:M + '8eaf7d54fb4e47bdb3f871c347480ec1.jpg',
-  sauce:     M + '7c0be1_dfcabf0955044fda943142e1830567c3~mv2.jpg',
-  lasagna:   M + 'nsplsh_584178764b703074647755~mv2.jpg',
-  partnerbg: M + 'nsplsh_b2056eb0df36469089b188aa0be75632~mv2.jpg',
-  icon:      M + '7c0be1_3204ca41b9b64e1abd5c10f6c86c4451~mv2.png',
-  logo:      M + '7c0be1_ee1b5d1b8a1047f1a89d65a233c038fb~mv2.png'
+  hero:       'images/food/hero-resized.jpg',
+  pasta:      'images/food/ravioli-butter-sage.jpg',
+  food:       'images/food/cicchetti.jpg',
+  greenpasta: 'images/raw-pasta/raw-pasta.jpg',
+  family:     'images/food/hero.jpg',
+  about2:     'images/food/hero-resized.jpg',
+  aboutHero:  'images/food/hero-resized.jpg',
+  product:    'images/food/fresh-ravioli.jpg',
+  pastawine:  'images/food/plase.jpg',
+  wine:       'images/sauces/salsa-al-baffo.jpg',
+  dining:     'images/food/cacio-e-pepe.jpg',
+  freshpasta: 'images/raw-pasta/caserecce.jpg',
+  sauce:      'images/food/ragu.jpg',
+  lasagna:    'images/food/bosco-romagno.jpg',
+  partnerbg:  'images/food/hero.jpg',
+  icon:       'images/logos/circle-logo.png',
+  logo:       'images/logos/new-logo.png'
 };
 const OG_DEFAULT = IMG.pasta;
 
@@ -239,7 +238,7 @@ function restaurantSchema(extra) {
     url: BASE,
     telephone: NAP.phone,
     email: NAP.email,
-    image: IMG.pasta,
+    image: `${BASE}/${IMG.pasta}`,
     servesCuisine: ['Italian', 'Mediterranean'],
     priceRange: '$$',
     address: POSTAL_ADDRESS,
@@ -282,7 +281,8 @@ function page(opts) {
   // opts: {slug,title,description,h1(unused),ogImage,active,schema:[],body}
   const url = `${BASE}/${opts.slug === 'index' ? '' : opts.slug + '.html'}`;
   const canonical = opts.slug === 'index' ? BASE + '/' : url;
-  const og = opts.ogImage || OG_DEFAULT;
+  const ogRaw = opts.ogImage || OG_DEFAULT;
+  const og = ogRaw.startsWith('http') ? ogRaw : `${BASE}/${ogRaw}`;
   const schemaBlocks = (opts.schema || []).map(s =>
     `  <script type="application/ld+json">${JSON.stringify(s)}</script>`
   ).join('\n');
@@ -318,7 +318,6 @@ function page(opts) {
   <link rel="apple-touch-icon" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://static.wixstatic.com">
   <link rel="stylesheet" href="css/styles.min.css?v=${VERSION}">
 ${schemaBlocks}
 </head>
@@ -472,6 +471,26 @@ pages.push(page({
       </div>
     </section>
 
+    <section class="section section--linen" aria-labelledby="food-gallery-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:54px;">
+          <span class="label" style="color:var(--terracotta);">From Our Kitchen</span>
+          <h2 id="food-gallery-h">Every plate, shaped by hand.</h2>
+          <p>A glimpse of what we make fresh each day — from silky ravioli to slow-cooked ragù.</p>
+        </div>
+        <div class="gallery gallery--4 reveal">
+          <figure class="zoom"><img src="images/food/cacio-e-pepe.jpg" alt="Cacio e Pepé pasta at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/ragu.jpg" alt="Ragù alla Bolognese at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/cicchetti.jpg" alt="Cicchetti Italian small bites at da Cecot" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/plase.jpg" alt="Plasé pomodoro sauce pasta at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/ravioli-butter-sage.jpg" alt="Ravioli with butter and sage at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/ravioli-salsa-al-baffo.jpg" alt="Ravioli with salsa al baffo at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/bosco-romagno.jpg" alt="Bosco Romagno pasta dish at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/fresh-ravioli.jpg" alt="Fresh filled ravioli at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+        </div>
+      </div>
+    </section>
+
     <section class="section section--brown" id="visit" aria-labelledby="visit-h">
       <div class="container">
         <div class="visit reveal">
@@ -595,6 +614,26 @@ pages.push(page({
               <li>Butter &amp; Sage Sauce</li>
             </ul>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--linen" aria-labelledby="dishes-gallery-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:50px;">
+          <span class="label" style="color:var(--terracotta);">The Dishes</span>
+          <h2 id="dishes-gallery-h">Everything on the menu, photographed fresh.</h2>
+        </div>
+        <div class="gallery reveal">
+          <figure class="zoom"><img src="images/food/ravioli-butter-sage.jpg" alt="Ravioli with butter and sage at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/ravioli-salsa-al-baffo.jpg" alt="Ravioli with salsa al baffo at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/cacio-e-pepe.jpg" alt="Cacio e Pepé pasta at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/ragu.jpg" alt="Ragù alla Bolognese at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/plase.jpg" alt="Plasé pomodoro pasta at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/bosco-romagno.jpg" alt="Bosco Romagno pasta at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/cicchetti.jpg" alt="Cicchetti Italian small bites at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/fresh-ravioli.jpg" alt="Fresh hand-filled ravioli at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/hero.jpg" alt="Signature pasta at da Cecot Food, Edmonton" loading="lazy" decoding="async"></figure>
         </div>
       </div>
     </section>
@@ -953,6 +992,45 @@ pages.push(page({
           </article>
         </div>
         <p class="text-center reveal" style="margin-top:36px; opacity:0.75; font-size:0.95rem;">Menu, sizes, and availability change with the season. Call <a href="tel:${NAP.phoneHref}" style="color:var(--terracotta);">${NAP.phone}</a> or email <a href="mailto:${NAP.email}" style="color:var(--terracotta);">${NAP.email}</a> for today's selection, family sizes, and large orders.</p>
+      </div>
+    </section>
+
+    <section class="section section--linen" aria-labelledby="raw-pasta-gallery-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:48px;">
+          <span class="label" style="color:var(--terracotta);">Raw Pasta to Take Home</span>
+          <h2 id="raw-pasta-gallery-h">Made fresh every morning.</h2>
+          <p>Ready to drop in boiling water and serve in minutes. Each bag is made the same day.</p>
+        </div>
+        <div class="gallery reveal">
+          <figure class="zoom"><img src="images/raw-pasta/caserecce.jpg" alt="Fresh caserecce pasta to take home from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/raw-pasta/tagliatelle.jpg" alt="Fresh tagliatelle to take home from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/raw-pasta/rigatoni.jpg" alt="Fresh rigatoni to take home from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/raw-pasta/radiatori.jpg" alt="Fresh radiatori pasta from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/raw-pasta/raw-pasta.jpg" alt="Fresh handmade pasta at da Cecot Pasta Shop, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/fresh-ravioli.jpg" alt="Fresh filled ravioli from da Cecot Pasta Shop, Edmonton" loading="lazy" decoding="async"></figure>
+        </div>
+        <div class="btn-wrap text-center reveal" style="margin-top:36px;">
+          <a href="tel:${NAP.phoneHref}" class="btn btn--terra">Call to Reserve Yours</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--cream" aria-labelledby="sauces-gallery-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:48px;">
+          <span class="label" style="color:var(--warm-brown);">Sauce to Go</span>
+          <h2 id="sauces-gallery-h">Our house sauces, bottled for you.</h2>
+          <p>The same slow-cooked sauces from our kitchen — available to take home and pair with any pasta you choose.</p>
+        </div>
+        <div class="gallery reveal">
+          <figure class="zoom"><img src="images/sauces/sauce-ragu.jpg" alt="Ragù alla Bolognese sauce to go from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/sauces/sauce-plase.jpg" alt="Plasé pomodoro sauce to go from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/sauces/sauce-bosco-romagno.jpg" alt="Bosco Romagno sauce to go from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/sauces/sauce-to-go.jpg" alt="House sauces to go from da Cecot Pasta Shop, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/sauces/salsa-al-baffo.jpg" alt="Salsa al baffo from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/sauces/sauce-salsa-al-baffo.jpg" alt="Salsa al baffo sauce from da Cecot Pasta Shop, Edmonton" loading="lazy" decoding="async"></figure>
+        </div>
       </div>
     </section>
 

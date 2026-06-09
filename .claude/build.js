@@ -696,7 +696,7 @@ pages.push(page({
   ],
   body: `${breadcrumb([{ slug: 'index', label: 'Home' }, { slug: 'our-story', label: 'Our Story' }])}
 
-    <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('${IMG.pastawine}');" aria-labelledby="story-h1">
+    <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('images/general/erica/_MG_1017.jpg');" aria-labelledby="story-h1">
       <div class="hero__inner reveal">
         <span class="label">Our Story</span>
         <h1 id="story-h1">From our family to yours.</h1>

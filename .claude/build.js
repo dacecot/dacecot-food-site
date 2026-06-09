@@ -356,9 +356,9 @@ pages.push(page({
   active: 'home',
   title: 'da Cecot Food | Italian Comfort Food in Edmonton',
   description: 'Family-run Italian pasta bar & street food in Edmonton. Fresh handmade pasta, slow-cooked sauces, dine in or take out. Explore the menu & book a table.',
-  ogImage: IMG.pasta,
+  ogImage: IMG.hero,
   schema: [restaurantSchema({ aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127' } })],
-  body: `    <section class="hero hero--home hero--parallax" style="background-image:url('${IMG.pasta}');">
+  body: `    <section class="hero hero--home hero--parallax" style="background-image:url('${IMG.hero}');">
       <div class="hero__inner reveal">
         <span class="label">da Cecot · On Whyte Avenue, Edmonton</span>
         <h1 class="hero__brand">Fresh Handmade Pasta on Whyte Ave</h1>

@@ -300,15 +300,15 @@ ${expHero('spc-h1', 'Sunday Pasta Classes', 'Roll up your sleeves and learn to m
           <figure class="zoom"><img src="images/general/erica/_MG_1017.jpg" alt="The class table set with mixing bowls, wine glasses, and aprons at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1163.jpg" alt="Hands rolling out fresh pasta dough at a da Cecot Sunday pasta class" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1192.jpg" alt="Shaping fresh pasta by hand at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/class-oct7-1.jpg" alt="Guests making fresh pasta at a da Cecot Sunday class, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/class-oct7-2.jpg" alt="Hands shaping fresh pasta dough at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1131.jpg" alt="Guests at work during a hands-on pasta class at da Cecot" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1138.jpg" alt="Fresh pasta dough being kneaded at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/class-oct7-3.jpg" alt="Rolling pasta by hand at a da Cecot Sunday pasta class" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/class-oct7-4.jpg" alt="Fresh pasta shapes made at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1135.jpg" alt="Guests learning to shape fresh pasta at a da Cecot class" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1182.jpg" alt="Hands-on pasta making with friends at a da Cecot class" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/class-oct7-5.jpg" alt="Guests enjoying pasta they made at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1185.jpg" alt="Fresh pasta dough being worked at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1198.jpg" alt="Cutting fresh pasta strands at a da Cecot Sunday class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1205.jpg" alt="Fresh pasta drying at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1210.jpg" alt="Guests preparing fresh pasta at a da Cecot Sunday class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1216.jpg" alt="Cicchetti and bruschetta served at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/food/ravioli-butter-sage.jpg" alt="Ravioli with butter and sage — the dish students take home" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/raw-pasta/tagliatelle.jpg" alt="Fresh tagliatelle shaped by hand at a da Cecot pasta class" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/food/fresh-ravioli.jpg" alt="Fresh hand-filled ravioli — a da Cecot pasta class finish" loading="lazy" decoding="async"></figure>

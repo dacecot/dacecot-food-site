@@ -731,23 +731,6 @@ pages.push(page({
       </div>
     </section>
 
-    <section class="section section--linen" aria-labelledby="notebook-h">
-      <div class="container"><div class="two-col menu-row reveal">
-        <figure class="menu-photo zoom">${img('images/general/heritage/notebook-torta-paradiso.jpg', "Erika's original handwritten recipe notebook — Torta Paradiso recipe page")}</figure>
-        <div class="menu-copy">
-          <span class="label" style="color:var(--terracotta);">A Notebook Full of Memories</span>
-          <h2 id="notebook-h">A notebook full of memories.</h2>
-          <p>For as long as I can remember, food has been part of my story.</p>
-          <p>This notebook has been with me since I was eight years old. It began with the encouragement of my godmothers, Aurelia and Nina, who helped me start filling its pages with recipes, ideas, and memories.</p>
-          <p>As I grew, so did the notebook. Over the years, it became a collection of reflections, family traditions, and dishes inspired by the people, places, and experiences that shaped me — from family meals in Plasencis and the villages of Friuli Venezia Giulia to the food we prepare today at da Cecot.</p>
-          <p>Many of the ideas behind our kitchen were written down long before da Cecot existed. These pages remind us where we come from, the people who inspired us, and the importance of gathering around a table to share food, stories, and time together.</p>
-          <p>Today, that same spirit continues at da Cecot.</p>
-          <p class="signature">— Erika</p>
-          <p style="margin-top:8px; opacity:0.75; font-size:0.85em;"><em>Original recipe notebook, started at age 8.</em></p>
-        </div>
-      </div></div>
-    </section>
-
     <section class="section section--brown" aria-labelledby="roots-h">
       <div class="container"><div class="two-col menu-row reveal">
         <figure class="menu-photo zoom">${img('images/general/heritage/childhood-dinner.jpg', 'A childhood family meal — pasta shared around the kitchen table')}</figure>

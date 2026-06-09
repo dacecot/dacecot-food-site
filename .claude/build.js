@@ -31,7 +31,7 @@ const IMG = {
   pasta:      'images/food/ravioli-butter-sage.jpg',
   food:       'images/food/cicchetti.jpg',
   greenpasta: 'images/raw-pasta/raw-pasta.jpg',
-  family:     'images/general/cut-img-2360.jpg',
+  family:     'images/general/cecot-family.jpg',
   about2:     'images/general/whatsapp-1.jpg',
   aboutHero:  'images/general/whatsapp-2.jpg',
   product:    'images/food/fresh-ravioli.jpg',
@@ -791,7 +791,7 @@ pages.push(page({
           <figure class="zoom"><img src="images/general/whatsapp-1.jpg" alt="Behind the scenes at da Cecot Food, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/whatsapp-2.jpg" alt="The da Cecot team at work in Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1036.jpg" alt="The da Cecot menu on display at the counter, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/general/cut-img-2360.jpg" alt="The Cecot family at da Cecot Food, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/cut-img-2360.jpg" alt="Friends gathered around the table at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1262.jpg" alt="A shared moment at the da Cecot family table, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/misc-photo.jpg" alt="A moment at da Cecot on Whyte Avenue, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1273.jpg" alt="Friends sharing a meal at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>

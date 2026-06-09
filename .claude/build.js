@@ -156,7 +156,7 @@ function footer() {
           <a href="pasta-shop.html">Pasta Shop</a>
           <a href="our-story.html">Our Story</a>
           <a href="visit-us.html">Visit Us</a>
-          <a href="partnerships.html">Wholesale &amp; Retail</a>
+          <a href="partnerships.html">Catering &amp; Wholesale</a>
           <a href="reservations.html">Reserve a Table</a>
         </nav>
       </div>
@@ -171,10 +171,12 @@ function footer() {
         </p>
         <p class="footer__hours">
           <strong>Hours</strong><br>
-          Mon–Tue 11:30–2 · 4–8<br>
+          Mon &amp; Tue 12–3 · 4:30–8<br>
           Wed Closed · Thu 4–8<br>
-          Fri 11:30–2 · 4–9<br>
-          Sat 12–8 · Sun 4–8
+          Fri 11:30–3 · 4–9<br>
+          Sat 12–9 · Sun 11:30–4<br>
+          Sunday Pasta Classes 5–9<br>
+          <em style="opacity:0.75;">First Sunday of every month: closed</em>
         </p>
       </div>
       <div class="footer__col footer__news">
@@ -206,13 +208,13 @@ function footer() {
 
 /* ---- opening hours for schema ---- */
 const HOURS_SPEC = [
-  { d: ['Monday', 'Tuesday'], o: '11:30', c: '14:00' },
-  { d: ['Monday', 'Tuesday'], o: '16:00', c: '20:00' },
+  { d: ['Monday', 'Tuesday'], o: '12:00', c: '15:00' },
+  { d: ['Monday', 'Tuesday'], o: '16:30', c: '20:00' },
   { d: ['Thursday'], o: '16:00', c: '20:00' },
-  { d: ['Friday'], o: '11:30', c: '14:00' },
+  { d: ['Friday'], o: '11:30', c: '15:00' },
   { d: ['Friday'], o: '16:00', c: '21:00' },
-  { d: ['Saturday'], o: '12:00', c: '20:00' },
-  { d: ['Sunday'], o: '16:00', c: '20:00' }
+  { d: ['Saturday'], o: '12:00', c: '21:00' },
+  { d: ['Sunday'], o: '11:30', c: '16:00' }
 ].map(h => ({
   '@type': 'OpeningHoursSpecification',
   dayOfWeek: h.d,
@@ -359,10 +361,10 @@ pages.push(page({
       <div class="hero__inner reveal">
         <span class="label">da Cecot · On Whyte Avenue, Edmonton</span>
         <h1 class="hero__brand">Fresh Handmade Pasta on Whyte Ave</h1>
-        <p class="hero__tag">Authentic Italian pasta, shaped by hand and made fresh every day — from our family's table to yours.</p>
+        <p class="hero__tag">Handmade pasta, Italian hospitality, and a table where everyone belongs. Crafted daily on Whyte Avenue by the Cecot family — inspired by the traditions of sharing food, stories, and meaningful moments around the table.</p>
         <div class="btn-group">
           <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
-          <a href="sunday-pasta-classes.html" class="btn btn--brown">Book a Pasta Class</a>
+          <a href="experiences.html" class="btn btn--brown">Explore Experiences</a>
           <a href="pasta-shop.html" class="btn btn--terra">Order Fresh Pasta</a>
         </div>
       </div>
@@ -373,8 +375,9 @@ pages.push(page({
       <div class="container text-center narrow reveal">
         <span class="label" style="color:var(--terracotta);">Our Italian Kitchen</span>
         <h2 id="kitchen-h">A warm Italian home, where pasta is made by hand.</h2>
-        <p>da Cecot began with a family that carried two homes in its heart — the warmth of Nigeria and the rich culinary tradition of Italy. We pour that love into every plate: slow-cooked sauces, fresh pasta rolled by hand, and a table where everyone belongs.</p>
-        <p>Come as a guest, leave as family. That's the way we've always done it.</p>
+        <p>da Cecot is an Italian family kitchen built on a love of hospitality, tradition, and good food shared with others. Inspired by our family's roots in Friuli Venezia Giulia, we create handmade pasta, slow-simmered sauces, and seasonal dishes that reflect the way we grew up eating — around a table filled with family, friends, and conversation.</p>
+        <p>From fresh pasta and ravioli to the occasional regional specialty, everything we serve is made with care and meant to be shared.</p>
+        <p><strong>Come as a guest. Leave as family.</strong></p>
         ${cta('our-story.html', 'Learn Our Story', 'terra')}
       </div>
     </section>
@@ -386,9 +389,9 @@ pages.push(page({
           <h2 id="fresh-h">Hand-shaped, never rushed.</h2>
         </div>
         <div class="feature-grid reveal" data-stagger>
-          <article class="feature-card"><div class="zoom">${img(IMG.pasta, 'Hand-shaped fresh pasta at da Cecot, Edmonton')}</div><h3>Hand-Shaped</h3><p>Every shape is rolled, cut, and formed by hand in our kitchen — the way nonna taught us.</p></article>
-          <article class="feature-card"><div class="zoom">${img(IMG.product, 'Seasonal filled ravioli at da Cecot, Edmonton')}</div><h3>Seasonal Fillings</h3><p>Ravioli and specials built around what's fresh, with fillings that change through the seasons.</p></article>
-          <article class="feature-card"><div class="zoom">${img(IMG.freshpasta, 'Fresh pasta made daily at da Cecot, Edmonton')}</div><h3>Crafted Daily</h3><p>We make our pasta fresh every morning — so what you taste is never more than a few hours old.</p></article>
+          <article class="feature-card"><div class="zoom">${img(IMG.pasta, 'Hand-shaped fresh pasta at da Cecot, Edmonton')}</div><h3>Handmade Daily</h3><p>Every pasta shape is produced with care and attention, using traditional methods and quality ingredients.</p></article>
+          <article class="feature-card"><div class="zoom">${img('images/general/heritage/notebook-pan-di-spagna.jpg', "Erika's original handwritten recipe notebook, started at age 8")}</div><h3>Family Recipes</h3><p>Many of the recipes we share today trace back to handwritten notes, family traditions, and memories collected over a lifetime.</p><p style="margin-top:8px; opacity:0.7; font-size:0.85em;"><em>Original recipe notebook, started at age 8.</em></p></article>
+          <article class="feature-card"><div class="zoom">${img(IMG.freshpasta, 'Fresh pasta made daily at da Cecot, Edmonton')}</div><h3>Crafted With Care</h3><p>Small-batch production, fresh ingredients, and a commitment to quality in everything we make.</p></article>
         </div>
       </div>
     </section>
@@ -399,9 +402,9 @@ pages.push(page({
           <figure class="menu-photo zoom">${img(IMG.pastawine, 'Guests laughing while making pasta at a da Cecot class, Edmonton')}</figure>
           <div class="menu-copy">
             <span class="label" style="color:var(--terracotta);">Experiences</span>
-            <h2 id="exp-h">Roll up your sleeves with us.</h2>
-            <p>Learn to make fresh pasta by hand in a relaxed, hands-on class — then sit down and enjoy everything you made. From Sunday classes to private dinners at our family table, there's a way for everyone to gather.</p>
-            ${cta('experiences.html', 'Book a Pasta Class', 'brown')}
+            <h2 id="exp-h">More than a meal.</h2>
+            <p>Join a pasta class, gather around our family table, celebrate a special occasion, or discover seasonal events inspired by Italian traditions. At da Cecot, food is only the beginning.</p>
+            ${cta('experiences.html', 'Explore Experiences', 'brown')}
           </div>
         </div>
       </div>
@@ -423,19 +426,68 @@ pages.push(page({
         </div>
         <div class="offer-grid reveal" data-stagger>
           <a class="offer-card" href="pasta-shop.html">
-            <div class="offer-card__img zoom">${img(IMG.greenpasta, 'Fresh tagliatelle to take home from da Cecot, Edmonton')}</div>
-            <div class="offer-card__body"><h3>Tagliatelle</h3><p>Silky ribbons of fresh egg pasta — perfect with ragù or butter &amp; sage.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
+            <div class="offer-card__img zoom">${img(IMG.greenpasta, 'Fresh pasta available in 450g and 1kg sizes at da Cecot, Edmonton')}</div>
+            <div class="offer-card__body"><h3>Fresh Pasta</h3><p>Available in 450g and 1kg — vegan semolina shapes and silky egg pasta, made fresh daily.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
           </a>
           <a class="offer-card" href="pasta-shop.html">
-            <div class="offer-card__img zoom">${img(IMG.product, 'Fresh ravioli to take home from da Cecot, Edmonton')}</div>
-            <div class="offer-card__body"><h3>Ravioli</h3><p>Hand-filled parcels with seasonal fillings, ready to drop straight into the pot.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
+            <div class="offer-card__img zoom">${img(IMG.product, 'Handmade ravioli with rotating seasonal fillings from da Cecot, Edmonton')}</div>
+            <div class="offer-card__body"><h3>Ravioli</h3><p>Handmade in small batches with rotating seasonal fillings.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
           </a>
           <a class="offer-card" href="pasta-shop.html">
-            <div class="offer-card__img zoom">${img(IMG.pasta, 'Fresh rigatoni to take home from da Cecot, Edmonton')}</div>
-            <div class="offer-card__body"><h3>Rigatoni</h3><p>Ridged tubes that hold every drop of sauce — a takeout-and-cook favourite.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
+            <div class="offer-card__img zoom">${img(IMG.sauce, 'Small-batch house sauces from da Cecot, Edmonton')}</div>
+            <div class="offer-card__body"><h3>House Sauces</h3><p>Prepared in small batches and ready to pair with your favourite pasta.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
+          </a>
+          <a class="offer-card" href="pasta-shop.html">
+            <div class="offer-card__img zoom">${img(IMG.pasta, 'Family Pasta Bundle from da Cecot, Edmonton — pasta, sauces, freezer-friendly')}</div>
+            <div class="offer-card__body"><h3>Family Bundle</h3><p>A simple way to keep authentic Italian meals ready at home.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
           </a>
         </div>
         <div class="btn-wrap text-center"><a href="pasta-shop.html" class="btn btn--terra">Visit Pasta Shop</a></div>
+      </div>
+    </section>
+
+    <section class="section section--linen" aria-labelledby="awards-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:48px;">
+          <span class="label" style="color:var(--terracotta);">Proudly Recognized</span>
+          <h2 id="awards-h">Awards &amp; recognition.</h2>
+          <p>We are grateful to the guests, families, and community members who have supported da Cecot since our journey began.</p>
+        </div>
+        <div class="info-grid reveal" data-stagger style="text-align:center;">
+          <div>
+            <h3 style="color:var(--terracotta);">Canadian Choice Award 2026</h3>
+            <p>Winner — Italian Restaurant Category</p>
+          </div>
+          <div>
+            <h3 style="color:var(--terracotta);">Tomato Magazine</h3>
+            <p>Top 100 Restaurants in Edmonton — recognized for our Cacio e Pepe.</p>
+          </div>
+          <div>
+            <h3 style="color:var(--terracotta);">Restaurantji</h3>
+            <p>Recommended Restaurant on Whyte Avenue, Edmonton.</p>
+          </div>
+          <div>
+            <h3 style="color:var(--terracotta);">Google Rating</h3>
+            <p>4.8+ stars from the Edmonton community.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--brown" aria-labelledby="catwhole-h">
+      <div class="container">
+        <div class="two-col reveal">
+          ${img(IMG.lasagna, 'Catering trays of handmade pasta from da Cecot, Edmonton', 'circle-img')}
+          <div>
+            <span class="label">For Home, Parties &amp; Restaurants</span>
+            <h2 id="catwhole-h">Handmade pasta, made with the same care.</h2>
+            <p>Whether you're feeding your family, planning an event, or sourcing fresh pasta for your restaurant, da Cecot offers handcrafted products made with the same care we serve in-house.</p>
+            <div class="btn-group">
+              <a href="catering.html" class="btn btn--terra">Catering</a>
+              <a href="partnerships.html" class="btn btn--ghost">Wholesale</a>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -510,13 +562,15 @@ pages.push(page({
             <div class="visit__hours">
               <h3>Hours</h3>
               <table>
-                <tr><th>Mon – Tue</th><td>11:30 AM – 2 PM · 4 – 8 PM</td></tr>
+                <tr><th>Mon &amp; Tue</th><td>12 – 3 PM · 4:30 – 8 PM</td></tr>
                 <tr><th>Wed</th><td>Closed</td></tr>
                 <tr><th>Thu</th><td>4 – 8 PM</td></tr>
-                <tr><th>Fri</th><td>11:30 AM – 2 PM · 4 – 9 PM</td></tr>
-                <tr><th>Sat</th><td>12 – 8 PM</td></tr>
-                <tr><th>Sun</th><td>4 – 8 PM</td></tr>
+                <tr><th>Fri</th><td>11:30 AM – 3 PM · 4 – 9 PM</td></tr>
+                <tr><th>Sat</th><td>12 – 9 PM</td></tr>
+                <tr><th>Sun</th><td>11:30 AM – 4 PM</td></tr>
+                <tr><th>Sunday Pasta Classes</th><td>5 – 9 PM</td></tr>
               </table>
+              <p style="margin-top:14px; opacity:0.78; font-size:0.92em;"><em>First Sunday of every month: closed.</em></p>
             </div>
             <div class="btn-group">
               <a href="reservations.html" class="btn btn--terra">Reserve a Table</a>
@@ -717,7 +771,7 @@ pages.push(page({
       <div class="hero__inner reveal">
         <span class="label">Our Story</span>
         <h1 id="story-h1">From our family to yours.</h1>
-        <p>A Nigerian-Italian family bringing handmade pasta and a warm table to Whyte Avenue.</p>
+        <p>da Cecot is the story of two cultures, one family, and a shared belief that food brings people together. From Friuli Venezia Giulia to Edmonton, we welcome guests the same way we would welcome them into our home.</p>
       </div>
     </section>
 
@@ -738,8 +792,9 @@ pages.push(page({
           <div>
             <span class="label" style="color:var(--terracotta);">Meet the Family</span>
             <h2 id="family-h">Ciao! We are the Cecot family.</h2>
-            <p>Our family carries two homes in its heart — the vibrant warmth of Nigeria and the rich culinary tradition of Italy. We pour both into everything we make.</p>
-            <p>One of our earliest traditions was making Strucchi, the little sweet pastries we'd prepare together for special occasions. That spirit — cooking side by side and sharing what we make — is the foundation of da Cecot.</p>
+            <p>da Cecot began with a simple dream: to create a place where people feel at home.</p>
+            <p>After spending our lives in Italy, we moved to Canada in 2021 carrying our recipes, traditions, and memories with us. What started around our family table became a small pasta kitchen, and eventually a restaurant on Whyte Avenue.</p>
+            <p>Today, we make fresh pasta by hand, share the traditions of Friuli Venezia Giulia, and welcome guests the same way we would welcome friends into our home.</p>
             <p class="signature">— Diego, Erika, Giovanni &amp; Ennio</p>
             ${cta('visit-us.html', 'Come Visit Us', 'green')}
           </div>
@@ -747,24 +802,44 @@ pages.push(page({
       </div>
     </section>
 
+    <section class="section section--linen" aria-labelledby="notebook-h">
+      <div class="container"><div class="two-col menu-row reveal">
+        <figure class="menu-photo zoom">${img('images/general/heritage/notebook-torta-paradiso.jpg', "Erika's original handwritten recipe notebook — Torta Paradiso recipe page")}</figure>
+        <div class="menu-copy">
+          <span class="label" style="color:var(--terracotta);">A Notebook Full of Memories</span>
+          <h2 id="notebook-h">A notebook full of memories.</h2>
+          <p>For as long as I can remember, food has been part of my story.</p>
+          <p>This notebook has been with me since I was eight years old. It began with the encouragement of my godmothers, Aurelia and Nina, who helped me start filling its pages with recipes, ideas, and memories.</p>
+          <p>As I grew, so did the notebook. Over the years, it became a collection of reflections, family traditions, and dishes inspired by the people, places, and experiences that shaped me — from family meals in Plasencis and the villages of Friuli Venezia Giulia to the food we prepare today at da Cecot.</p>
+          <p>Many of the ideas behind our kitchen were written down long before da Cecot existed. These pages remind us where we come from, the people who inspired us, and the importance of gathering around a table to share food, stories, and time together.</p>
+          <p>Today, that same spirit continues at da Cecot.</p>
+          <p class="signature">— Erika</p>
+          <p style="margin-top:8px; opacity:0.75; font-size:0.85em;"><em>Original recipe notebook, started at age 8.</em></p>
+        </div>
+      </div></div>
+    </section>
+
     <section class="section section--brown" aria-labelledby="roots-h">
       <div class="container"><div class="two-col menu-row reveal">
-        <figure class="menu-photo zoom">${img(IMG.sauce, 'Slow-cooked Italian sauce in the da Cecot kitchen, Edmonton')}</figure>
+        <figure class="menu-photo zoom">${img('images/general/heritage/childhood-dinner.jpg', 'A childhood family meal — pasta shared around the kitchen table')}</figure>
         <div class="menu-copy">
           <span class="label">Roots in Italy</span>
           <h2 id="roots-h">Recipes passed down by hand.</h2>
-          <p>Our pasta is built on generations of Italian tradition — sauces simmered slowly, dough rolled by hand, and the conviction that good food is made with patience and love. These are the recipes we grew up with, and the ones we're proud to share.</p>
+          <p>Many of the recipes we serve today were first made in our family kitchens in Friuli Venezia Giulia.</p>
+          <p>Some were taught by grandparents, others learned in local agriturismi and village kitchens. They remind us where we come from and inspire everything we make today.</p>
         </div>
       </div></div>
     </section>
 
     <section class="section section--linen" aria-labelledby="journey-h">
       <div class="container"><div class="two-col menu-row menu-row--rev reveal">
-        <figure class="menu-photo zoom">${img(IMG.dining, 'A welcoming dinner table at da Cecot on Whyte Avenue, Edmonton')}</figure>
+        <figure class="menu-photo zoom">${img('images/general/heritage/erika-diego-celebration.jpg', 'Erika and Diego with family and friends at an Italian celebration')}</figure>
         <div class="menu-copy">
           <span class="label" style="color:var(--terracotta);">The Journey</span>
-          <h2 id="journey-h">From two homes to Whyte Ave.</h2>
-          <p>In 2021 we moved to Canada and brought our recipes, our memories, and our love of feeding people with us. We found our home on Whyte Avenue in Edmonton — and turned it into a little corner of Italy, open to everyone who walks through the door.</p>
+          <h2 id="journey-h">From two homes to Whyte Avenue.</h2>
+          <p>In 2021 we moved to Canada carrying little more than our experience, our recipes, and the hope of building something meaningful.</p>
+          <p>Edmonton became our second home. When the opportunity came to open on Whyte Avenue, we knew we had found a place where our traditions and our community could grow together.</p>
+          <p>Today, da Cecot is our way of sharing a little piece of Italy with everyone who walks through our doors.</p>
         </div>
       </div></div>
     </section>
@@ -776,6 +851,7 @@ pages.push(page({
           <span class="label">Community</span>
           <h2 id="community-h">A table for everyone.</h2>
           <p>We believe food is a right, not a luxury. We keep our menu affordable and welcoming, create meaningful work for our team, and open our space for classes, gatherings, and pop-ups. When you walk through our doors, you're not just a customer — you're family.</p>
+          <p>As we grow, we hope to create meaningful employment and learning opportunities for people of all abilities while preserving the traditions of handmade pasta for future generations.</p>
         </div>
       </div></div>
     </section>
@@ -804,7 +880,7 @@ pages.push(page({
       <div class="container text-center narrow reveal">
         <span class="label" style="color:var(--terracotta);">Join the Family</span>
         <h2 id="join-h">Pull up a chair.</h2>
-        <p>Come share a meal, learn to make pasta, or simply say hello. We can't wait to welcome you to our table on Whyte Avenue.</p>
+        <p>Come share a meal, learn to make pasta, or simply say hello. There will always be a place for you at our table.</p>
         <div class="btn-group" style="justify-content:center;">
           <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
           <a href="visit-us.html" class="btn btn--outline">Visit Us</a>
@@ -812,19 +888,36 @@ pages.push(page({
       </div>
     </section>
 
-    <section class="section section--brown award-section" aria-labelledby="award-h">
-      <div class="container text-center narrow reveal">
-        <svg class="award-seal" viewBox="0 0 140 120" role="img" aria-label="Canadian Choice Award 2026 Winner seal">
-          <circle cx="70" cy="58" r="50" fill="#3F512E" stroke="#C7A45A" stroke-width="3"/>
-          <circle cx="70" cy="58" r="41" fill="none" stroke="#C7A45A" stroke-width="1.5"/>
-          <path d="M70 26 l5.1 10.3 11.4 1.7 -8.3 8 1.9 11.3 -10.1 -5.3 -10.1 5.3 1.9 -11.3 -8.3 -8 11.4 -1.7 Z" fill="#C7A45A"/>
-          <text x="70" y="78" text-anchor="middle" fill="#F4F0E8" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="2.5">WINNER</text>
-          <text x="70" y="97" text-anchor="middle" fill="#C7A45A" font-family="Georgia,'Times New Roman',serif" font-size="16" font-weight="700">2026</text>
-        </svg>
-        <span class="label">Award-Winning</span>
-        <h2 id="award-h">Canadian Choice Award 2026</h2>
-        <p class="award-cat">Winner · Italian Restaurants</p>
-        <p>We're honoured to be named a 2026 Canadian Choice Award winner in the Italian Restaurants category — a recognition we share with the community that has welcomed us to Whyte Avenue.</p>
+    <section class="section section--brown" aria-labelledby="award-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:48px;">
+          <span class="label">Awards &amp; Recognition</span>
+          <h2 id="award-h">Awards &amp; recognition.</h2>
+          <p>We are grateful to the guests, families, and community members who have supported da Cecot since our journey began. These recognitions reflect the passion of our team, the traditions that inspire our food, and the support of the Edmonton community we proudly call home.</p>
+        </div>
+        <div class="info-grid reveal" data-stagger style="text-align:center;">
+          <div>
+            <svg viewBox="0 0 140 120" role="img" aria-label="Canadian Choice Award 2026 Winner seal" style="width:96px; height:auto; margin-bottom:12px;">
+              <circle cx="70" cy="58" r="50" fill="#3F512E" stroke="#C7A45A" stroke-width="3"/>
+              <circle cx="70" cy="58" r="41" fill="none" stroke="#C7A45A" stroke-width="1.5"/>
+              <path d="M70 26 l5.1 10.3 11.4 1.7 -8.3 8 1.9 11.3 -10.1 -5.3 -10.1 5.3 1.9 -11.3 -8.3 -8 11.4 -1.7 Z" fill="#C7A45A"/>
+              <text x="70" y="78" text-anchor="middle" fill="#F4F0E8" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="2.5">WINNER</text>
+              <text x="70" y="97" text-anchor="middle" fill="#C7A45A" font-family="Georgia,'Times New Roman',serif" font-size="16" font-weight="700">2026</text>
+            </svg>
+            <h3>Canadian Choice Award 2026</h3>
+            <p>Winner — Italian Restaurant Category</p>
+          </div>
+          <div>
+            <img src="images/awards/tomato-top-100.png" alt="Tomato Top 100 Edmonton — Best Things to Eat &amp; Drink — da Cecot Cacio e Pepe" style="max-width:150px; height:auto; margin-bottom:12px;" loading="lazy">
+            <h3>Tomato Magazine</h3>
+            <p>Top 100 Restaurants in Edmonton — recognized for our Cacio e Pepe.</p>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <div style="font-size:3rem; color:var(--gold); line-height:1;">★★★★★</div>
+            <h3 style="margin-top:12px;">Google Rating</h3>
+            <p>4.8+ stars from the Edmonton community.</p>
+          </div>
+        </div>
       </div>
     </section>`
 }));
@@ -834,7 +927,7 @@ pages.push(page({
   slug: 'reservations',
   active: 'reservations',
   title: 'Reservations | Book a Table at da Cecot, Edmonton',
-  description: "Reserve your table at da Cecot in Edmonton. Book a weekend 'At Our Family Table' experience or a weekday seat. Limited seating — reserve now.",
+  description: 'Reserve a table at da Cecot in Edmonton — lunch, dinner, or Sunday family lunch on Whyte Avenue. For pasta classes & special experiences see the Experiences page.',
   ogImage: IMG.dining,
   schema: [
     breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'reservations', label: 'Reservations' }]),
@@ -844,11 +937,14 @@ pages.push(page({
 
     <section class="section section--cream" style="padding-top:40px;" aria-labelledby="res-h1">
       <div class="container text-center narrow reveal">
-        <h1 id="res-h1">Make a Reservation</h1>
-        <p class="lead" style="margin-top:18px;">Select your details below to reserve your table at da Cecot in Edmonton. Booking for the weekend? Be sure to ask about our <strong>"At Our Family Table"</strong> experience — an intimate, fixed-menu evening you won't forget.</p>
+        <h1 id="res-h1">Reserve a Table</h1>
+        <p class="lead" style="margin-top:18px;">Book your table at da Cecot for lunch, dinner, or Sunday family lunch. For pasta classes, private dinners, and special experiences, please visit our <a href="experiences.html" style="color:var(--terracotta); font-weight:600;">Experiences page</a>.</p>
       </div>
-      <div class="container" style="max-width:760px; margin:0 auto; padding-bottom:60px;">
+      <div class="container" style="max-width:760px; margin:0 auto; padding-bottom:20px;">
         <!-- Start Square Appointments Embed Code --><script src='https://square.site/appointments/buyer/widget/cj1toniazzz1ms/LYPSZAFKKPK8Z.js'></script><!-- End Square Appointments Embed Code -->
+      </div>
+      <div class="container narrow text-center reveal" style="padding-bottom:60px;">
+        <p style="opacity:0.78; font-size:0.95em;"><em>For groups larger than 6 guests, private events, catering, or pasta classes, please <a href="visit-us.html" style="color:var(--terracotta);">contact us directly</a> or visit the <a href="experiences.html" style="color:var(--terracotta);">Experiences page</a>.</em></p>
       </div>
     </section>`
 }));
@@ -869,8 +965,14 @@ pages.push(page({
     <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('${IMG.dining}');" aria-labelledby="visit-h1">
       <div class="hero__inner reveal">
         <span class="label">Find Us</span>
-        <h1 id="visit-h1">Visit da Cecot</h1>
-        <p>You'll find us on Whyte Avenue, in the heart of Old Strathcona. Come dine in, grab takeout, or join us for a class.</p>
+        <h1 id="visit-h1">Visit our family kitchen on Whyte Avenue.</h1>
+        <p>Fresh pasta, Italian hospitality, pasta classes, and seasonal experiences in the heart of Old Strathcona.</p>
+      </div>
+    </section>
+
+    <section class="section section--cream" aria-labelledby="visit-intro-h">
+      <div class="container narrow text-center reveal">
+        <p class="lead" id="visit-intro-h">da Cecot is a family-owned Italian pastificio and restaurant bringing handmade pasta, regional Italian traditions, and community experiences to Whyte Avenue.</p>
       </div>
     </section>
 
@@ -880,7 +982,8 @@ pages.push(page({
           <div class="visit__info">
             <span class="label">Located on Whyte Ave</span>
             <h2 id="visit-h">Come say ciao.</h2>
-            <p>da Cecot is on Whyte Avenue (82 Ave) at 104 Street in Edmonton. Dine in, take out, or pre-order fresh pasta to cook at home.</p>
+            <p>Located in the heart of Old Strathcona, da Cecot is a family-run Italian kitchen specializing in fresh pasta, ravioli, espresso, and community experiences.</p>
+            <p>Join us for lunch, dinner, pasta classes, or take fresh pasta home.</p>
             <ul class="visit__list">
               <li><span>Address</span><a href="${MAPS_LINK}" target="_blank" rel="noopener">Whyte Ave (82 Ave) &amp; 104 Street, Edmonton, AB</a></li>
               <li><span>Phone</span><a href="tel:${NAP.phoneHref}">${NAP.phone}</a></li>
@@ -889,13 +992,15 @@ pages.push(page({
             <div class="visit__hours">
               <h3>Hours</h3>
               <table>
-                <tr><th>Mon – Tue</th><td>11:30 AM – 2 PM · 4 – 8 PM</td></tr>
+                <tr><th>Mon &amp; Tue</th><td>12 – 3 PM · 4:30 – 8 PM</td></tr>
                 <tr><th>Wed</th><td>Closed</td></tr>
                 <tr><th>Thu</th><td>4 – 8 PM</td></tr>
-                <tr><th>Fri</th><td>11:30 AM – 2 PM · 4 – 9 PM</td></tr>
-                <tr><th>Sat</th><td>12 – 8 PM</td></tr>
-                <tr><th>Sun</th><td>4 – 8 PM</td></tr>
+                <tr><th>Fri</th><td>11:30 AM – 3 PM · 4 – 9 PM</td></tr>
+                <tr><th>Sat</th><td>12 – 9 PM</td></tr>
+                <tr><th>Sun</th><td>11:30 AM – 4 PM</td></tr>
+                <tr><th>Sunday Pasta Classes</th><td>5 – 9 PM</td></tr>
               </table>
+              <p style="margin-top:14px; opacity:0.78; font-size:0.92em;"><em>First Sunday of every month: closed.</em></p>
             </div>
             <div class="btn-group">
               <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
@@ -904,6 +1009,38 @@ pages.push(page({
           </div>
           <div class="visit__map">
             <iframe src="${MAPS_EMBED}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map showing da Cecot Food on Whyte Avenue at 104 Street, Edmonton, AB"></iframe>
+          </div>
+        </div>
+
+        <div class="reveal" style="margin-top:40px; max-width:680px;">
+          <h3 style="color:var(--cream);">Parking</h3>
+          <p style="color:var(--cream); opacity:0.92;">Free street parking is available nearby. Additional public parking lots are located throughout Old Strathcona within a short walking distance of the restaurant.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--linen" aria-labelledby="why-visit-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:48px;">
+          <span class="label" style="color:var(--terracotta);">Reasons to Visit</span>
+          <h2 id="why-visit-h">Why visit da Cecot?</h2>
+        </div>
+        <div class="info-grid reveal" data-stagger>
+          <div>
+            <h3>Fresh Pasta Daily</h3>
+            <p>Made fresh in-house every day.</p>
+          </div>
+          <div>
+            <h3>Pasta Classes</h3>
+            <p>Learn traditional pasta making with Erika.</p>
+          </div>
+          <div>
+            <h3>Ravioli Atelier</h3>
+            <p>Seasonal handmade ravioli inspired by regional Italian traditions.</p>
+          </div>
+          <div>
+            <h3>Private Events</h3>
+            <p>Celebrate birthdays, anniversaries, and special occasions around our family table.</p>
           </div>
         </div>
       </div>
@@ -925,6 +1062,18 @@ pages.push(page({
           <div class="form-row">
             <div class="field"><label for="phone">Phone *</label><input type="tel" id="phone" name="phone" required></div>
             <div class="field"><label for="email">Email *</label><input type="email" id="email" name="email" required></div>
+          </div>
+          <div class="field">
+            <label for="inquiry-type">Inquiry Type *</label>
+            <select id="inquiry-type" name="inquiry_type" required>
+              <option value="">Select an inquiry type…</option>
+              <option>Reservation Question</option>
+              <option>Pasta Classes</option>
+              <option>Private Events</option>
+              <option>Catering</option>
+              <option>Wholesale</option>
+              <option>General Inquiry</option>
+            </select>
           </div>
           <div class="field"><label for="message">Message *</label><textarea id="message" name="message" placeholder="What are you inquiring about?" required></textarea></div>
           <div class="text-center"><button type="submit" class="btn btn--terra">Send Message</button></div>

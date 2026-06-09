@@ -70,16 +70,15 @@ function expHero(id, h1, sub, image, dark) {
    EXPERIENCES HUB
    ============================================================ */
 const hubFaqs = [
-  { q: 'What experiences does da Cecot offer?', a: 'da Cecot offers five Italian food experiences in Edmonton: Sunday Pasta Classes, a weekly Public Pasta Drop-In, Food & Drink Special Experiences, Private Events (La Famiglia), and Catering. Each is built around fresh handmade pasta and the warmth of an Italian family table.' },
-  { q: 'How do I book a da Cecot experience?', a: 'Most experiences can be booked through our reservations page or by contacting us at (825) 888-4218 or info@dacecotfood.com. Private events and catering start with an inquiry so we can tailor the details to your group.' },
-  { q: 'Where are da Cecot experiences held?', a: 'All experiences take place at our kitchen and dining room on Whyte Avenue (82 Ave) at 104 Street in Edmonton, AB — except catering, which we bring to your location across the Edmonton area.' }
+  { q: 'What experiences does da Cecot offer?', a: 'da Cecot offers four core experiences in Edmonton: Pasta Classes (including Pasta With Erika on Thursdays and La Domenica Da Cecot on Sundays), At Our Family Table dining, Seasonal & Special Events throughout the year, and Private Events & Pop-Up Restaurants. Each is built around fresh handmade pasta and the warmth of an Italian family table.' },
+  { q: 'How do I book a da Cecot experience?', a: 'Pasta Classes and Seasonal & Special Events are booked through Square. At Our Family Table and Private Events start with an inquiry form so we can tailor the details to your group. You can also reach us anytime at (825) 888-4218 or info@dacecotfood.com.' },
+  { q: 'Where are da Cecot experiences held?', a: 'All experiences take place at our kitchen and dining room on Whyte Avenue (82 Ave) at 104 Street in Edmonton, AB. Pop-up restaurant experiences can also be brought to your venue.' }
 ];
 const hubCards = [
-  { slug: 'sunday-pasta-classes', t: 'Sunday Pasta Classes', img: IMG.pastawine, d: 'Learn to make fresh pasta by hand in a relaxed Sunday class — then sit down and enjoy what you made.' },
-  { slug: 'pasta-drop-in', t: 'Public Pasta Drop-In', img: IMG.greenpasta, d: 'Our Thursday community pasta night — two seatings (6–7 PM &amp; 7–8 PM), $45 per person.' },
-  { slug: 'food-drink-experiences', t: 'Food & Drink Experiences', img: IMG.wine, d: 'Curated tasting evenings and wine-paired Italian menus for a special night out.' },
-  { slug: 'private-events', t: 'Private Events', img: IMG.dining, d: 'Host your group at our family table with a private, multi-course La Famiglia dinner.' },
-  { slug: 'catering', t: 'Catering', img: IMG.lasagna, d: 'Bring da Cecot to your event with budget-friendly, heat-and-serve Italian catering.' }
+  { slug: 'sunday-pasta-classes', t: 'Pasta Classes', img: IMG.pastawine, d: 'Learn traditional pasta making, discover regional Italian techniques, and enjoy the joy of creating something with your own hands.' },
+  { slug: 'food-drink-experiences', t: 'At Our Family Table', img: IMG.dining, d: 'A shared Italian dining experience inspired by the meals we grew up with and the traditions that continue to bring people together.' },
+  { slug: 'pasta-drop-in', t: 'Seasonal &amp; Special Events', img: IMG.wine, d: 'Unique gatherings celebrating Italian culture, seasonal ingredients, and community traditions throughout the year.' },
+  { slug: 'private-events', t: 'Private Events &amp; Pop-Up Restaurants', img: IMG.dining, d: 'Celebrate your special occasion at da Cecot or bring the da Cecot experience to your venue.' }
 ];
 pages.push(page({
   slug: 'experiences',
@@ -93,15 +92,15 @@ pages.push(page({
     <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('${IMG.pastawine}');" aria-labelledby="xp-h1">
       <div class="hero__inner reveal">
         <span class="label">Gather With Us</span>
-        <h1 id="xp-h1">Pasta Classes &amp; Experiences</h1>
-        <p>From hands-on pasta classes to private dinners at our family table — here's how to share a little Italian magic with us in Edmonton.</p>
+        <h1 id="xp-h1">Gather around our table.</h1>
+        <p>From hands-on pasta classes to seasonal celebrations and private gatherings, discover the experiences that bring people together at da Cecot. At the heart of every experience is the belief that food is meant to be shared, traditions are meant to be passed on, and every table has room for one more guest.</p>
       </div>
     </section>
 
     <section class="section section--cream" aria-labelledby="xp-intro-h">
       <div class="container text-center narrow reveal" style="margin-bottom:54px;">
-        <h2 id="xp-intro-h">Five ways to gather around the table</h2>
-        <p>da Cecot is more than a pasta bar. We host classes, community nights, tastings, private dinners, and catering — each one an invitation to slow down, eat well, and feel like family. Choose the experience that fits your occasion.</p>
+        <h2 id="xp-intro-h">Four ways to gather around the table</h2>
+        <p>da Cecot is more than a pasta bar. We host classes, family-table dinners, seasonal celebrations, and private gatherings — each one an invitation to slow down, eat well, and feel like family. Choose the experience that fits your occasion.</p>
       </div>
       <div class="container">
         <div class="card-grid reveal">
@@ -122,15 +121,16 @@ ${hubCards.map(c => `          <article class="xp-card">
         <div class="two-col reveal">
           ${img(IMG.dining, 'A dinner table set with pasta and wine for the At Our Family Table experience', 'circle-img')}
           <div>
-            <span class="label">Weekend Special</span>
+            <span class="label">The Italian Table Experience</span>
             <h2 id="weekend-h">At Our Family Table</h2>
-            <p>Join us for a relaxed, intimate evening of fixed-menu dining — the kind of unhurried meal that feels like Sunday dinner at nonna's. Good food, good wine, and good company, all at our family table.</p>
-            <p class="price-tag">Starting from CA$15.00 / guest</p>
+            <p>Some meals are about more than food. <em>At Our Family Table</em> is an invitation to slow down and share an evening inspired by the traditions of Italian hospitality. Gather with family, friends, coworkers, or loved ones and enjoy a menu designed for conversation, connection, and the simple pleasure of eating together.</p>
+            <p>No rush. No decisions. Just good food and good company.</p>
+            <p class="price-tag">Starting at $55 per guest</p>
             <ul class="detail-list">
-              <li><strong>Duration:</strong> 2 hrs 30 min</li>
-              <li><strong>Availability:</strong> Weekends · multiple dates</li>
+              <li><strong>Group size:</strong> 2–12 guests</li>
+              <li><strong>Reservation:</strong> Required</li>
             </ul>
-            ${cta('reservations.html', 'Reserve Now', 'terra')}
+            ${cta('food-drink-experiences.html', 'Reserve Your Table', 'terra')}
           </div>
         </div>
       </div>
@@ -171,43 +171,42 @@ const classFaqs = [
   { q: 'Do I need any cooking experience?', a: 'Not at all. Our Sunday pasta classes are beginner-friendly and fully guided. Whether you have never touched a rolling pin or you cook every night, our team walks you through every step from dough to plate.' },
   { q: 'What is included in a pasta class?', a: 'Your spot includes hands-on instruction, all ingredients and equipment, an apron to use, the pasta you make to enjoy together at the end, and the recipes to take home so you can recreate them.' },
   { q: 'How long is a class and how many people can attend?', a: 'Classes run about 2.5 to 3 hours and are capped at 15 guests so everyone gets personal attention. They run on select Sundays — contact us for the next available dates.' },
-  { q: 'Can I come on my own or book for a couple?', a: 'Both work beautifully. Classes are $105 per person and solo guests are always welcome — most leave with new friends.' },
+  { q: 'Can I come on my own or book for a couple?', a: 'Both work beautifully. Classes are $95 per guest and solo guests are always welcome — most leave with new friends.' },
   { q: 'Can I buy a pasta class as a gift?', a: 'Yes — a pasta class makes a memorable gift. Reach out at (825) 888-4218 or info@dacecotfood.com and we will help you arrange it.' }
 ];
 pages.push(page({
   slug: 'sunday-pasta-classes',
   active: 'sunday-pasta-classes',
-  title: 'Sunday Pasta Classes in Edmonton | da Cecot Food',
-  description: 'Learn to make fresh pasta by hand at da Cecot in Edmonton. Beginner-friendly Sunday classes, small groups, all included. $105 per person — book your spot.',
+  title: 'La Domenica Da Cecot — Sunday Pasta Class | da Cecot, Edmonton',
+  description: 'La Domenica Da Cecot — twice-monthly Sunday pasta class on Whyte Avenue. $95 per guest, 5–8:30 PM, 4–12 guests, adults only. Book through Square.',
   ogImage: IMG.pastawine,
   schema: [
     breadcrumbSchema(trail('Sunday Pasta Classes').map((t, i) => i === 2 ? { slug: 'sunday-pasta-classes', label: t.label } : t)),
-    eventSchema({ slug: 'sunday-pasta-classes', name: 'Sunday Pasta Class', desc: 'Hands-on Italian pasta-making class in Edmonton, from dough to plate, ending with a shared meal.', image: IMG.pastawine, byDay: 'https://schema.org/Sunday', startTime: '12:00', price: '105' }),
+    eventSchema({ slug: 'sunday-pasta-classes', name: 'Sunday Pasta Class', desc: 'Hands-on Italian pasta-making class in Edmonton, from dough to plate, ending with a shared meal.', image: IMG.pastawine, byDay: 'https://schema.org/Sunday', startTime: '12:00', price: '95' }),
     faqSchema(classFaqs)
   ],
   body: `${breadcrumb(trail('Sunday Pasta Classes').map((t, i) => i === 2 ? { slug: 'sunday-pasta-classes', label: t.label } : t))}
 
-${expHero('spc-h1', 'Sunday Pasta Classes', 'Roll up your sleeves and learn to make fresh pasta by hand — then sit down and savour what you created.', IMG.pastawine, true)}
+${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — Sunday at our family table.', IMG.pastawine, true)}
 
     <section class="section section--cream" aria-labelledby="spc-what-h">
       <div class="container narrow reveal text-center">
-        <h2 id="spc-what-h">What is a da Cecot pasta class?</h2>
-        <p class="lead">A Sunday pasta class at da Cecot is a hands-on, beginner-friendly workshop in Edmonton where you make fresh Italian pasta from scratch — mixing the dough, shaping it by hand, and finishing it with one of our signature sauces. You'll spend about 2.5–3 hours with our family, then sit down to eat everything you've made.</p>
+        <h2 id="spc-what-h">Not every Sunday has a plan.</h2>
+        <p class="lead">Some are meant to unfold slowly — with flour on your hands, stories in the air, and a table waiting to be shared.</p>
+        <p>At da Cecot, we open our kitchen twice a month for something more than a class and gentler than a dinner. Guests will prepare fresh pasta together, enjoy a shared meal, discover regional traditions, and experience the joy of gathering around an Italian family table.</p>
+        <p>We won't tell you every detail. Just come with an open heart, an appetite, and a willingness to share. The rest you'll discover around the table.</p>
+        <p style="margin-top:24px; font-style:italic; color:var(--terracotta);">"It all starts with intention and a prayer."</p>
       </div>
     </section>
 
     <section class="section section--brown" aria-labelledby="spc-incl-h">
       <div class="container">
-        <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="spc-incl-h">What's included</h2></div>
+        <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="spc-incl-h">Booking information</h2></div>
         <div class="info-grid reveal">
-          <div><h3>Hands-on instruction</h3><p>Step-by-step guidance from our family — no experience needed.</p></div>
-          <div><h3>All ingredients &amp; tools</h3><p>Flour, eggs, equipment, and an apron are all provided.</p></div>
-          <div><h3>A shared meal</h3><p>Sit down and enjoy the pasta you made, together at the table.</p></div>
-          <div><h3>Recipes to take home</h3><p>Leave with the techniques and recipes to recreate it all.</p></div>
-        </div>
-        <div class="text-center" style="margin-top:30px;">
-          <p class="price-tag">$105 per person</p>
-          <p style="opacity:0.85;">About 2.5–3 hours · Maximum 15 guests · Select Sundays · First class Sunday, June 28, 2026</p>
+          <div><h3>$95 per guest</h3><p>Adults only (18+).</p></div>
+          <div><h3>5:00 – 8:30 PM</h3><p>Twice monthly · Select Sundays.</p></div>
+          <div><h3>4–12 guests</h3><p>An intimate table, room for one more.</p></div>
+          <div><h3>First class</h3><p>Sunday, June 28, 2026.</p></div>
         </div>
       </div>
     </section>
@@ -216,7 +215,7 @@ ${expHero('spc-h1', 'Sunday Pasta Classes', 'Roll up your sleeves and learn to m
       <div class="container narrow reveal">
         <div class="text-center">
           <h2 id="spc-book-h">Book your class spot</h2>
-          <p>Classes are $105 per person, capped at 15 guests, and fill up quickly. Pick a Sunday below to reserve and pay — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+          <p>Classes are $95 per guest, run twice monthly, capped at 12 guests, and fill up quickly. Pick a Sunday below to reserve and pay — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
         <div class="container" style="max-width:760px; margin:32px auto 0; padding-bottom:20px;">
           <!-- TODO: Replace this comment with the Square Appointments embed for Sunday Pasta Classes.
@@ -269,45 +268,47 @@ ${faqBlock(classFaqs)}
    2. PUBLIC PASTA DROP-IN
    ============================================================ */
 const dropFaqs = [
-  { q: 'Do I need to book the pasta drop-in?', a: 'Yes — seats are limited, so reserve your time slot in advance. We run two seatings every Thursday evening: 6–7 PM and 7–8 PM, both $45 per person.' },
-  { q: 'When is the pasta drop-in?', a: 'Every Thursday on Whyte Avenue (82 Ave) at 104 Street in Edmonton. Two seatings: 6–7 PM and 7–8 PM. It is our weekly community pasta night.' },
-  { q: 'What is included for $45?', a: 'Your seat at one of the Thursday seatings, a fresh pasta from the bar with a house sauce of your choice (including our signature Caserecce), and the warm, family-table atmosphere da Cecot is known for.' },
-  { q: 'Is the drop-in family-friendly?', a: 'Absolutely. The drop-in is relaxed and welcoming for all ages, families, and solo diners alike — exactly the kind of easy weeknight meal we love to share.' }
+  { q: 'What is Pasta With Erika?', a: 'Pasta With Erika is a relaxed, hands-on Thursday pasta lab where you make, cook, and enjoy your own traditional Italian pasta in an informal and welcoming setting. Guests may arrive anytime between 5 PM and 8 PM and participate at their own pace.' },
+  { q: 'What kinds of pasta do you make on Thursdays?', a: 'On Thursdays we focus on traditional Italian pasta made with semolina or potatoes, celebrating regional shapes — Orecchiette, Cavatelli, Fusilloni, bucatini-style pasta, and Potato Gnocchi. No previous experience required.' },
+  { q: 'Who is it open to?', a: 'Pasta With Erika is open to adults, couples, families, and children. Come with an open heart, an appetite, and a willingness to get your hands a little floury.' },
+  { q: 'Is it family-friendly?', a: 'Absolutely. The Thursday session is relaxed and welcoming for all ages, families, and solo guests alike — exactly the kind of easy weeknight gathering we love to share.' }
 ];
 pages.push(page({
   slug: 'pasta-drop-in',
   active: 'pasta-drop-in',
-  title: 'Public Pasta Drop-In (Thursdays) | da Cecot, Edmonton',
-  description: 'da Cecot’s Thursday pasta night in Edmonton. Two seatings — 6–7 PM and 7–8 PM, $45/person. Fresh pasta, house sauces & good company. Reserve your seat.',
+  title: 'Pasta With Erika — Thursday Public Drop-In | da Cecot, Edmonton',
+  description: 'Pasta With Erika — a relaxed Thursday pasta lab on Whyte Avenue. Arrive 5–8 PM, make traditional Italian pasta at your own pace. Adults, couples, families & kids welcome.',
   ogImage: IMG.greenpasta,
   schema: [
-    breadcrumbSchema(trail('Public Pasta Drop-In').map((t, i) => i === 2 ? { slug: 'pasta-drop-in', label: t.label } : t)),
-    eventSchema({ slug: 'pasta-drop-in', name: 'Public Pasta Drop-In', desc: 'Weekly community pasta night at da Cecot in Edmonton, every Thursday evening. Two seatings: 6–7 PM and 7–8 PM.', image: IMG.greenpasta, byDay: 'https://schema.org/Thursday', startTime: '18:00', price: '45' }),
+    breadcrumbSchema(trail('Pasta With Erika').map((t, i) => i === 2 ? { slug: 'pasta-drop-in', label: t.label } : t)),
+    eventSchema({ slug: 'pasta-drop-in', name: 'Pasta With Erika — Thursday Drop-In', desc: 'Relaxed Thursday pasta lab at da Cecot in Edmonton. Drop in anytime between 5 PM and 8 PM and make traditional Italian pasta at your own pace.', image: IMG.greenpasta, byDay: 'https://schema.org/Thursday', startTime: '17:00', price: '0' }),
     faqSchema(dropFaqs)
   ],
-  body: `${breadcrumb(trail('Public Pasta Drop-In').map((t, i) => i === 2 ? { slug: 'pasta-drop-in', label: t.label } : t))}
+  body: `${breadcrumb(trail('Pasta With Erika').map((t, i) => i === 2 ? { slug: 'pasta-drop-in', label: t.label } : t))}
 
-${expHero('drop-h1', 'Public Pasta Drop-In', 'Our Thursday community pasta night in Edmonton. Two seatings, fresh pasta, a seat at the family table.', IMG.greenpasta, true)}
+${expHero('drop-h1', 'Pasta With Erika', 'Thursday public drop-in. Learn. Create. Eat together.', IMG.greenpasta, true)}
 
     <section class="section section--cream" aria-labelledby="drop-what-h">
       <div class="container narrow reveal text-center">
-        <h2 id="drop-what-h">What is the Public Pasta Drop-In?</h2>
-        <p class="lead">The Public Pasta Drop-In is da Cecot's weekly Thursday-evening pasta night in Edmonton. Two seatings — 6–7 PM and 7–8 PM, $45 per person. Choose your pasta and sauce from the bar, sit down with the neighbourhood, and enjoy fresh Italian comfort food the way we'd serve it at home.</p>
+        <h2 id="drop-what-h">Learn. Create. Eat together.</h2>
+        <p class="lead">Join Erika for a relaxed, hands-on pasta lab where you'll make, cook, and enjoy your own traditional Italian pasta in an informal and welcoming setting.</p>
+        <p>Guests may arrive anytime between 5:00 PM and 8:00 PM and participate at their own pace. On Thursdays, we focus on traditional Italian pasta made with semolina or potatoes, celebrating regional shapes such as Orecchiette, Cavatelli, Fusilloni, bucatini-style pasta, and Potato Gnocchi.</p>
+        <p>No previous experience is required.</p>
+        <p style="margin-top:24px; font-style:italic; color:var(--terracotta);">"It all starts with intention and a prayer."</p>
       </div>
     </section>
 
     <section class="section section--brown" aria-labelledby="drop-expect-h">
       <div class="container">
-        <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="drop-expect-h">What to expect</h2></div>
+        <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="drop-expect-h">Open to everyone</h2></div>
         <div class="info-grid reveal">
-          <div><h3>Two seatings, weekly</h3><p>Reserve 6–7 PM or 7–8 PM every Thursday — pick the slot that fits your evening.</p></div>
-          <div><h3>Build your bowl</h3><p>Pick a fresh pasta shape and a house sauce, including our signature Caserecce.</p></div>
-          <div><h3>$45 per person</h3><p>Includes your seat, your pasta, and the warmth of the da Cecot family table.</p></div>
-          <div><h3>Community vibe</h3><p>A friendly weeknight table for families, friends, and solo diners alike.</p></div>
+          <div><h3>Adults</h3><p>Roll up your sleeves after work or come solo and meet the table.</p></div>
+          <div><h3>Couples</h3><p>A low-key, hands-on date — flour, conversation, and a shared meal.</p></div>
+          <div><h3>Families</h3><p>A welcoming weeknight ritual the whole family can join.</p></div>
+          <div><h3>Children</h3><p>Little hands love shaping pasta. Bring them along.</p></div>
         </div>
         <div class="text-center" style="margin-top:30px;">
-          <p class="price-tag">$45 per person</p>
-          <p style="opacity:0.85;">Every Thursday · 6–7 PM &amp; 7–8 PM · Whyte Ave &amp; 104 Street, Edmonton</p>
+          <p style="opacity:0.85;">Every Thursday · 5–8 PM · Whyte Ave &amp; 104 Street, Edmonton</p>
         </div>
       </div>
     </section>
@@ -315,11 +316,11 @@ ${expHero('drop-h1', 'Public Pasta Drop-In', 'Our Thursday community pasta night
     <section class="section section--cream" aria-labelledby="drop-how-h">
       <div class="container narrow reveal">
         <div class="text-center">
-          <h2 id="drop-how-h">Reserve your seat</h2>
-          <p>Seats are limited and these Thursdays fill quickly. Pick a seating below to reserve and pay — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+          <h2 id="drop-how-h">Book through Square</h2>
+          <p>Drop in any Thursday between 5 PM and 8 PM, or reserve your spot below — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
         <div class="container" style="max-width:760px; margin:32px auto 0; padding-bottom:20px;">
-          <!-- TODO: Replace this comment with the Square Appointments embed for Public Pasta Drop-In.
+          <!-- TODO: Replace this comment with the Square Appointments embed for Pasta With Erika (Thursday drop-in).
                Format expected:
                <script src='https://square.site/appointments/buyer/widget/<MERCHANT_ID>/<LOCATION_ID>.js'></​script>
                (Same shape as the Reservations page embed.) -->
@@ -329,7 +330,7 @@ ${expHero('drop-h1', 'Public Pasta Drop-In', 'Our Thursday community pasta night
 
     <section class="section section--brown" aria-labelledby="drop-faq-h">
       <div class="container">
-        <div class="text-center reveal" style="margin-bottom:40px;"><h2 id="drop-faq-h">Drop-in FAQ</h2></div>
+        <div class="text-center reveal" style="margin-bottom:40px;"><h2 id="drop-faq-h">Thursday FAQ</h2></div>
 ${faqBlock(dropFaqs)}
       </div>
     </section>`

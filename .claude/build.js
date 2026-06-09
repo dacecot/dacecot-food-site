@@ -27,7 +27,7 @@ const MAPS_EMBED = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.map
 const MAPS_LINK = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.mapsQuery);
 
 const IMG = {
-  hero:       'images/food/hero-resized.jpg',
+  hero:       'images/food/homepage-hero.jpg',
   pasta:      'images/food/ravioli-butter-sage.jpg',
   food:       'images/food/cicchetti.jpg',
   greenpasta: 'images/raw-pasta/raw-pasta.jpg',
@@ -400,7 +400,7 @@ pages.push(page({
     <section class="section section--cream" aria-labelledby="exp-h">
       <div class="container">
         <div class="two-col menu-row reveal">
-          <figure class="menu-photo zoom">${img(IMG.pastawine, 'Guests laughing while making pasta at a da Cecot class, Edmonton')}</figure>
+          <figure class="menu-photo zoom">${img('images/class/instagram-1.jpg', 'Guests making fresh pasta at a da Cecot class, Edmonton')}</figure>
           <div class="menu-copy">
             <span class="label" style="color:var(--terracotta);">Experiences</span>
             <h2 id="exp-h">More than a meal.</h2>

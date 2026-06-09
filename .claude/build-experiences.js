@@ -136,6 +136,26 @@ ${hubCards.map(c => `          <article class="xp-card">
       </div>
     </section>
 
+    <section class="section section--linen" aria-labelledby="xp-gallery-h">
+      <div class="container">
+        <div class="text-center narrow reveal" style="margin-bottom:48px;">
+          <span class="label" style="color:var(--terracotta);">From Our Tables</span>
+          <h2 id="xp-gallery-h">A few nights at da Cecot.</h2>
+          <p>Glasses raised, pasta rolled, friends shoulder-to-shoulder — a glimpse of what gathering at da Cecot actually looks like.</p>
+        </div>
+        <div class="gallery gallery--4 reveal">
+          <figure class="zoom"><img src="images/general/erica/_MG_1100.jpg" alt="Guests raising glasses at a da Cecot private pasta event, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1357.jpg" alt="Friends toasting with red wine at a da Cecot dinner, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1085.jpg" alt="A warm moment around the da Cecot family table, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1087.jpg" alt="Guests gathered at da Cecot on Whyte Avenue, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1264.jpg" alt="Sharing a fresh salad course at a da Cecot dinner, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1295.jpg" alt="The da Cecot dining room during a private event, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1320.jpg" alt="Atmosphere at a da Cecot pasta-and-wine evening, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1381.jpg" alt="A plated da Cecot dish at a private dinner, Edmonton" loading="lazy" decoding="async"></figure>
+        </div>
+      </div>
+    </section>
+
     <section class="section section--cream" aria-labelledby="xp-faq-h">
       <div class="container">
         <div class="text-center reveal" style="margin-bottom:40px;"><h2 id="xp-faq-h">Experiences FAQ</h2></div>
@@ -277,11 +297,18 @@ ${expHero('spc-h1', 'Sunday Pasta Classes', 'Roll up your sleeves and learn to m
           <p>Every class ends with a shared meal — pasta you shaped yourself, finished with our house sauces, eaten together at the table.</p>
         </div>
         <div class="gallery gallery--4 reveal">
-          <figure class="zoom"><img src="images/class/instagram-1.jpg" alt="Guests making fresh pasta at a da Cecot Sunday class, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/instagram-2.jpg" alt="Hands shaping fresh pasta dough at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/instagram-3.jpg" alt="Rolling pasta by hand at a da Cecot Sunday pasta class" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/instagram-4.jpg" alt="Fresh pasta shapes made at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/class/instagram-5.jpg" alt="Guests enjoying pasta they made at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1017.jpg" alt="The class table set with mixing bowls, wine glasses, and aprons at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1163.jpg" alt="Hands rolling out fresh pasta dough at a da Cecot Sunday pasta class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1192.jpg" alt="Shaping fresh pasta by hand at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/class/class-oct7-1.jpg" alt="Guests making fresh pasta at a da Cecot Sunday class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/class/class-oct7-2.jpg" alt="Hands shaping fresh pasta dough at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1131.jpg" alt="Guests at work during a hands-on pasta class at da Cecot" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1138.jpg" alt="Fresh pasta dough being kneaded at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/class/class-oct7-3.jpg" alt="Rolling pasta by hand at a da Cecot Sunday pasta class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/class/class-oct7-4.jpg" alt="Fresh pasta shapes made at a da Cecot pasta class, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1135.jpg" alt="Guests learning to shape fresh pasta at a da Cecot class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/_MG_1182.jpg" alt="Hands-on pasta making with friends at a da Cecot class" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/class/class-oct7-5.jpg" alt="Guests enjoying pasta they made at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/food/ravioli-butter-sage.jpg" alt="Ravioli with butter and sage — the dish students take home" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/raw-pasta/tagliatelle.jpg" alt="Fresh tagliatelle shaped by hand at a da Cecot pasta class" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/food/fresh-ravioli.jpg" alt="Fresh hand-filled ravioli — a da Cecot pasta class finish" loading="lazy" decoding="async"></figure>

@@ -144,7 +144,7 @@ function footer() {
         <div class="footer__logo">da Cecot</div>
         <p class="footer__tag">Fresh handmade pasta &amp; Italian comfort food, made by hand on Whyte Avenue in Edmonton.</p>
         <div class="footer__social">
-          <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="da Cecot on Instagram">${ig}</a>
+          <a href="https://www.instagram.com/cecotkitchen/" target="_blank" rel="noopener" aria-label="da Cecot on Instagram">${ig}</a>
           <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="da Cecot on Facebook">${fb}</a>
         </div>
       </div>
@@ -250,7 +250,7 @@ function restaurantSchema(extra) {
     acceptsReservations: 'True',
     award: 'Winner — Canadian Choice Award 2026, Italian Restaurants',
     menu: BASE + '/menu.html',
-    sameAs: ['https://www.instagram.com/', 'https://www.facebook.com/']
+    sameAs: ['https://www.instagram.com/cecotkitchen/']
   }, extra || {});
 }
 
@@ -775,11 +775,48 @@ pages.push(page({
         <h1 id="res-h1">Reserve a Table</h1>
         <p class="lead" style="margin-top:18px;">Book your table at da Cecot for lunch, dinner, or Sunday family lunch. For pasta classes, private dinners, and special experiences, please visit our <a href="experiences.html" style="color:var(--terracotta); font-weight:600;">Experiences page</a>.</p>
       </div>
-      <div class="container" style="max-width:760px; margin:0 auto; padding-bottom:20px;">
-        <!-- Start Square Appointments Embed Code --><script src='https://square.site/appointments/buyer/widget/cj1toniazzz1ms/LYPSZAFKKPK8Z.js'></script><!-- End Square Appointments Embed Code -->
+      <div class="container narrow reveal" style="padding-bottom:20px;">
+        <div class="booking">
+          <form data-formsubmit data-subject="Reservation Request — da Cecot" aria-label="Reservation request">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+            <div class="form-row">
+              <div class="field">
+                <label for="res-date">Date</label>
+                <input type="date" id="res-date" name="date" required>
+              </div>
+              <div class="field">
+                <label for="res-time">Preferred time</label>
+                <input type="time" id="res-time" name="time" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="res-party">Party size</label>
+              <select id="res-party" name="party_size">
+                <option>1 guest</option>
+                <option>2 guests</option>
+                <option>3 guests</option>
+                <option>4 guests</option>
+                <option>5 guests</option>
+                <option>6 guests</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="res-name">Name</label><input type="text" id="res-name" name="name" required></div>
+              <div class="field"><label for="res-phone">Phone</label><input type="tel" id="res-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="res-email">Email</label><input type="email" id="res-email" name="email" required></div>
+            <div class="field">
+              <label for="res-notes">Special requests <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="res-notes" name="notes" placeholder="Occasion, seating preference, dietary needs, high chair, accessibility…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Request Reservation</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've received your reservation request and will confirm by phone or email shortly.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
+          </form>
+        </div>
       </div>
       <div class="container narrow text-center reveal" style="padding-bottom:60px;">
-        <p style="opacity:0.78; font-size:0.95em;"><em>For groups larger than 6 guests, private events, catering, or pasta classes, please <a href="visit-us.html" style="color:var(--terracotta);">contact us directly</a> or visit the <a href="experiences.html" style="color:var(--terracotta);">Experiences page</a>.</em></p>
+        <p style="opacity:0.78; font-size:0.95em;"><em>Reservation requests are confirmed by our team — we'll reach out to lock in your table. For groups larger than 6 guests, private events, catering, or pasta classes, please <a href="visit-us.html" style="color:var(--terracotta);">contact us directly</a> or visit the <a href="experiences.html" style="color:var(--terracotta);">Experiences page</a>.</em></p>
       </div>
     </section>`
 }));

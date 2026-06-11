@@ -14,6 +14,27 @@ const POSTAL_ADDRESS = {
   addressRegion: NAP.region, addressCountry: NAP.country
 };
 
+/* Build <option> tags for the next `count` weekly class dates from a start date.
+   Past dates are dropped automatically at build time, so the list stays current. */
+function weeklyDateOptions(startISO, count) {
+  const WD = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const MO = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const [sy, sm, sd] = startISO.split('-').map(Number);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const out = [];
+  let d = new Date(sy, sm - 1, sd); // local midnight — no timezone-parsing ambiguity
+  for (let i = 0; out.length < count && i < 520; i++) {
+    if (d >= today) {
+      const m = d.getMonth(), day = d.getDate(), y = d.getFullYear();
+      const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      out.push(`<option value="${iso}">${WD[d.getDay()]}, ${MO[m]} ${day}, ${y}</option>`);
+    }
+    d.setDate(d.getDate() + 7);
+  }
+  return out.join('\n                  ');
+}
+const guestOptions = (max) => Array.from({ length: max }, (_, i) => `<option>${i + 1} guest${i ? 's' : ''}</option>`).join('');
+
 function eventSchema({ slug, name, desc, image, byDay, startTime, price }) {
   return {
     '@context': 'https://schema.org',
@@ -71,7 +92,7 @@ function expHero(id, h1, sub, image, dark) {
    ============================================================ */
 const hubFaqs = [
   { q: 'What experiences does da Cecot offer?', a: 'da Cecot offers four core experiences in Edmonton: Pasta Classes (including Pasta With Erika on Thursdays and La Domenica Da Cecot on Sundays), At Our Family Table dining, Seasonal & Special Events throughout the year, and Private Events & Pop-Up Restaurants. Each is built around fresh handmade pasta and the warmth of an Italian family table.' },
-  { q: 'How do I book a da Cecot experience?', a: 'Pasta Classes and Seasonal & Special Events are booked through Square. At Our Family Table and Private Events start with an inquiry form so we can tailor the details to your group. You can also reach us anytime at (825) 888-4218 or info@dacecotfood.com.' },
+  { q: 'How do I book a da Cecot experience?', a: 'Pasta Classes are booked using the request form on each class page — pick your date and we confirm your spot. At Our Family Table and Private Events start with an inquiry form so we can tailor the details to your group. You can also reach us anytime at (825) 888-4218 or info@dacecotfood.com.' },
   { q: 'Where are da Cecot experiences held?', a: 'All experiences take place at our kitchen and dining room on Whyte Avenue (82 Ave) at 104 Street in Edmonton, AB. Pop-up restaurant experiences can also be brought to your venue.' }
 ];
 const hubCards = [
@@ -178,7 +199,7 @@ pages.push(page({
   slug: 'sunday-pasta-classes',
   active: 'sunday-pasta-classes',
   title: 'La Domenica Da Cecot — Sunday Pasta Class | da Cecot, Edmonton',
-  description: 'La Domenica Da Cecot — twice-monthly Sunday pasta class on Whyte Avenue. $95 per guest, 5–8:30 PM, 4–12 guests, adults only. Book through Square.',
+  description: 'La Domenica Da Cecot — weekly Sunday pasta class on Whyte Avenue. $95 per guest, 5–8:30 PM, up to 12 guests, adults only. Reserve your spot online.',
   ogImage: IMG.pastawine,
   schema: [
     breadcrumbSchema(trail('Sunday Pasta Classes').map((t, i) => i === 2 ? { slug: 'sunday-pasta-classes', label: t.label } : t)),
@@ -193,7 +214,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
       <div class="container narrow reveal text-center">
         <h2 id="spc-what-h">Not every Sunday has a plan.</h2>
         <p class="lead">Some are meant to unfold slowly — with flour on your hands, stories in the air, and a table waiting to be shared.</p>
-        <p>At da Cecot, we open our kitchen twice a month for something more than a class and gentler than a dinner. Guests will prepare fresh pasta together, enjoy a shared meal, discover regional traditions, and experience the joy of gathering around an Italian family table.</p>
+        <p>At da Cecot, we open our kitchen every Sunday evening for something more than a class and gentler than a dinner. Guests will prepare fresh pasta together, enjoy a shared meal, discover regional traditions, and experience the joy of gathering around an Italian family table.</p>
         <p>We won't tell you every detail. Just come with an open heart, an appetite, and a willingness to share. The rest you'll discover around the table.</p>
         <p style="margin-top:24px; font-style:italic; color:var(--terracotta);">"It all starts with intention and a prayer."</p>
       </div>
@@ -204,7 +225,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
         <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="spc-incl-h">Booking information</h2></div>
         <div class="info-grid reveal">
           <div><h3>$95 per guest</h3><p>Adults only (18+).</p></div>
-          <div><h3>5:00 – 8:30 PM</h3><p>Twice monthly · Select Sundays.</p></div>
+          <div><h3>5:00 – 8:30 PM</h3><p>Weekly · Every Sunday.</p></div>
           <div><h3>4–12 guests</h3><p>An intimate table, room for one more.</p></div>
           <div><h3>First class</h3><p>Sunday, June 28, 2026.</p></div>
         </div>
@@ -215,13 +236,36 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
       <div class="container narrow reveal">
         <div class="text-center">
           <h2 id="spc-book-h">Book your class spot</h2>
-          <p>Classes are $95 per guest, run twice monthly, capped at 12 guests, and fill up quickly. Pick a Sunday below to reserve and pay — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+          <p>Classes are $95 per guest, run every Sunday from 5–8:30 PM, capped at 12 guests, and fill up quickly. Pick a Sunday below to request your spot — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
-        <div class="container" style="max-width:760px; margin:32px auto 0; padding-bottom:20px;">
-          <!-- TODO: Replace this comment with the Square Appointments embed for Sunday Pasta Classes.
-               Format expected:
-               <script src='https://square.site/appointments/buyer/widget/<MERCHANT_ID>/<LOCATION_ID>.js'></​script>
-               (Same shape as the Reservations page embed.) -->
+        <div class="booking" style="margin-top:32px;">
+          <form data-formsubmit data-subject="Sunday Pasta Class Booking — da Cecot" aria-label="Sunday pasta class booking request">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+            <div class="form-row">
+              <div class="field">
+                <label for="spc-date">Class date (Sundays)</label>
+                <select id="spc-date" name="class_date" required>
+                  ${weeklyDateOptions('2026-06-28', 5)}
+                </select>
+              </div>
+              <div class="field">
+                <label for="spc-guests">Number of guests</label>
+                <select id="spc-guests" name="guests">${guestOptions(12)}</select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="spc-name">Name</label><input type="text" id="spc-name" name="name" required></div>
+              <div class="field"><label for="spc-phone">Phone</label><input type="tel" id="spc-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="spc-email">Email</label><input type="email" id="spc-email" name="email" required></div>
+            <div class="field">
+              <label for="spc-notes">Dietary needs or notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="spc-notes" name="notes" placeholder="Allergies, dietary restrictions, celebrating something special…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Request a Spot</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've received your class request — we'll confirm your spot and payment ($95 per guest) by phone or email shortly.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
+          </form>
         </div>
       </div>
     </section>
@@ -316,14 +360,37 @@ ${expHero('drop-h1', 'Pasta With Erika', 'Thursday public drop-in. Learn. Create
     <section class="section section--cream" aria-labelledby="drop-how-h">
       <div class="container narrow reveal">
         <div class="text-center">
-          <h2 id="drop-how-h">Book through Square</h2>
-          <p>Drop in any Thursday between 5 PM and 8 PM, or reserve your spot below — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+          <h2 id="drop-how-h">Reserve your spot</h2>
+          <p>Drop in any Thursday between 5 PM and 8 PM. Reserve a spot below so we can have a station ready — or just call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
-        <div class="container" style="max-width:760px; margin:32px auto 0; padding-bottom:20px;">
-          <!-- TODO: Replace this comment with the Square Appointments embed for Pasta With Erika (Thursday drop-in).
-               Format expected:
-               <script src='https://square.site/appointments/buyer/widget/<MERCHANT_ID>/<LOCATION_ID>.js'></​script>
-               (Same shape as the Reservations page embed.) -->
+        <div class="booking" style="margin-top:32px;">
+          <form data-formsubmit data-subject="Pasta Drop-In Reservation — da Cecot" aria-label="Thursday pasta drop-in reservation request">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+            <div class="form-row">
+              <div class="field">
+                <label for="drop-date">Date (Thursdays)</label>
+                <select id="drop-date" name="drop_in_date" required>
+                  ${weeklyDateOptions('2026-07-02', 5)}
+                </select>
+              </div>
+              <div class="field">
+                <label for="drop-guests">Number of guests</label>
+                <select id="drop-guests" name="guests">${guestOptions(8)}</select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="drop-name">Name</label><input type="text" id="drop-name" name="name" required></div>
+              <div class="field"><label for="drop-phone">Phone</label><input type="tel" id="drop-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="drop-email">Email</label><input type="email" id="drop-email" name="email" required></div>
+            <div class="field">
+              <label for="drop-notes">Notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+              <textarea id="drop-notes" name="notes" placeholder="Roughly what time you'll arrive, dietary needs, anything else…"></textarea>
+            </div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Reserve a Spot</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've saved your Thursday drop-in request — see you in the pasta lab. We'll reach out if anything changes.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
+          </form>
         </div>
       </div>
     </section>

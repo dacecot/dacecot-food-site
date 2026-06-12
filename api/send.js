@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
     if (!r.ok) {
       const detail = await r.text();
       console.error('Resend error', r.status, detail);
-      return res.status(502).json({ success: false, error: 'Send failed' });
+      return res.status(502).json({ success: false, error: 'Send failed', _status: r.status, _detail: String(detail).slice(0, 400) });
     }
     return res.status(200).json({ success: true });
   } catch (err) {

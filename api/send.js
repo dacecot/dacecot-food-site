@@ -9,7 +9,11 @@
 //   RESEND_FROM      e.g. "da Cecot <bookings@dacecotfood.com>" once the domain
 //                    is verified in Resend. Defaults to Resend's test sender.
 
-const TO = 'info@dacecotfood.com';
+// Where form notifications are delivered. Overridable via the RESEND_TO env var.
+// Until a domain is verified in Resend, Resend only delivers to the account
+// owner's address (erikaomoregie@gmail.com), so that is the default. Once a
+// domain is verified, set RESEND_TO=info@dacecotfood.com in Vercel.
+const TO = process.env.RESEND_TO || 'erikaomoregie@gmail.com';
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -95,7 +99,7 @@ module.exports = async (req, res) => {
     if (!r.ok) {
       const detail = await r.text();
       console.error('Resend error', r.status, detail);
-      return res.status(502).json({ success: false, error: 'Send failed', _status: r.status, _detail: String(detail).slice(0, 400) });
+      return res.status(502).json({ success: false, error: 'Send failed' });
     }
     return res.status(200).json({ success: true });
   } catch (err) {

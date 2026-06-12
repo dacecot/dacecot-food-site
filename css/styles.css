@@ -1110,8 +1110,10 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
 
 .review-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 26px;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 .review-card {
   background: #fff;
@@ -1514,7 +1516,7 @@ body.nav-open { overflow: hidden; }
   .two-col img.circle-img { order: -1; }
   .three-col { grid-template-columns: 1fr; gap: 38px; }
   .feature-grid { grid-template-columns: 1fr; }
-  .gallery { grid-template-columns: 1fr; }
+  .gallery { grid-template-columns: 1fr 1fr; }
   .gallery--4 { grid-template-columns: 1fr 1fr; }
   .gallery img, .gallery figure { height: 230px; }
   .form-row { grid-template-columns: 1fr; }

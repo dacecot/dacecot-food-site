@@ -53,7 +53,7 @@ function bookingCalendar({ weekday, blockFirst = false, weeks = 8, start, name, 
             <input type="hidden" name="${name}" data-cal-input required>
           </div>`;
 }
-const PAY_NOTE = `<p class="cal__pay-note"><strong>Online payment is awaiting verification.</strong> Submit your details to reserve — we'll confirm your spot and arrange payment by phone or email. Your seat is held in the meantime.</p>`;
+const PAY_NOTE = `<p class="cal__pay-note">Online payment awaiting verification.</p>`;
 
 function eventSchema({ slug, name, desc, image, byDay, startTime, price }) {
   return {

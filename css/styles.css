@@ -333,6 +333,30 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
 .hero p { font-size: 1.15rem; max-width: 640px; margin: 0 auto 14px; }
 .hero--page { min-height: 52vh; }
 
+/* Hero crossfade slideshow */
+.hero--slideshow { background-image: none !important; }
+.hero__slides { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.hero__slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  animation: heroSlide 14s infinite;
+  will-change: opacity;
+}
+.hero__slide:first-child { animation-delay: -1s; }
+.hero__slide:nth-child(2) { animation-delay: 6s; }
+.hero--slideshow::before { z-index: 1; }
+@keyframes heroSlide {
+  0%, 50%, 100% { opacity: 0; }
+  6%, 44% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__slide { animation: none; }
+  .hero__slide:first-child { opacity: 1; }
+}
+
 /* Parallax: fixed background on capable, non-touch devices */
 @media (hover: hover) and (min-width: 901px) {
   .hero--parallax, .fullbleed.hero--parallax { background-attachment: fixed; }

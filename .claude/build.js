@@ -569,7 +569,11 @@ pages.push(page({
   ],
   body: `${breadcrumb([{ slug: 'index', label: 'Home' }, { slug: 'our-story', label: 'Our Story' }])}
 
-    <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('images/general/erica/_MG_1017.jpg');" aria-labelledby="story-h1">
+    <section class="hero hero--page hero--dark hero--slideshow" aria-labelledby="story-h1">
+      <div class="hero__slides" aria-hidden="true">
+        <div class="hero__slide" style="background-image:url('images/general/heritage/childhood-dinner.jpg');"></div>
+        <div class="hero__slide" style="background-image:url('images/general/heritage/erika-diego-celebration.jpg');"></div>
+      </div>
       <div class="hero__inner reveal">
         <span class="label">Our Story</span>
         <h1 id="story-h1">From our family to yours.</h1>
@@ -621,31 +625,6 @@ pages.push(page({
       </div></div>
     </section>
 
-    <section class="section section--brown" aria-labelledby="roots-h">
-      <div class="container"><div class="two-col menu-row reveal">
-        <figure class="menu-photo zoom">${img('images/general/heritage/childhood-dinner.jpg', 'A childhood family meal — pasta shared around the kitchen table')}</figure>
-        <div class="menu-copy">
-          <span class="label">Roots in Italy</span>
-          <h2 id="roots-h">Recipes passed down by hand.</h2>
-          <p>Many of the recipes we serve today were first made in our family kitchens in Friuli Venezia Giulia.</p>
-          <p>Some were taught by grandparents, others learned in local agriturismi and village kitchens. They remind us where we come from and inspire everything we make today.</p>
-        </div>
-      </div></div>
-    </section>
-
-    <section class="section section--linen" aria-labelledby="journey-h">
-      <div class="container"><div class="two-col menu-row menu-row--rev reveal">
-        <figure class="menu-photo zoom">${img('images/general/heritage/erika-diego-celebration.jpg', 'Erika and Diego with family and friends at an Italian celebration')}</figure>
-        <div class="menu-copy">
-          <span class="label" style="color:var(--terracotta);">The Journey</span>
-          <h2 id="journey-h">From two homes to Whyte Avenue.</h2>
-          <p>In 2021 we moved to Canada carrying little more than our experience, our recipes, and the hope of building something meaningful.</p>
-          <p>Edmonton became our second home. When the opportunity came to open on Whyte Avenue, we knew we had found a place where our traditions and our community could grow together.</p>
-          <p>Today, da Cecot is our way of sharing a little piece of Italy with everyone who walks through our doors.</p>
-        </div>
-      </div></div>
-    </section>
-
     <section class="section section--brown" aria-labelledby="community-h">
       <div class="container"><div class="two-col menu-row reveal">
         <figure class="menu-photo zoom">${img(IMG.freshpasta, 'Hands making fresh pasta together in the da Cecot kitchen, Edmonton')}</figure>
@@ -670,10 +649,6 @@ pages.push(page({
           <figure class="zoom"><img src="images/general/whatsapp-2.jpg" alt="The da Cecot team at work in Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/erica/_MG_1036.jpg" alt="The da Cecot menu on display at the counter, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/cut-img-2360.jpg" alt="Friends gathered around the table at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/general/erica/_MG_1262.jpg" alt="A shared moment at the da Cecot family table, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/general/erica/_MG_1085.jpg" alt="A warm moment around the da Cecot family table, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/general/erica/_MG_1273.jpg" alt="Friends sharing a meal at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/general/erica/_MG_1345.jpg" alt="Wine and pasta at the da Cecot family table, Edmonton" loading="lazy" decoding="async"></figure>
         </div>
       </div>
     </section>
@@ -686,39 +661,6 @@ pages.push(page({
         <div class="btn-group" style="justify-content:center;">
           <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
           <a href="visit-us.html" class="btn btn--outline">Visit Us</a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section section--brown" aria-labelledby="award-h">
-      <div class="container">
-        <div class="text-center narrow reveal" style="margin-bottom:48px;">
-          <span class="label">Awards &amp; Recognition</span>
-          <h2 id="award-h">Awards &amp; recognition.</h2>
-          <p>We are grateful to the guests, families, and community members who have supported da Cecot since our journey began. These recognitions reflect the passion of our team, the traditions that inspire our food, and the support of the Edmonton community we proudly call home.</p>
-        </div>
-        <div class="info-grid reveal" data-stagger style="text-align:center;">
-          <div>
-            <svg viewBox="0 0 140 120" role="img" aria-label="Canadian Choice Award 2026 Winner seal" style="width:96px; height:auto; margin-bottom:12px;">
-              <circle cx="70" cy="58" r="50" fill="#3F512E" stroke="#C7A45A" stroke-width="3"/>
-              <circle cx="70" cy="58" r="41" fill="none" stroke="#C7A45A" stroke-width="1.5"/>
-              <path d="M70 26 l5.1 10.3 11.4 1.7 -8.3 8 1.9 11.3 -10.1 -5.3 -10.1 5.3 1.9 -11.3 -8.3 -8 11.4 -1.7 Z" fill="#C7A45A"/>
-              <text x="70" y="78" text-anchor="middle" fill="#F4F0E8" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="2.5">WINNER</text>
-              <text x="70" y="97" text-anchor="middle" fill="#C7A45A" font-family="Georgia,'Times New Roman',serif" font-size="16" font-weight="700">2026</text>
-            </svg>
-            <h3>Canadian Choice Award 2026</h3>
-            <p>Winner — Italian Restaurant Category</p>
-          </div>
-          <div>
-            <img src="images/awards/tomato-top-100.png" alt="Tomato Top 100 Edmonton — Best Things to Eat &amp; Drink — da Cecot Cacio e Pepe" style="max-width:150px; height:auto; margin-bottom:12px;" loading="lazy">
-            <h3>Tomato Magazine</h3>
-            <p>Top 100 Restaurants in Edmonton — recognized for our Cacio e Pepe.</p>
-          </div>
-          <div style="display:flex; flex-direction:column; align-items:center;">
-            <div style="font-size:3rem; color:var(--gold); line-height:1;">★★★★★</div>
-            <h3 style="margin-top:12px;">Google Rating</h3>
-            <p>4.8+ stars from the Edmonton community.</p>
-          </div>
         </div>
       </div>
     </section>`

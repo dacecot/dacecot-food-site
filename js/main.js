@@ -128,9 +128,9 @@
         var payWin = payUrl ? window.open('', '_blank') : null;
 
         var payload = { _subject: form.dataset.subject || 'New message — da Cecot Food' };
-        new FormData(form).forEach(function (v, k) { if (k !== '_honey') payload[k] = v; });
+        new FormData(form).forEach(function (v, k) { payload[k] = v; });
 
-        fetch('https://formsubmit.co/ajax/info@dacecotfood.com', {
+        fetch('/api/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify(payload)

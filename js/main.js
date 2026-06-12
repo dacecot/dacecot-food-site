@@ -154,6 +154,37 @@
       });
     });
 
+    /* ---- Per-product order modal (Pasta Shop) ---- */
+    var orderModal = document.querySelector('[data-order-modal]');
+    if (orderModal) {
+      var omForm = orderModal.querySelector('form');
+      var omTitle = orderModal.querySelector('[data-order-title]');
+      var omPrice = orderModal.querySelector('[data-order-price]');
+      var omProduct = orderModal.querySelector('[data-order-product]');
+      var omNote = orderModal.querySelector('[data-order-note]');
+      var omSubmit = orderModal.querySelector('[data-order-submit]');
+      var openOrder = function (btn) {
+        var product = btn.getAttribute('data-product') || 'Order';
+        var price = btn.getAttribute('data-price') || '';
+        var pay = btn.getAttribute('data-pay') || '';
+        if (omTitle) omTitle.textContent = product;
+        if (omPrice) omPrice.textContent = price ? price + ' each' : '';
+        if (omProduct) omProduct.value = product;
+        omForm.dataset.subject = 'Pasta Shop Order: ' + product;
+        if (pay) { omForm.dataset.payUrl = pay; if (omNote) omNote.style.display = ''; if (omSubmit) omSubmit.textContent = 'Proceed to Payment'; }
+        else { delete omForm.dataset.payUrl; if (omNote) omNote.style.display = 'none'; if (omSubmit) omSubmit.textContent = 'Send My Order'; }
+        omForm.querySelectorAll('.form-success, .form-error').forEach(function (e) { e.classList.remove('show'); });
+        orderModal.hidden = false;
+        document.body.classList.add('nav-open');
+      };
+      var closeOrder = function () { orderModal.hidden = true; document.body.classList.remove('nav-open'); };
+      document.querySelectorAll('[data-order-open]').forEach(function (b) {
+        b.addEventListener('click', function () { openOrder(b); });
+      });
+      orderModal.querySelectorAll('[data-order-close]').forEach(function (c) { c.addEventListener('click', closeOrder); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !orderModal.hidden) closeOrder(); });
+    }
+
     /* ---- Notebook slider (auto-advance + swipe + dots) ---- */
     document.querySelectorAll('[data-note-slider]').forEach(function (slider) {
       var track = slider.querySelector('[data-note-track]');

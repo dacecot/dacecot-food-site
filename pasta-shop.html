@@ -29,7 +29,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/styles.min.css?v=1781307787958">
+  <link rel="stylesheet" href="css/styles.min.css?v=1781308299799">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.dacecotfood.com/"},{"@type":"ListItem","position":2,"name":"Pasta Shop","item":"https://www.dacecotfood.com/pasta-shop.html"}]}</script>
 </head>
 <body>
@@ -110,6 +110,10 @@
             </ul>
           </div>
         </div>
+        <div class="btn-group reveal" style="justify-content:center; margin-top:36px;">
+          <button type="button" class="btn btn--terra" data-order-open data-product="Fresh Pasta — 450 g" data-price="$9.95" data-pay="">Order 450 g · $9.95</button>
+          <button type="button" class="btn btn--terra" data-order-open data-product="Fresh Pasta — 1 kg" data-price="$15.00" data-pay="">Order 1 kg · $15.00</button>
+        </div>
         <div class="gallery gallery--4 reveal" style="margin-top:48px;">
           <figure class="zoom"><img src="images/raw-pasta/caserecce.jpg" alt="Fresh caserecce pasta to take home from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/raw-pasta/tagliatelle.jpg" alt="Fresh tagliatelle to take home from da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
@@ -150,6 +154,11 @@
               <li><strong>Salsa Plasé</strong> <span style="opacity:0.75;">(tomato sauce — our signature)</span> — $12.99</li>
               <li><strong>Ragù Bolognese</strong> <span style="opacity:0.75;">(beef)</span> — $14.55</li>
             </ul>
+            <div class="btn-group" style="margin-top:22px; gap:12px;">
+              <button type="button" class="btn btn--terra" data-order-open data-product="Salsa Amatriciana — 12 oz" data-price="$12.99" data-pay="">Order Amatriciana</button>
+              <button type="button" class="btn btn--terra" data-order-open data-product="Salsa Plasé — 12 oz" data-price="$12.99" data-pay="">Order Plasé</button>
+              <button type="button" class="btn btn--terra" data-order-open data-product="Ragù Bolognese — 12 oz" data-price="$14.55" data-pay="">Order Ragù</button>
+            </div>
           </div>
         </div>
         <div class="gallery gallery--4 reveal" style="margin-top:48px;">
@@ -166,7 +175,10 @@
         <span class="label">Mix &amp; Match</span>
         <h2 id="bundle-h">Family Pasta Bundle — $39.99</h2>
         <p>1 kg of fresh pasta (choose up to 2 shapes) + two 12 oz house sauces. Mix and match your favourites — perfect for freezer stocking and quick weeknight dinners.</p>
-        <a href="tel:+18258884218" class="btn btn--terra" style="margin-top:18px;">Order Your Bundle</a>
+        <div class="btn-group" style="justify-content:center; margin-top:24px;">
+          <button type="button" class="btn btn--terra" data-order-open data-product="Family Pasta Bundle" data-price="$39.99" data-pay="">Order Bundle · $39.99</button>
+          <a href="tel:+18258884218" class="btn btn--outline">Call to Order</a>
+        </div>
       </div>
     </section>
 
@@ -180,38 +192,6 @@
           <div><h3>2 · Order</h3><p>Call <a href="tel:+18258884218">(825) 888-4218</a> or order online.</p></div>
           <div><h3>3 · Pick up</h3><p>Collect from da Cecot on Whyte Avenue.</p></div>
           <div><h3>4 · Enjoy</h3><p>Cook in minutes — fresh or straight from your freezer.</p></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section section--linen" aria-labelledby="order-h">
-      <div class="container narrow reveal">
-        <div class="text-center">
-          <span class="label" style="color:var(--terracotta);">Order Online</span>
-          <h2 id="order-h">Order for pickup</h2>
-          <p>Tell us what you'd like and when you'll collect it, and we'll confirm your total by phone or email. Prefer to talk? Call <a href="tel:+18258884218">(825) 888-4218</a>.</p>
-        </div>
-        <div class="booking" style="margin-top:32px;">
-          <form data-formsubmit data-subject="Pasta Shop Pickup Order — da Cecot" aria-label="Pasta shop pickup order">
-            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
-            <div class="field">
-              <label for="ord-items">Your order</label>
-              <textarea id="ord-items" name="order" required placeholder="e.g. 1 kg tagliatelle, 2 × Salsa Plasé, 1 Family Bundle…"></textarea>
-              <p style="margin-top:10px;font-size:0.85rem;opacity:0.75;line-height:1.7;">Fresh pasta 450 g $9.95 · 1 kg $15 &nbsp;·&nbsp; Salsa Amatriciana $12.99 · Salsa Plasé $12.99 · Ragù Bolognese $14.55 &nbsp;·&nbsp; Family Pasta Bundle $39.99</p>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="ord-pickup">Day of pickup</label><input type="date" id="ord-pickup" name="pickup_day" required></div>
-              <div class="field"><label for="ord-allergies">Any allergies?</label><input type="text" id="ord-allergies" name="allergies" placeholder="Gluten, nuts, none…"></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="ord-name">Name</label><input type="text" id="ord-name" name="name" required></div>
-              <div class="field"><label for="ord-phone">Phone</label><input type="tel" id="ord-phone" name="phone" required></div>
-            </div>
-            <div class="field"><label for="ord-email">Email</label><input type="email" id="ord-email" name="email" required></div>
-            <button type="submit" class="btn btn--terra" style="width:100%;">Send My Order</button>
-            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've got your order — we'll confirm your pickup time and total by phone or email shortly.</div>
-            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
-          </form>
         </div>
       </div>
     </section>
@@ -271,6 +251,35 @@
         <div class="btn-wrap"><a href="reservations.html" class="btn btn--green">Reserve a Table</a></div>
       </div>
     </section>
+
+    <div class="order-modal" data-order-modal hidden>
+      <div class="order-modal__backdrop" data-order-close></div>
+      <div class="order-modal__panel" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+        <button type="button" class="order-modal__close" data-order-close aria-label="Close">&times;</button>
+        <span class="label" style="color:var(--terracotta);">Order for Pickup</span>
+        <h3 id="order-modal-title" data-order-title>Your order</h3>
+        <p class="order-modal__price" data-order-price></p>
+        <form data-formsubmit aria-label="Pasta shop order">
+          <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+          <input type="hidden" name="item" data-order-product>
+          <div class="form-row">
+            <div class="field"><label for="om-qty">Quantity</label><input type="number" id="om-qty" name="quantity" min="1" value="1" required></div>
+            <div class="field"><label for="om-pickup">Day of pickup</label><input type="date" id="om-pickup" name="pickup_day" required></div>
+          </div>
+          <div class="field"><label for="om-allergies">Any allergies?</label><input type="text" id="om-allergies" name="allergies" placeholder="Gluten, nuts, none…"></div>
+          <div class="field"><label for="om-notes">Notes <span style="font-weight:400;opacity:0.7;">(pasta shape, preferences)</span></label><textarea id="om-notes" name="notes" placeholder="Pasta shape, anything else…"></textarea></div>
+          <div class="form-row">
+            <div class="field"><label for="om-name">Name</label><input type="text" id="om-name" name="name" required></div>
+            <div class="field"><label for="om-phone">Phone</label><input type="tel" id="om-phone" name="phone" required></div>
+          </div>
+          <div class="field"><label for="om-email">Email</label><input type="email" id="om-email" name="email" required></div>
+          <button type="submit" class="btn btn--terra" style="width:100%;" data-order-submit>Send My Order</button>
+          <p class="cal__pay-note" data-order-note style="display:none;">You'll be taken to our secure Square checkout to pay.</p>
+          <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've got your order — we'll confirm your pickup and total by phone or email shortly.</div>
+          <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
+        </form>
+      </div>
+    </div>
   </main>
 
   <footer class="footer">
@@ -306,6 +315,6 @@
   </footer>
 
   <button class="back-to-top" aria-label="Back to top">↑</button>
-  <script src="js/main.js?v=1781307787958"></script>
+  <script src="js/main.js?v=1781308299799"></script>
 </body>
 </html>

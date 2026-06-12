@@ -97,8 +97,9 @@ function serviceSchema({ slug, name, desc, image, priceNote }) {
 const trail = (label) => [{ slug: 'index', label: 'Home' }, { slug: 'experiences', label: 'Experiences' }, { slug: '', label: label }];
 
 /* small helper: standard experience page sections */
-function expHero(id, h1, sub, image, dark) {
-  return `    <section class="hero hero--page${dark ? ' hero--dark' : ''}" style="background-image:url('${image}');" aria-labelledby="${id}">
+function expHero(id, h1, sub, image, dark, pos) {
+  const posStyle = pos ? ` background-position:${pos};` : '';
+  return `    <section class="hero hero--page${dark ? ' hero--dark' : ''}" style="background-image:url('${image}');${posStyle}" aria-labelledby="${id}">
       <div class="hero__inner reveal">
         <h1 id="${id}">${h1}</h1>
         <p>${sub}</p>
@@ -227,7 +228,7 @@ pages.push(page({
   ],
   body: `${breadcrumb(trail('Sunday Pasta Classes').map((t, i) => i === 2 ? { slug: 'sunday-pasta-classes', label: t.label } : t))}
 
-${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — Sunday at our family table.', 'images/general/erica/erika-hero.jpg', true)}
+${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — Sunday at our family table.', 'images/general/erica/erika-hero.jpg', true, '30% 22%')}
 
     <section class="section section--cream" aria-labelledby="spc-what-h">
       <div class="container narrow reveal text-center">

@@ -341,7 +341,7 @@ pages.push(page({
     <section id="kitchen" class="section section--cream" aria-labelledby="kitchen-h">
       <div class="container">
         <div class="two-col menu-row reveal">
-          <figure class="menu-photo zoom">${img('images/food/cacio-e-pepe.jpg', "A bowl of da Cecot's cacio e pepe — fresh handmade pasta made by hand, Edmonton")}</figure>
+          <figure class="menu-photo zoom">${img('images/food/italian-kitchen.jpg', 'The da Cecot team making fresh pasta in their warm Italian kitchen, Edmonton')}</figure>
           <div class="menu-copy">
             <span class="label" style="color:var(--terracotta);">Our Italian Kitchen</span>
             <h2 id="kitchen-h">A warm Italian home, where pasta is made by hand.</h2>
@@ -365,7 +365,7 @@ pages.push(page({
         </div>
         <div class="offer-grid reveal" data-stagger>
           <a class="offer-card" href="pasta-shop.html">
-            <div class="offer-card__img zoom">${img(IMG.greenpasta, 'Fresh pasta available in 450g and 1kg sizes at da Cecot, Edmonton')}</div>
+            <div class="offer-card__img zoom">${img('images/general/erica/days-rolling.jpg', 'Erika rolling fresh pasta by hand at da Cecot, Edmonton')}</div>
             <div class="offer-card__body"><h3>Fresh Pasta</h3><p>Available in 450g and 1kg — vegan semolina shapes and silky egg pasta, made fresh daily.</p></div>
           </a>
           <a class="offer-card" href="pasta-shop.html">
@@ -377,7 +377,7 @@ pages.push(page({
             <div class="offer-card__body"><h3>House Sauces</h3><p>Prepared in small batches and ready to pair with your favourite pasta.</p></div>
           </a>
           <a class="offer-card" href="pasta-shop.html">
-            <div class="offer-card__img zoom">${img(IMG.pasta, 'Family Pasta Bundle from da Cecot, Edmonton — pasta, sauces, freezer-friendly')}</div>
+            <div class="offer-card__img zoom">${img(IMG.greenpasta, 'Family Pasta Bundle from da Cecot, Edmonton — fresh pasta, sauces, freezer-friendly')}</div>
             <div class="offer-card__body"><h3>Family Bundle</h3><p>A simple way to keep authentic Italian meals ready at home.</p></div>
           </a>
         </div>
@@ -484,7 +484,7 @@ pages.push(page({
   ],
   body: `${breadcrumb([{ slug: 'index', label: 'Home' }, { slug: 'menu', label: 'Menu' }])}
 
-    <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('${IMG.pasta}');" aria-labelledby="menu-h1">
+    <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('images/food/menu-hero.jpg');" aria-labelledby="menu-h1">
       <div class="hero__inner reveal">
         <span class="label">Eat With Us</span>
         <h1 id="menu-h1">Our Menu</h1>
@@ -518,7 +518,7 @@ ${menuCards.map(m => `          <div style="display:flex; flex-direction:column;
     <section class="section section--brown" aria-labelledby="atelier-h">
       <div class="container">
         <div class="two-col menu-row reveal">
-          <figure class="menu-photo zoom">${img(IMG.product, 'Limited handmade Ravioli Atelier ravioli at da Cecot, Edmonton')}</figure>
+          <figure class="menu-photo zoom">${img('images/food/ravioli-atelier.jpg', 'Limited handmade Ravioli Atelier ravioli at da Cecot, Edmonton')}</figure>
           <div class="menu-copy">
             <span class="label">Signature</span>
             <h2 id="atelier-h">Ravioli Atelier</h2>
@@ -537,13 +537,11 @@ ${menuCards.map(m => `          <div style="display:flex; flex-direction:column;
           <span class="label" style="color:var(--terracotta);">From Our Kitchen</span>
           <h2 id="dishes-gallery-h">A taste of what's waiting.</h2>
         </div>
-        <div class="gallery reveal">
-          <figure class="zoom"><img src="images/food/ravioli-butter-sage.jpg" alt="Ravioli with butter and sage at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/food/cacio-e-pepe.jpg" alt="Cacio e Pepé pasta at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/food/ragu.jpg" alt="Ragù alla Bolognese at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/food/plase.jpg" alt="Plasé pomodoro pasta at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/food/cicchetti.jpg" alt="Cicchetti Italian small bites at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/food/fresh-ravioli.jpg" alt="Fresh hand-filled ravioli at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+        <div class="gallery gallery--4 reveal">
+          <figure class="zoom"><img src="images/food/taste-1.jpg" alt="Handmade pasta dish at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/taste-2.jpg" alt="Italian drinks at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/taste-3.jpg" alt="Fresh pasta being finished at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/food/taste-4.jpg" alt="Ragù pasta dish at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
         </div>
       </div>
     </section>

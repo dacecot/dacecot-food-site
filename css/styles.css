@@ -333,6 +333,24 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
 .hero p { font-size: 1.15rem; max-width: 640px; margin: 0 auto 14px; }
 .hero--page { min-height: 52vh; }
 
+/* Order rows — clickable price-list buttons (Pasta Shop sauces) */
+.order-rows { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.order-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  width: 100%; text-align: left;
+  padding: 15px 18px;
+  background: rgba(255,255,255,0.5);
+  border: 1.5px solid rgba(74,46,34,0.18);
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--serif); font-size: 1.1rem; color: var(--brown);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+.section--linen .order-row { background: rgba(255,255,255,0.55); }
+.order-row:hover { border-color: var(--terracotta); background: #fff; transform: translateY(-1px); }
+.order-row__name em { font-family: var(--sans); font-style: normal; font-size: 0.8rem; opacity: 0.65; display: block; margin-top: 2px; }
+.order-row__price { font-weight: 600; color: var(--terracotta); white-space: nowrap; }
+
 /* Per-product order modal (Pasta Shop) */
 .order-modal[hidden] { display: none; }
 .order-modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -427,10 +445,8 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
   .hero__slide:first-child { opacity: 1; }
 }
 
-/* Parallax: fixed background on capable, non-touch devices */
-@media (hover: hover) and (min-width: 901px) {
-  .hero--parallax, .fullbleed.hero--parallax { background-attachment: fixed; }
-}
+/* Parallax disabled — background-attachment:fixed causes heavy scroll repaint/jank.
+   Backgrounds scroll normally for smooth performance. */
 
 /* Full-viewport branded home hero */
 .hero--home {

@@ -367,19 +367,19 @@ pages.push(page({
         <div class="offer-grid reveal" data-stagger>
           <a class="offer-card" href="pasta-shop.html">
             <div class="offer-card__img zoom">${img(IMG.greenpasta, 'Fresh pasta available in 450g and 1kg sizes at da Cecot, Edmonton')}</div>
-            <div class="offer-card__body"><h3>Fresh Pasta</h3><p>Available in 450g and 1kg — vegan semolina shapes and silky egg pasta, made fresh daily.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
+            <div class="offer-card__body"><h3>Fresh Pasta</h3><p>Available in 450g and 1kg — vegan semolina shapes and silky egg pasta, made fresh daily.</p></div>
           </a>
           <a class="offer-card" href="pasta-shop.html">
             <div class="offer-card__img zoom">${img(IMG.product, 'Handmade ravioli with rotating seasonal fillings from da Cecot, Edmonton')}</div>
-            <div class="offer-card__body"><h3>Ravioli</h3><p>Handmade in small batches with rotating seasonal fillings.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
+            <div class="offer-card__body"><h3>Ravioli</h3><p>Handmade in small batches with rotating seasonal fillings.</p></div>
           </a>
           <a class="offer-card" href="pasta-shop.html">
             <div class="offer-card__img zoom">${img(IMG.sauce, 'Small-batch house sauces from da Cecot, Edmonton')}</div>
-            <div class="offer-card__body"><h3>House Sauces</h3><p>Prepared in small batches and ready to pair with your favourite pasta.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
+            <div class="offer-card__body"><h3>House Sauces</h3><p>Prepared in small batches and ready to pair with your favourite pasta.</p></div>
           </a>
           <a class="offer-card" href="pasta-shop.html">
             <div class="offer-card__img zoom">${img(IMG.pasta, 'Family Pasta Bundle from da Cecot, Edmonton — pasta, sauces, freezer-friendly')}</div>
-            <div class="offer-card__body"><h3>Family Bundle</h3><p>A simple way to keep authentic Italian meals ready at home.</p><span class="offer-card__link">Visit Pasta Shop</span></div>
+            <div class="offer-card__body"><h3>Family Bundle</h3><p>A simple way to keep authentic Italian meals ready at home.</p></div>
           </a>
         </div>
         <div class="btn-group" style="justify-content:center; margin-top:32px;">
@@ -965,15 +965,10 @@ pages.push(page({
             <span class="label" style="color:var(--terracotta);">12 oz Jars</span>
             <h2 id="sauces-h">House sauces.</h2>
             <p>Designed to pair perfectly with our fresh pasta — and they freeze beautifully.</p>
-            <ul class="detail-list">
-              <li><strong>Salsa Amatriciana</strong> — $12.99</li>
-              <li><strong>Salsa Plasé</strong> <span style="opacity:0.75;">(tomato sauce — our signature)</span> — $12.99</li>
-              <li><strong>Ragù Bolognese</strong> <span style="opacity:0.75;">(beef)</span> — $14.55</li>
-            </ul>
-            <div class="btn-group" style="margin-top:22px; gap:12px;">
-              <button type="button" class="btn btn--terra" data-order-open data-product="Salsa Amatriciana — 12 oz" data-price="$12.99" data-pay="https://square.link/u/apGE8Wtl">Order Amatriciana</button>
-              <button type="button" class="btn btn--terra" data-order-open data-product="Salsa Plasé — 12 oz" data-price="$12.99" data-pay="https://square.link/u/GhjM2ayB">Order Plasé</button>
-              <button type="button" class="btn btn--terra" data-order-open data-product="Ragù Bolognese — 12 oz" data-price="$14.55" data-pay="https://square.link/u/lAb7z4YK">Order Ragù</button>
+            <div class="order-rows" role="group" aria-label="Order house sauces">
+              <button type="button" class="order-row" data-order-open data-product="Salsa Amatriciana — 12 oz" data-price="$12.99" data-pay="https://square.link/u/apGE8Wtl"><span class="order-row__name">Salsa Amatriciana</span><span class="order-row__price">$12.99</span></button>
+              <button type="button" class="order-row" data-order-open data-product="Salsa Plasé — 12 oz" data-price="$12.99" data-pay="https://square.link/u/GhjM2ayB"><span class="order-row__name">Salsa Plasé <em>(tomato sauce · our signature)</em></span><span class="order-row__price">$12.99</span></button>
+              <button type="button" class="order-row" data-order-open data-product="Ragù Bolognese — 12 oz" data-price="$14.55" data-pay="https://square.link/u/lAb7z4YK"><span class="order-row__name">Ragù Bolognese <em>(beef)</em></span><span class="order-row__price">$14.55</span></button>
             </div>
           </div>
         </div>

@@ -658,9 +658,9 @@ pages.push(page({
           <p>A glimpse into the people and moments that make up our kitchen on Whyte Avenue.</p>
         </div>
         <div class="gallery gallery--4 reveal">
-          <figure class="zoom"><img src="images/general/whatsapp-1.jpg" alt="Behind the scenes at da Cecot Food, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/days-rolling.jpg" alt="Rolling fresh pasta by hand at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/whatsapp-2.jpg" alt="The da Cecot team at work in Edmonton" loading="lazy" decoding="async"></figure>
-          <figure class="zoom"><img src="images/general/erica/_MG_1036.jpg" alt="The da Cecot menu on display at the counter, Edmonton" loading="lazy" decoding="async"></figure>
+          <figure class="zoom"><img src="images/general/erica/days-table.jpg" alt="Guests gathered around the table during a pasta evening at da Cecot, Edmonton" loading="lazy" decoding="async"></figure>
           <figure class="zoom"><img src="images/general/cut-img-2360.jpg" alt="Friends gathered around the table at a da Cecot class, Edmonton" loading="lazy" decoding="async"></figure>
         </div>
       </div>

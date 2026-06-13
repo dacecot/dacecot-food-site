@@ -111,13 +111,12 @@ function expHero(id, h1, sub, image, dark, pos) {
    EXPERIENCES HUB
    ============================================================ */
 const hubFaqs = [
-  { q: 'What experiences does da Cecot offer?', a: 'da Cecot offers four core experiences in Edmonton: Pasta Classes (including Pasta With Erika on Thursdays and La Domenica Da Cecot on Sundays), At Our Family Table dining, Seasonal & Special Events throughout the year, and Private Events & Pop-Up Restaurants. Each is built around fresh handmade pasta and the warmth of an Italian family table.' },
-  { q: 'How do I book a da Cecot experience?', a: 'Pasta Classes are booked using the request form on each class page — pick your date and we confirm your spot. At Our Family Table and Private Events start with an inquiry form so we can tailor the details to your group. You can also reach us anytime at (825) 888-4218 or info@dacecotfood.com.' },
+  { q: 'What experiences does da Cecot offer?', a: 'da Cecot offers several core experiences in Edmonton: Pasta Classes (including Pasta With Erika on Thursdays and La Domenica Da Cecot on Sundays), Seasonal & Special Events throughout the year, and Private Events & Pop-Up Restaurants. Each is built around fresh handmade pasta and the warmth of an Italian family table.' },
+  { q: 'How do I book a da Cecot experience?', a: 'Pasta Classes are booked using the request form on each class page — pick your date and we confirm your spot. Private Events start with an inquiry form so we can tailor the details to your group. You can also reach us anytime at (825) 888-4218 or info@dacecotfood.com.' },
   { q: 'Where are da Cecot experiences held?', a: 'All experiences take place at our kitchen and dining room on Whyte Avenue (82 Ave) at 104 Street in Edmonton, AB. Pop-up restaurant experiences can also be brought to your venue.' }
 ];
 const hubCards = [
   { slug: 'sunday-pasta-classes', t: 'Pasta Classes', img: 'images/general/erica/erika-class.jpg', d: 'Learn traditional pasta making, discover regional Italian techniques, and enjoy the joy of creating something with your own hands.' },
-  { slug: 'food-drink-experiences', t: 'At Our Family Table', img: IMG.dining, d: 'A shared Italian dining experience inspired by the meals we grew up with and the traditions that continue to bring people together.' },
   { slug: 'pasta-drop-in', t: 'Seasonal &amp; Special Events', img: IMG.wine, d: 'Unique gatherings celebrating Italian culture, seasonal ingredients, and community traditions throughout the year.' },
   { slug: 'private-events', t: 'Private Events &amp; Pop-Up Restaurants', img: IMG.dining, d: 'Celebrate your special occasion at da Cecot or bring the da Cecot experience to your venue.' }
 ];
@@ -140,11 +139,11 @@ pages.push(page({
 
     <section class="section section--cream" aria-labelledby="xp-intro-h">
       <div class="container text-center narrow reveal" style="margin-bottom:54px;">
-        <h2 id="xp-intro-h">Four ways to gather around the table</h2>
-        <p>da Cecot is more than a pasta bar. We host classes, family-table dinners, seasonal celebrations, and private gatherings — each one an invitation to slow down, eat well, and feel like family. Choose the experience that fits your occasion.</p>
+        <h2 id="xp-intro-h">Ways to gather around the table</h2>
+        <p>da Cecot is more than a pasta bar. We host classes, seasonal celebrations, and private gatherings — each one an invitation to slow down, eat well, and feel like family. Choose the experience that fits your occasion.</p>
       </div>
       <div class="container">
-        <div class="card-grid reveal">
+        <div class="card-grid card-grid--center reveal">
 ${hubCards.map(c => `          <article class="xp-card">
             ${img(c.img, c.t + ' at da Cecot Food, Edmonton')}
             <div class="xp-card__body">
@@ -153,26 +152,6 @@ ${hubCards.map(c => `          <article class="xp-card">
               <a class="xp-card__link" href="${c.slug}.html">Learn more</a>
             </div>
           </article>`).join('\n')}
-        </div>
-      </div>
-    </section>
-
-    <section class="section section--brown" aria-labelledby="weekend-h">
-      <div class="container">
-        <div class="two-col reveal">
-          ${img(IMG.dining, 'A dinner table set with pasta and wine for the At Our Family Table experience', 'circle-img')}
-          <div>
-            <span class="label">The Italian Table Experience</span>
-            <h2 id="weekend-h">At Our Family Table</h2>
-            <p>Some meals are about more than food. <em>At Our Family Table</em> is an invitation to slow down and share an evening inspired by the traditions of Italian hospitality. Gather with family, friends, coworkers, or loved ones and enjoy a menu designed for conversation, connection, and the simple pleasure of eating together.</p>
-            <p>No rush. No decisions. Just good food and good company.</p>
-            <p class="price-tag">Starting at $55 per guest</p>
-            <ul class="detail-list">
-              <li><strong>Group size:</strong> 2–12 guests</li>
-              <li><strong>Reservation:</strong> Required</li>
-            </ul>
-            ${cta('food-drink-experiences.html', 'Reserve Your Table', 'terra')}
-          </div>
         </div>
       </div>
     </section>
@@ -423,107 +402,6 @@ ${faqBlock(dropFaqs)}
     </section>`
 }));
 
-/* ============================================================
-   3. FOOD & DRINK SPECIAL EXPERIENCES
-   ============================================================ */
-const fdFaqs = [
-  { q: 'What are Food & Drink Experiences?', a: 'Food & Drink Experiences are da Cecot’s special ticketed evenings in Edmonton — multi-course tasting menus, wine-paired Italian dinners, Cicchetti small-bite nights, and seasonal themed events. Each is a hosted, curated occasion beyond our everyday pasta bar.' },
-  { q: 'What is included?', a: 'Depending on the evening, your ticket includes a multi-course menu, curated wine or beverage pairings, and a hosted experience guided by our family. Each event page or inquiry will outline exactly what is served.' },
-  { q: 'How much do these experiences cost?', a: 'Pricing varies by event and what is included. Contact us for current dates and pricing, and we will share the details for each upcoming experience.' },
-  { q: 'Can you accommodate dietary needs?', a: 'Yes — let us know about allergies or dietary preferences when you book and we will do our best to tailor your tasting. Reach us at (825) 888-4218 or info@dacecotfood.com.' }
-];
-pages.push(page({
-  slug: 'food-drink-experiences',
-  active: 'food-drink-experiences',
-  title: 'Food & Drink Experiences | Tastings & Wine, Edmonton',
-  description: 'Curated Italian tasting evenings & wine-paired dinners at da Cecot in Edmonton. Multi-course menus, small bites & seasonal nights. Limited seating — inquire now.',
-  ogImage: IMG.wine,
-  schema: [
-    breadcrumbSchema(trail('Food & Drink Experiences').map((t, i) => i === 2 ? { slug: 'food-drink-experiences', label: t.label } : t)),
-    serviceSchema({ slug: 'food-drink-experiences', name: 'Food & Drink Special Experiences', desc: 'Curated multi-course tasting menus and wine-paired Italian dinners in Edmonton.', image: IMG.wine, priceNote: 'Varies by event — contact for pricing' }),
-    faqSchema(fdFaqs)
-  ],
-  body: `${breadcrumb(trail('Food & Drink Experiences').map((t, i) => i === 2 ? { slug: 'food-drink-experiences', label: t.label } : t))}
-
-${expHero('fd-h1', 'Food &amp; Drink Experiences', 'Curated tasting evenings and wine-paired Italian menus — a special night out, the da Cecot way.', IMG.wine, true)}
-
-    <section class="section section--cream" aria-labelledby="fd-what-h">
-      <div class="container narrow reveal text-center">
-        <h2 id="fd-what-h">What are Food &amp; Drink Experiences?</h2>
-        <p class="lead">Food &amp; Drink Experiences are da Cecot's special ticketed evenings in Edmonton — multi-course tasting menus, wine-paired dinners, Cicchetti small-bite nights, and seasonal themed events. Each is a hosted, intimate occasion that goes beyond our everyday pasta bar.</p>
-      </div>
-    </section>
-
-    <section class="section section--brown" aria-labelledby="fd-incl-h">
-      <div class="container">
-        <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="fd-incl-h">What to expect</h2></div>
-        <div class="info-grid reveal">
-          <div><h3>Multi-course menus</h3><p>Thoughtfully built tasting menus that tell a story, course by course.</p></div>
-          <div><h3>Wine &amp; pairings</h3><p>Italian-inspired drink pairings chosen to match each plate.</p></div>
-          <div><h3>Cicchetti small bites</h3><p>Italian small-plate nights perfect for grazing and sharing.</p></div>
-          <div><h3>Hosted &amp; intimate</h3><p>Limited seats and a warm, personal evening with our family.</p></div>
-        </div>
-        <div class="text-center" style="margin-top:30px;">
-          <p class="price-tag">Pricing varies by event · Contact for details</p>
-          <p style="opacity:0.85;">Limited seating · Select dates throughout the year</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="section section--olive" aria-labelledby="fd-featured-h">
-      <div class="container narrow reveal text-center">
-        <span class="label" style="color:var(--gold);">Next on the calendar</span>
-        <h2 id="fd-featured-h">The Tomato Workshop</h2>
-        <p class="lead">A hands-on evening with da Cecot built around the tomato — from raw to sauce to plate. Pick, blanch, peel, and finish your own jar of pomodoro alongside our family, then sit down to a tomato-led tasting plate. The next Food &amp; Drink Experience on the calendar.</p>
-        <p style="margin-top:24px;">Want a seat the moment a date is announced? Add yourself to the list below — we'll send pricing and dates first.</p>
-      </div>
-    </section>
-
-    <section class="section section--cream" aria-labelledby="fd-how-h">
-      <div class="container narrow reveal">
-        <div class="text-center">
-          <h2 id="fd-how-h">Reserve your seat</h2>
-          <p>Seats are limited and these evenings book up fast. Fill in the form below and we'll reach out with upcoming dates, menus, and pricing.</p>
-        </div>
-        <div class="booking">
-          <form data-formsubmit data-subject="Food &amp; Drink Experience Inquiry — da Cecot" aria-label="Food &amp; Drink experience reservation inquiry">
-            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
-            <div class="form-row">
-              <div class="field">
-                <label for="fd-guests">Number of guests</label>
-                <select id="fd-guests" name="guests">
-                  <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="fd-date">Preferred date <span style="font-weight:400;opacity:0.7;">(if known)</span></label>
-                <input type="date" id="fd-date" name="preferred_date">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="fd-name">Name</label><input type="text" id="fd-name" name="name" required></div>
-              <div class="field"><label for="fd-phone">Phone</label><input type="tel" id="fd-phone" name="phone" required></div>
-            </div>
-            <div class="field"><label for="fd-email">Email</label><input type="email" id="fd-email" name="email" required></div>
-            <div class="field">
-              <label for="fd-dietary">Dietary needs <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
-              <textarea id="fd-dietary" name="dietary_notes" placeholder="Allergies, dietary restrictions, or anything else we should know…"></textarea>
-            </div>
-            <button type="submit" class="btn btn--green" style="width:100%;">Request a Seat</button>
-            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We'll be in touch soon with upcoming event details and pricing.</div>
-            <div class="form-error" style="color:var(--brown);">Something went wrong — please email us at info@dacecotfood.com.</div>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <section class="section section--brown" aria-labelledby="fd-faq-h">
-      <div class="container">
-        <div class="text-center reveal" style="margin-bottom:40px;"><h2 id="fd-faq-h">Food &amp; Drink FAQ</h2></div>
-${faqBlock(fdFaqs)}
-      </div>
-    </section>`
-}));
 
 /* ============================================================
    4. PRIVATE EVENTS
@@ -877,7 +755,7 @@ ${faqBlock(catFaqs)}
    ============================================================ */
 const ALL_SLUGS = [
   'index', 'menu', 'experiences', 'sunday-pasta-classes', 'pasta-drop-in',
-  'food-drink-experiences', 'private-events', 'catering', 'pasta-shop',
+  'private-events', 'catering', 'pasta-shop',
   'our-story', 'visit-us', 'reservations', 'partnerships'
 ];
 

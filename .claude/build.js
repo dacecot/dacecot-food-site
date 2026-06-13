@@ -53,7 +53,6 @@ const EXPERIENCE_PAGES = [
   { slug: 'experiences',           label: 'Experiences Overview' },
   { slug: 'sunday-pasta-classes',  label: 'Sunday Pasta Classes' },
   { slug: 'pasta-drop-in',         label: 'Public Pasta Drop-In' },
-  { slug: 'food-drink-experiences',label: 'Food & Drink Experiences' },
   { slug: 'private-events',        label: 'Private Events' },
 ];
 

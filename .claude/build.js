@@ -180,7 +180,7 @@ const HOURS_SPEC = [
   { d: ['Friday'], o: '11:30', c: '15:00' },
   { d: ['Friday'], o: '16:00', c: '21:00' },
   { d: ['Saturday'], o: '12:00', c: '21:00' },
-  { d: ['Sunday'], o: '11:30', c: '16:00' }
+  { d: ['Sunday'], o: '12:00', c: '16:00' }
 ].map(h => ({
   '@type': 'OpeningHoursSpecification',
   dayOfWeek: h.d,
@@ -439,7 +439,7 @@ pages.push(page({
                 <tr><th>Thu</th><td>4 – 8 PM</td></tr>
                 <tr><th>Fri</th><td>11:30 AM – 3 PM · 4 – 9 PM</td></tr>
                 <tr><th>Sat</th><td>12 – 9 PM</td></tr>
-                <tr><th>Sun</th><td>11:30 AM – 4 PM</td></tr>
+                <tr><th>Sun</th><td>12 – 4 PM</td></tr>
                 <tr><th>Sunday Pasta Classes</th><td>5 – 9 PM</td></tr>
               </table>
               <p style="margin-top:14px; opacity:0.78; font-size:0.92em;"><em>First Sunday of every month: closed.</em></p>
@@ -459,7 +459,7 @@ pages.push(page({
 
 /* ---------- MENU (hub: buttons open PDFs — replace files in /menus to update) ---------- */
 const menuFaqs = [
-  { q: 'Where can I see the current da Cecot menus?', a: 'Right on our menu page — choose Lunch, Dinner, Drinks & Dessert, Kids, or Gluten-Free and the latest menu opens instantly. Menus change with the seasons and our handmade production.' },
+  { q: 'Where can I see the current da Cecot menus?', a: 'Right on our menu page — choose Dinner, Drink, Lunch, Liquor, Dessert, or Kids and the latest menu opens instantly. Menus change with the seasons and our handmade production.' },
   { q: 'What is the Ravioli Atelier?', a: 'Each week we prepare a small selection of handmade ravioli inspired by regional Italian traditions, seasonal ingredients, and the creativity of our kitchen — available Friday and Saturday evenings in limited quantities. Reservations recommended.' },
   { q: 'Can you accommodate dietary restrictions?', a: 'Yes — we offer a dedicated gluten-free menu and vegan pasta options. Call us ahead at (825) 888-4218 with any questions about ingredients, allergens, or to place a large order in advance.' }
 ];
@@ -468,13 +468,13 @@ const menuCards = [
   { name: 'Drink Menu', file: 'menus/drink-menu.pdf', d: 'Espresso, moka coffee, Italian drinks, and more.', ready: true },
   { name: 'Lunch Menu', d: 'Fresh pasta, quick lunches, and comforting Italian dishes.', ready: false },
   { name: 'Liquor Menu', d: 'Wine, beer, spirits, and Italian aperitivi.', ready: false },
-  { name: 'Gluten-Free Menu', d: 'Gluten-free pasta options and dishes prepared with care.', ready: false },
+  { name: 'Dessert Menu', d: 'Dolci, tiramisu, gelato, and sweet Italian finishes.', ready: false },
   { name: 'Kids Menu', d: 'Simple, comforting pasta options made for younger guests.', ready: false }
 ];
 pages.push(page({
   slug: 'menu',
   active: 'menu',
-  title: 'Menu | da Cecot, Edmonton — Lunch, Dinner, Kids & Gluten-Free',
+  title: 'Menu | da Cecot, Edmonton — Lunch, Dinner, Kids & Dessert',
   description: 'View da Cecot menus: lunch, dinner, drinks & dessert, kids, and gluten-free — plus the Ravioli Atelier, Friday & Saturday evenings on Whyte Avenue.',
   ogImage: IMG.pasta,
   schema: [
@@ -787,7 +787,7 @@ pages.push(page({
                 <tr><th>Thu</th><td>4 – 8 PM</td></tr>
                 <tr><th>Fri</th><td>11:30 AM – 3 PM · 4 – 9 PM</td></tr>
                 <tr><th>Sat</th><td>12 – 9 PM</td></tr>
-                <tr><th>Sun</th><td>11:30 AM – 4 PM</td></tr>
+                <tr><th>Sun</th><td>12 – 4 PM</td></tr>
                 <tr><th>Sunday Pasta Classes</th><td>5 – 9 PM</td></tr>
               </table>
               <p style="margin-top:14px; opacity:0.78; font-size:0.92em;"><em>First Sunday of every month: closed.</em></p>

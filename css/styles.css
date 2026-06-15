@@ -339,8 +339,8 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
 }
 
 /* Centered card grid (used when fewer than 4 cards, avoids an orphaned row) */
-.card-grid--center { display: flex; flex-wrap: wrap; justify-content: center; }
-.card-grid--center .xp-card { flex: 1 1 300px; max-width: 380px; }
+.card-grid--center { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 26px; }
+.card-grid--center .xp-card { flex: 0 1 320px; max-width: 360px; }
 
 /* "Our Menu" promo — bike rides across the top of the heading */
 .menu-promo__track { position: relative; width: 100%; max-width: 720px; margin: 0 auto 4px; height: 92px; overflow: hidden; }

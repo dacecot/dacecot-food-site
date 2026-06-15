@@ -918,7 +918,6 @@ pages.push(page({
         <div class="text-center narrow reveal" style="margin-bottom:48px;">
           <span class="label" style="color:var(--terracotta);">Available Daily</span>
           <h2 id="fresh-pasta-h">Fresh pasta, made every morning.</h2>
-          <p class="price-tag" style="margin-top:12px;">450 g — $9.95 &nbsp;·&nbsp; 1 kg — $15.00</p>
           <p style="margin-top:14px;">Made fresh daily and ready to take home — just drop it in boiling water and serve in minutes.</p>
         </div>
         <div class="two-col reveal" style="align-items:start;">
@@ -964,6 +963,20 @@ pages.push(page({
             <li><strong>Custom options</strong> for vegan &amp; gluten-free customers</li>
           </ul>
           <a href="tel:${NAP.phoneHref}" class="btn btn--terra" style="margin-top:18px;">Preorder by Phone</a>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="section section--olive" aria-labelledby="lasagna-shop-h">
+      <div class="container"><div class="two-col menu-row menu-row--rev reveal">
+        <figure class="menu-photo zoom">${img('images/food/lasagna.jpg', 'Fresh handmade lasagna ready to take home from da Cecot, Edmonton')}</figure>
+        <div class="menu-copy">
+          <span class="label">Heat &amp; Serve</span>
+          <h2 id="lasagna-shop-h">Lasagna.</h2>
+          <p>Hand-layered with slow-cooked ragù, silky béchamel, and Italian cheeses — made fresh and ready to bake at home.</p>
+          <div class="btn-group" style="margin-top:24px;">
+            <button type="button" class="btn btn--terra" data-order-open data-product="Lasagna" data-price="" data-pay="">Order Lasagna</button>
+          </div>
         </div>
       </div></div>
     </section>

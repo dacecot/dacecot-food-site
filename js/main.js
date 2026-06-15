@@ -185,6 +185,57 @@
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !orderModal.hidden) closeOrder(); });
     }
 
+    /* ---- Reservation hours-aware time picker ---- */
+    (function () {
+      var dateInput = document.getElementById('res-date');
+      var timeSel = document.querySelector('[data-res-time]');
+      var msg = document.querySelector('[data-res-msg]');
+      if (!dateInput || !timeSel) return;
+      // Service windows by weekday (0=Sun … 6=Sat): [openMinutes, closeMinutes]
+      var WIN = {
+        0: [[720, 960]],              // Sun 12:00–4:00
+        1: [[720, 900], [990, 1200]], // Mon 12–3, 4:30–8
+        2: [[720, 900], [990, 1200]], // Tue
+        3: [],                        // Wed closed
+        4: [[960, 1200]],             // Thu 4–8
+        5: [[690, 900], [960, 1260]], // Fri 11:30–3, 4–9
+        6: [[720, 1260]]              // Sat 12–9
+      };
+      var BUFFER = 60; // last reservation this many minutes before close
+      var STEP = 30;
+      function fmt(m) {
+        var h = Math.floor(m / 60), mm = m % 60, ap = h < 12 ? 'AM' : 'PM', hh = h % 12;
+        if (hh === 0) hh = 12;
+        return hh + ':' + String(mm).padStart(2, '0') + ' ' + ap;
+      }
+      function update() {
+        var v = dateInput.value;
+        if (msg) msg.textContent = '';
+        if (!v) { timeSel.innerHTML = '<option value="">Pick a date first</option>'; return; }
+        var p = v.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]);
+        var dow = d.getDay();
+        var firstSun = (dow === 0 && d.getDate() <= 7);
+        var wins = WIN[dow] || [];
+        if (dow === 3 || firstSun || !wins.length) {
+          timeSel.innerHTML = '<option value="">Closed — choose another day</option>';
+          if (msg) msg.textContent = dow === 3
+            ? "We're closed on Wednesdays — please choose another day."
+            : (firstSun ? "We're closed the first Sunday of every month — please choose another Sunday."
+                        : "We're closed that day — please choose another.");
+          return;
+        }
+        var opts = '<option value="">Select a time</option>';
+        wins.forEach(function (w) {
+          for (var t = w[0]; t <= w[1] - BUFFER; t += STEP) opts += '<option value="' + fmt(t) + '">' + fmt(t) + '</option>';
+        });
+        timeSel.innerHTML = opts;
+      }
+      var today = new Date();
+      dateInput.min = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+      dateInput.addEventListener('change', update);
+      update();
+    })();
+
     /* ---- Notebook slider (auto-advance + swipe + dots) ---- */
     document.querySelectorAll('[data-note-slider]').forEach(function (slider) {
       var track = slider.querySelector('[data-note-track]');

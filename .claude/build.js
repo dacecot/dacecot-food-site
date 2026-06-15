@@ -704,9 +704,12 @@ pages.push(page({
               </div>
               <div class="field">
                 <label for="res-time">Preferred time</label>
-                <input type="time" id="res-time" name="time" required>
+                <select id="res-time" name="time" required data-res-time>
+                  <option value="">Pick a date first</option>
+                </select>
               </div>
             </div>
+            <p data-res-msg style="margin:-10px 0 8px; font-size:0.88rem; color:var(--terracotta); min-height:1.2em;"></p>
             <div class="field">
               <label for="res-party">Party size</label>
               <select id="res-party" name="party_size">

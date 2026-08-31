@@ -1,19 +1,46 @@
 // Vercel Serverless Function — receives website form submissions and emails
-// them via Resend (https://resend.com). The recipient is hard-coded so this
-// endpoint can only ever email da Cecot's own inbox (it can't be abused to
-// send mail to arbitrary addresses).
+// them via Resend (https://resend.com).
 //
-// Required env var (set in Vercel → Project → Settings → Environment Variables):
+//   1. STORE notification  → always sent to da Cecot's own inbox (info@…).
+//   2. CUSTOMER confirmation → sent back to the person who placed a pasta-shop
+//      order, so they get a written "we've got your order" receipt. Best-effort:
+//      if it fails the order is still recorded (the store email is what counts).
+//
+// Required env var (Vercel → Project → Settings → Environment Variables):
 //   RESEND_API_KEY   your Resend API key (starts with "re_")
 // Optional:
-//   RESEND_FROM      e.g. "da Cecot <bookings@dacecotfood.com>" once the domain
-//                    is verified in Resend. Defaults to Resend's test sender.
+//   RESEND_FROM      e.g. "da Cecot <orders@dacecotfood.com>" — REQUIRED for the
+//                    customer confirmation to actually deliver. Resend's test
+//                    sender (onboarding@resend.dev) can only email the account
+//                    owner, so customer confirmations need the dacecotfood.com
+//                    domain verified in Resend and RESEND_FROM set to it.
+//   RESEND_TO        where store notifications land. Defaults to info@dacecotfood.com
 
-// Where form notifications are delivered. Overridable via the RESEND_TO env var.
-// Delivers to da Cecot's own inbox. Note: the Resend account/key must be able
-// to send to this address — either info@dacecotfood.com is the Resend account's
-// verified address, or the dacecotfood.com domain is verified in Resend.
 const TO = process.env.RESEND_TO || 'info@dacecotfood.com';
+const FROM = process.env.RESEND_FROM || 'da Cecot Website <onboarding@resend.dev>';
+
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+const humanize = (k) => k.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase());
+
+// Fire a single email through Resend. Returns { ok, status, detail }.
+async function sendEmail(key, { to, subject, html, text, replyTo }) {
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: FROM, to: [to], reply_to: replyTo, subject, html, text })
+    });
+    if (!r.ok) {
+      const detail = await r.text();
+      console.error('Resend error', r.status, detail);
+      return { ok: false, status: r.status, detail };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error('Resend exception', err);
+    return { ok: false, status: 0, detail: String(err && err.message || err) };
+  }
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -35,84 +62,110 @@ module.exports = async (req, res) => {
   if (data._honey) return res.status(200).json({ success: true });
 
   const subject = String(data._subject || 'New message — da Cecot Food').slice(0, 200);
-  // Friendly label for the body, derived from the subject (e.g. "Sunday Pasta Class Booking").
   const formName = subject.replace(/\s*[—–-]\s*da Cecot.*$/i, '').trim() || 'website enquiry';
 
-  const humanize = function (k) {
-    return k.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
-      .replace(/\b\w/g, function (c) { return c.toUpperCase(); });
-  };
-  const esc = function (s) {
-    return String(s == null ? '' : s).replace(/[&<>]/g, function (c) {
-      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c];
-    });
-  };
-
-  // Order: contact details first, free-text notes last, everything else between.
-  const all = Object.keys(data).filter(function (k) { return k !== '_subject' && k !== '_honey'; });
+  // ---- Build the STORE notification (unchanged behaviour) ----
+  const all = Object.keys(data).filter((k) => k !== '_subject' && k !== '_honey');
   const top = ['name', 'email', 'phone'];
   const last = ['notes', 'message'];
-  const ordered = top.filter(function (k) { return all.indexOf(k) > -1; })
-    .concat(all.filter(function (k) { return top.indexOf(k) < 0 && last.indexOf(k) < 0; }))
-    .concat(last.filter(function (k) { return all.indexOf(k) > -1; }));
-  const fields = ordered.map(function (k) { return [k, data[k]]; })
-    .filter(function (e) { return String(e[1] == null ? '' : e[1]).trim() !== ''; });
+  const ordered = top.filter((k) => all.indexOf(k) > -1)
+    .concat(all.filter((k) => top.indexOf(k) < 0 && last.indexOf(k) < 0))
+    .concat(last.filter((k) => all.indexOf(k) > -1));
+  const fields = ordered.map((k) => [k, data[k]])
+    .filter((e) => String(e[1] == null ? '' : e[1]).trim() !== '');
 
-  const customer = (typeof data.name === 'string' && data.name.trim()) ? data.name.trim() : 'the customer';
+  const customerName = (typeof data.name === 'string' && data.name.trim()) ? data.name.trim() : 'the customer';
 
-  const rows = fields.map(function (e) {
-    return '<tr>' +
+  const rows = fields.map((e) =>
+    '<tr>' +
       '<td style="padding:7px 18px 7px 0;font-weight:600;color:#3F512E;white-space:nowrap;vertical-align:top">' + esc(humanize(e[0])) + '</td>' +
       '<td style="padding:7px 0;color:#2b2b2b;vertical-align:top">' + esc(e[1]).replace(/\n/g, '<br>') + '</td>' +
-    '</tr>';
-  }).join('');
-  const html =
+    '</tr>'
+  ).join('');
+  const storeHtml =
     '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;max-width:560px;margin:0 auto">' +
       '<p style="font-size:15px;margin:0">You have a new <strong>' + esc(formName) + '</strong> from the website:</p>' +
       '<table style="font-size:14px;line-height:1.5;border-collapse:collapse;margin:14px 0 0">' + rows + '</table>' +
-      '<p style="font-size:13px;color:#555;margin:22px 0 0">Just reply to this email to get back to ' + esc(customer) + ' directly.</p>' +
+      '<p style="font-size:13px;color:#555;margin:22px 0 0">Just reply to this email to get back to ' + esc(customerName) + ' directly.</p>' +
       '<p style="font-size:12px;color:#999;margin:6px 0 0">Sent from dacecotfood.com</p>' +
     '</div>';
+  const labelWidth = fields.reduce((m, e) => Math.max(m, humanize(e[0]).length), 0);
+  const padLabel = (s) => { while (s.length < labelWidth) { s += ' '; } return s; };
+  const storeText = 'You have a new ' + formName + ' from the website:\n\n' +
+    fields.map((e) => padLabel(humanize(e[0])) + '   ' + String(e[1]).replace(/\n/g, ' ')).join('\n') +
+    '\n\nJust reply to this email to get back to ' + customerName + ' directly.';
 
-  const labelWidth = fields.reduce(function (m, e) { return Math.max(m, humanize(e[0]).length); }, 0);
-  const padLabel = function (s) { while (s.length < labelWidth) { s += ' '; } return s; };
-  const text = 'You have a new ' + formName + ' from the website:\n\n' +
-    fields.map(function (e) { return padLabel(humanize(e[0])) + '   ' + String(e[1]).replace(/\n/g, ' '); }).join('\n') +
-    '\n\nJust reply to this email to get back to ' + customer + ' directly.';
+  const customerEmail = (typeof data.email === 'string' && /.+@.+\..+/.test(data.email.trim())) ? data.email.trim() : null;
 
-  const replyTo = (typeof data.email === 'string' && data.email.indexOf('@') > 0) ? data.email : undefined;
-
-  try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'da Cecot Website <onboarding@resend.dev>',
-        to: [TO],
-        reply_to: replyTo,
-        subject: subject,
-        html: html,
-        text: text
-      })
+  // ---- Send the store notification (this is the critical one) ----
+  const storeRes = await sendEmail(key, {
+    to: TO,
+    subject,
+    html: storeHtml,
+    text: storeText,
+    replyTo: customerEmail || undefined
+  });
+  if (!storeRes.ok) {
+    return res.status(502).json({
+      success: false, error: 'Send failed',
+      resendStatus: storeRes.status, resendDetail: storeRes.detail,
+      attemptedFrom: FROM, attemptedTo: TO
     });
-
-    if (!r.ok) {
-      const detail = await r.text();
-      console.error('Resend error', r.status, detail);
-      // TEMP DIAGNOSTIC: surface Resend's actual rejection reason so we can see
-      // why sends fail in production. Remove once forms are confirmed working.
-      return res.status(502).json({
-        success: false,
-        error: 'Send failed',
-        resendStatus: r.status,
-        resendDetail: detail,
-        attemptedFrom: process.env.RESEND_FROM || 'da Cecot Website <onboarding@resend.dev>',
-        attemptedTo: TO
-      });
-    }
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    console.error('Resend exception', err);
-    return res.status(502).json({ success: false, error: 'Send failed', exception: String(err && err.message || err) });
   }
+
+  // ---- Send the CUSTOMER confirmation (best-effort) ----
+  // Any submission that carries the customer's email gets a friendly confirmation.
+  // Orders (pasta shop) get an order-style receipt; other forms get a generic
+  // "we received your message" note. Never blocks the success response.
+  let customerConfirmation = 'skipped';
+  const isOrder = /pasta shop order/i.test(subject) || data.item || data.pickup_day || data.quantity;
+  if (customerEmail) {
+    const firstName = customerName === 'the customer' ? 'there' : customerName.split(/\s+/)[0];
+
+    // Order detail rows (item, quantity, pickup day, allergies, notes) when present.
+    const detailKeys = ['item', 'quantity', 'pickup_day', 'pickup_time', 'allergies', 'notes'];
+    const detailRows = detailKeys
+      .filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
+      .map((k) =>
+        '<tr>' +
+          '<td style="padding:6px 18px 6px 0;font-weight:600;color:#3F512E;white-space:nowrap;vertical-align:top">' + esc(humanize(k)) + '</td>' +
+          '<td style="padding:6px 0;color:#2b2b2b;vertical-align:top">' + esc(data[k]).replace(/\n/g, '<br>') + '</td>' +
+        '</tr>'
+      ).join('');
+
+    let intro, closing, subjectLine;
+    if (isOrder) {
+      subjectLine = 'We\'ve received your order — da Cecot Food';
+      intro = 'Grazie, ' + esc(firstName) + '! We\'ve received your pasta-shop order and the kitchen has it. We\'ll confirm your pickup time and total by phone or email shortly.';
+      closing = 'If you paid online, your payment was handled securely by Square and you\'ll have a Square receipt too. Questions? Just reply to this email or call us at (825) 888-4218.';
+    } else {
+      subjectLine = 'Thanks for reaching out — da Cecot Food';
+      intro = 'Grazie, ' + esc(firstName) + '! We\'ve received your message and someone from the da Cecot family will get back to you shortly.';
+      closing = 'Questions in the meantime? Just reply to this email or call us at (825) 888-4218.';
+    }
+
+    const custHtml =
+      '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;max-width:560px;margin:0 auto">' +
+        '<h2 style="font-family:Georgia,\'Times New Roman\',serif;color:#4a1e18;font-size:22px;margin:0 0 12px">da Cecot Food</h2>' +
+        '<p style="font-size:15px;line-height:1.6;margin:0 0 14px">' + intro + '</p>' +
+        (detailRows ? '<table style="font-size:14px;line-height:1.5;border-collapse:collapse;margin:0 0 16px;background:#f9f7ef;border-radius:8px;padding:4px">' + detailRows + '</table>' : '') +
+        '<p style="font-size:14px;line-height:1.6;color:#555;margin:0 0 18px">' + closing + '</p>' +
+        '<p style="font-size:12px;color:#999;margin:0">da Cecot Food Inc · Whyte Avenue, Edmonton · dacecotfood.com</p>' +
+      '</div>';
+    const custText = intro.replace(/&#39;/g, "'") + '\n\n' +
+      detailKeys.filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
+        .map((k) => humanize(k) + ': ' + String(data[k]).replace(/\n/g, ' ')).join('\n') +
+      '\n\n' + closing.replace(/&#39;/g, "'") + '\n\nda Cecot Food Inc · Whyte Avenue, Edmonton';
+
+    const custRes = await sendEmail(key, {
+      to: customerEmail,
+      subject: subjectLine,
+      html: custHtml,
+      text: custText,
+      replyTo: TO
+    });
+    customerConfirmation = custRes.ok ? 'sent' : ('failed:' + custRes.status);
+  }
+
+  return res.status(200).json({ success: true, customerConfirmation });
 };

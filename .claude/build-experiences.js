@@ -36,6 +36,47 @@ function weeklyDateOptions(startISO, count) {
 const guestOptions = (max) => Array.from({ length: max }, (_, i) => `<option>${i + 1} guest${i ? 's' : ''}</option>`).join('');
 const WD_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+/* ---- Pasta class schedule + cap (editable; CMS-driven once content.json is wired) ----
+   Sunday classes run every Sunday Sep 20 – Nov 30, 2026, EXCEPT the first Sunday
+   of each month — da Cecot is closed the first Sunday of every month (Oct 4 &
+   Nov 1 are therefore skipped). Cap: 12 guests per class. */
+const CLASS_MAX = 12;
+const CLASS_DATES = [
+  'Sunday, September 20, 2026',
+  'Sunday, September 27, 2026',
+  'Sunday, October 11, 2026',
+  'Sunday, October 18, 2026',
+  'Sunday, October 25, 2026',
+  'Sunday, November 8, 2026',
+  'Sunday, November 15, 2026',
+  'Sunday, November 22, 2026',
+  'Sunday, November 29, 2026'
+];
+
+// Turn full date strings into radio "pills". Short label: "Sun · Sep 20".
+function datePills(name, dates, required) {
+  const WD3 = { Sunday: 'Sun', Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat' };
+  const MO3 = { January: 'Jan', February: 'Feb', March: 'Mar', April: 'Apr', May: 'May', June: 'Jun', July: 'Jul', August: 'Aug', September: 'Sep', October: 'Oct', November: 'Nov', December: 'Dec' };
+  return dates.map((d, i) => {
+    const m = d.match(/^(\w+), (\w+) (\d+),/);
+    const short = m ? `${WD3[m[1]]} · ${MO3[m[2]]} ${m[3]}` : d;
+    return `<label class="date-pill"><input type="radio" name="${name}" value="${d}"${i === 0 && required ? ' required' : ''}><span>${short}</span></label>`;
+  }).join('\n                ');
+}
+
+// Next `count` upcoming dates that fall on `targetDow` (0=Sun..6=Sat), from today.
+// Used for the open-ended Thursday drop-in so its list never goes stale.
+function upcomingWeekdays(targetDow, count) {
+  const WD = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const MO = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  while (d.getDay() !== targetDow) d.setDate(d.getDate() + 1);
+  const out = [];
+  for (let i = 0; i < count; i++) { out.push(`${WD[d.getDay()]}, ${MO[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`); d.setDate(d.getDate() + 7); }
+  return out;
+}
+const DROP_IN_DATES = upcomingWeekdays(4, 6); // next 6 Thursdays
+
 /* Interactive booking calendar — JS in main.js hydrates it (weekday-only, blocks first weekday of month if set). */
 function bookingCalendar({ weekday, blockFirst = false, weeks = 8, start, name, prompt }) {
   const dow = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => `<span>${d}</span>`).join('');
@@ -188,7 +229,7 @@ ${faqBlock(hubFaqs)}
 const classFaqs = [
   { q: 'Do I need any cooking experience?', a: 'Not at all. Our Sunday pasta classes are beginner-friendly and fully guided. Whether you have never touched a rolling pin or you cook every night, our team walks you through every step from dough to plate.' },
   { q: 'What is included in a pasta class?', a: 'Your spot includes hands-on instruction, all ingredients and equipment, an apron to use, the pasta you make to enjoy together at the end, and the recipes to take home so you can recreate them.' },
-  { q: 'How long is a class and how many people can attend?', a: 'Classes run about 2.5 to 3 hours and are capped at 15 guests so everyone gets personal attention. They run on select Sundays — contact us for the next available dates.' },
+  { q: 'How long is a class and how many people can attend?', a: 'Classes run about 2.5 to 3 hours and are capped at 12 guests so everyone gets personal attention. They run every Sunday evening — except the first Sunday of each month, when we are closed. See the booking form for upcoming dates.' },
   { q: 'Can I come on my own or book for a couple?', a: 'Both work beautifully. Classes are $95 per guest and solo guests are always welcome — most leave with new friends.' },
   { q: 'Can I buy a pasta class as a gift?', a: 'Yes — a pasta class makes a memorable gift. Reach out at (825) 888-4218 or info@dacecotfood.com and we will help you arrange it.' }
 ];
@@ -222,9 +263,9 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
         <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="spc-incl-h">Booking information</h2></div>
         <div class="info-grid reveal">
           <div><h3>$95 per guest</h3><p>Adults only (18+).</p></div>
-          <div><h3>5:00 – 8:30 PM</h3><p>Weekly · Every Sunday.</p></div>
-          <div><h3>4–12 guests</h3><p>An intimate table, room for one more.</p></div>
-          <div><h3>First class</h3><p>Sunday, June 28, 2026.</p></div>
+          <div><h3>5:00 – 8:30 PM</h3><p>Every Sunday · Sep 20 – Nov 30.</p></div>
+          <div><h3>Up to ${CLASS_MAX} guests</h3><p>Small classes — ${CLASS_MAX} seats max per Sunday.</p></div>
+          <div><h3>Please note</h3><p>Closed the first Sunday of each month.</p></div>
         </div>
       </div>
     </section>
@@ -233,7 +274,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
       <div class="container narrow reveal">
         <div class="text-center">
           <h2 id="spc-book-h">Book your class spot</h2>
-          <p>Classes are $95 per guest, run from 5–8:30 PM, and are capped at 12 guests. Choose one of our upcoming class dates below — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+          <p>Classes are $95 per guest, run from 5–8:30 PM, and are capped at ${CLASS_MAX} guests. Choose one of our upcoming class dates below — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
         <div class="booking" style="margin-top:32px;">
           <form data-formsubmit data-pay-url="https://square.link/u/mTkWSnl5" data-subject="Sunday Pasta Class Booking — da Cecot" aria-label="Sunday pasta class booking request">
@@ -241,15 +282,14 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
             <fieldset class="date-picker">
               <legend class="date-picker__legend">Choose your class date</legend>
               <div class="date-picker__grid">
-                <label class="date-pill"><input type="radio" name="class_date" value="Sunday, June 28, 2026" required><span>Sun · Jun 28</span></label>
-                <label class="date-pill"><input type="radio" name="class_date" value="Sunday, July 12, 2026"><span>Sun · Jul 12</span></label>
-                <label class="date-pill"><input type="radio" name="class_date" value="Sunday, August 9, 2026"><span>Sun · Aug 9</span></label>
-                <label class="date-pill"><input type="radio" name="class_date" value="Sunday, September 20, 2026"><span>Sun · Sep 20</span></label>
+                ${datePills('class_date', CLASS_DATES, true)}
               </div>
+              <p class="date-picker__note" style="margin-top:12px; font-size:0.9em; opacity:0.75;">Closed the first Sunday of each month.</p>
             </fieldset>
             <div class="field" style="margin-top:22px;">
-              <label for="spc-guests">Number of guests</label>
-              <select id="spc-guests" name="guests">${guestOptions(12)}</select>
+              <label for="spc-guests">Number of guests <span style="font-weight:400;opacity:0.7;">(max ${CLASS_MAX})</span></label>
+              <select id="spc-guests" name="guests">${guestOptions(CLASS_MAX)}</select>
+              <p class="field__hint" style="margin-top:6px; font-size:0.85em; opacity:0.7;">Classes are limited to ${CLASS_MAX} guests total.</p>
             </div>
             <div class="form-row">
               <div class="field"><label for="spc-name">Name</label><input type="text" id="spc-name" name="name" required></div>
@@ -282,12 +322,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
             <fieldset class="date-picker">
               <legend class="date-picker__legend">Choose your Thursday</legend>
               <div class="date-picker__grid">
-                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, July 2, 2026" required><span>Thu · Jul 2</span></label>
-                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, July 9, 2026"><span>Thu · Jul 9</span></label>
-                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, July 16, 2026"><span>Thu · Jul 16</span></label>
-                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, July 23, 2026"><span>Thu · Jul 23</span></label>
-                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, July 30, 2026"><span>Thu · Jul 30</span></label>
-                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, August 6, 2026"><span>Thu · Aug 6</span></label>
+                ${datePills('drop_in_date', DROP_IN_DATES, true)}
               </div>
             </fieldset>
             <div class="field" style="margin-top:22px;">

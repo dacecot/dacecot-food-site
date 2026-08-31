@@ -163,6 +163,59 @@
       var omProduct = orderModal.querySelector('[data-order-product]');
       var omNote = orderModal.querySelector('[data-order-note]');
       var omSubmit = orderModal.querySelector('[data-order-submit]');
+
+      /* Pickup-time picker — offers only times inside our opening hours for the
+         chosen day (from the #pickup-hours JSON). Closed days (Wed, first Sunday
+         of the month) are blocked with a clear message. */
+      var omDay = orderModal.querySelector('[name="pickup_day"]');
+      var omTime = orderModal.querySelector('[name="pickup_time"]');
+      var omPickNote = orderModal.querySelector('[data-pickup-note]');
+      var PICK_HOURS = {}, pickFirstSunClosed = false;
+      try {
+        var phRaw = document.getElementById('pickup-hours');
+        var phCfg = phRaw ? JSON.parse(phRaw.textContent) : {};
+        PICK_HOURS = phCfg.hours || {}; pickFirstSunClosed = !!phCfg.firstSundayClosed;
+      } catch (e) {}
+      var PICK_STEP = 30;
+      function pickFmt(m) {
+        var h = Math.floor(m / 60), mm = m % 60, ap = h < 12 ? 'AM' : 'PM', hh = h % 12;
+        if (hh === 0) hh = 12;
+        return hh + ':' + String(mm).padStart(2, '0') + ' ' + ap;
+      }
+      function updatePickup() {
+        if (!omTime) return;
+        var v = omDay ? omDay.value : '';
+        if (!v) {
+          omTime.innerHTML = '<option value="">Choose a pickup day first…</option>';
+          omTime.disabled = true;
+          if (omPickNote) omPickNote.textContent = 'Pickup times follow our opening hours.';
+          return;
+        }
+        var p = v.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]), dow = d.getDay();
+        var firstSun = pickFirstSunClosed && dow === 0 && d.getDate() <= 7;
+        var wins = PICK_HOURS[dow] || [];
+        if (!wins.length || firstSun) {
+          omTime.innerHTML = '<option value="">Closed — choose another day</option>';
+          omTime.disabled = true;
+          if (omPickNote) omPickNote.textContent = firstSun
+            ? "We're closed the first Sunday of every month — please choose another day."
+            : "We're closed that day — please choose another.";
+          return;
+        }
+        var opts = '<option value="">Select a time</option>';
+        wins.forEach(function (w) {
+          for (var t = w[0]; t <= w[1]; t += PICK_STEP) opts += '<option value="' + pickFmt(t) + '">' + pickFmt(t) + '</option>';
+        });
+        omTime.innerHTML = opts;
+        omTime.disabled = false;
+        if (omPickNote) omPickNote.textContent = 'Pickup during our opening hours on your chosen day.';
+      }
+      if (omDay) {
+        var pickToday = new Date();
+        omDay.min = pickToday.getFullYear() + '-' + String(pickToday.getMonth() + 1).padStart(2, '0') + '-' + String(pickToday.getDate()).padStart(2, '0');
+        omDay.addEventListener('change', updatePickup);
+      }
+
       var openOrder = function (btn) {
         var product = btn.getAttribute('data-product') || 'Order';
         var price = btn.getAttribute('data-price') || '';
@@ -174,6 +227,7 @@
         if (pay) { omForm.dataset.payUrl = pay; if (omNote) omNote.style.display = ''; if (omSubmit) omSubmit.textContent = 'Proceed to Payment'; }
         else { delete omForm.dataset.payUrl; if (omNote) omNote.style.display = 'none'; if (omSubmit) omSubmit.textContent = 'Send My Order'; }
         omForm.querySelectorAll('.form-success, .form-error').forEach(function (e) { e.classList.remove('show'); });
+        updatePickup();
         orderModal.hidden = false;
         document.body.classList.add('nav-open');
       };

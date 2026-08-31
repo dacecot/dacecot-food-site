@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
   const formName = subject.replace(/\s*[—–-]\s*da Cecot.*$/i, '').trim() || 'website enquiry';
 
   // ---- Build the STORE notification (unchanged behaviour) ----
-  const all = Object.keys(data).filter((k) => k !== '_subject' && k !== '_honey');
+  const all = Object.keys(data).filter((k) => k !== '_subject' && k !== '_honey' && k !== 'pay_link');
   const top = ['name', 'email', 'phone'];
   const last = ['notes', 'message'];
   const ordered = top.filter((k) => all.indexOf(k) > -1)
@@ -133,11 +133,18 @@ module.exports = async (req, res) => {
         '</tr>'
       ).join('');
 
+    // A "complete your payment" button when the front-end passed a Square link.
+    const payLink = (typeof data.pay_link === 'string' && /^https:\/\/(square\.link|checkout\.square)/i.test(data.pay_link.trim())) ? data.pay_link.trim() : '';
+    const payButton = payLink
+      ? '<p style="margin:0 0 18px"><a href="' + esc(payLink) + '" style="display:inline-block;background:#ad5217;color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px">Complete your payment</a></p>'
+      : '';
+    const payLine = payLink ? ('\nComplete your payment: ' + payLink + '\n') : '';
+
     let intro, closing, subjectLine;
     if (isOrder) {
       subjectLine = 'We\'ve received your order — da Cecot Food';
       intro = 'Grazie, ' + esc(firstName) + '! We\'ve received your pasta-shop order and the kitchen has it. We\'ll confirm your pickup time and total by phone or email shortly.';
-      closing = 'If you paid online, your payment was handled securely by Square and you\'ll have a Square receipt too. Questions? Just reply to this email or call us at (825) 888-4218.';
+      closing = (payLink ? 'You can complete your payment securely with the button above (Square) any time. ' : 'If you paid online, your payment was handled securely by Square and you\'ll have a Square receipt too. ') + 'Questions? Just reply to this email or call us at (825) 888-4218.';
     } else {
       subjectLine = 'Thanks for reaching out — da Cecot Food';
       intro = 'Grazie, ' + esc(firstName) + '! We\'ve received your message and someone from the da Cecot family will get back to you shortly.';
@@ -149,12 +156,14 @@ module.exports = async (req, res) => {
         '<h2 style="font-family:Georgia,\'Times New Roman\',serif;color:#4a1e18;font-size:22px;margin:0 0 12px">da Cecot Food</h2>' +
         '<p style="font-size:15px;line-height:1.6;margin:0 0 14px">' + intro + '</p>' +
         (detailRows ? '<table style="font-size:14px;line-height:1.5;border-collapse:collapse;margin:0 0 16px;background:#f9f7ef;border-radius:8px;padding:4px">' + detailRows + '</table>' : '') +
+        payButton +
         '<p style="font-size:14px;line-height:1.6;color:#555;margin:0 0 18px">' + closing + '</p>' +
         '<p style="font-size:12px;color:#999;margin:0">da Cecot Food Inc · Whyte Avenue, Edmonton · dacecotfood.com</p>' +
       '</div>';
     const custText = intro.replace(/&#39;/g, "'") + '\n\n' +
       detailKeys.filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
         .map((k) => humanize(k) + ': ' + String(data[k]).replace(/\n/g, ' ')).join('\n') +
+      payLine +
       '\n\n' + closing.replace(/&#39;/g, "'") + '\n\nda Cecot Food Inc · Whyte Avenue, Edmonton';
 
     const custRes = await sendEmail(key, {

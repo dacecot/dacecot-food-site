@@ -129,6 +129,9 @@
 
         var payload = { _subject: form.dataset.subject || 'New message — da Cecot Food' };
         new FormData(form).forEach(function (v, k) { payload[k] = v; });
+        // Pass the Square checkout link so the confirmation email can include a
+        // "complete your payment" button (a fallback if they don't pay right away).
+        if (form.dataset.payUrl) payload.pay_link = form.dataset.payUrl;
 
         fetch('/api/send', {
           method: 'POST',

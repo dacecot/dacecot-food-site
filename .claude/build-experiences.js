@@ -4,10 +4,11 @@
    ============================================================ */
 const B = require('./build.js');
 const { pages, page, breadcrumb, breadcrumbSchema, faqBlock, faqSchema, cta, img, IMG, BASE, EXPERIENCE_PAGES, ROOT, fs, path } = B;
+const content = require('../lib/cms/content');
 
 const NAP = {
-  name: 'da Cecot Food Inc', phone: '(825) 888-4218',
-  street: '82 Avenue (Whyte Avenue) & 104 Street', city: 'Edmonton', region: 'AB', country: 'CA'
+  name: content.get('businessName'), phone: content.get('phone'),
+  street: '82 Avenue (Whyte Avenue) & 104 Street', city: content.get('city'), region: content.get('region'), country: 'CA'
 };
 const POSTAL_ADDRESS = {
   '@type': 'PostalAddress', streetAddress: NAP.street, addressLocality: NAP.city,
@@ -40,18 +41,8 @@ const WD_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
    Sunday classes run every Sunday Sep 20 – Nov 30, 2026, EXCEPT the first Sunday
    of each month — da Cecot is closed the first Sunday of every month (Oct 4 &
    Nov 1 are therefore skipped). Cap: 12 guests per class. */
-const CLASS_MAX = 12;
-const CLASS_DATES = [
-  'Sunday, September 20, 2026',
-  'Sunday, September 27, 2026',
-  'Sunday, October 11, 2026',
-  'Sunday, October 18, 2026',
-  'Sunday, October 25, 2026',
-  'Sunday, November 8, 2026',
-  'Sunday, November 15, 2026',
-  'Sunday, November 22, 2026',
-  'Sunday, November 29, 2026'
-];
+const CLASS_MAX = content.num('classMax');
+const CLASS_DATES = content.list('classDates');
 
 // Turn full date strings into radio "pills". Short label: "Sun · Sep 20".
 function datePills(name, dates, required) {

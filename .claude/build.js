@@ -11,15 +11,21 @@ const BASE = 'https://www.dacecotfood.com';
 // Safari) always fetch the latest assets after each deploy instead of stale cache.
 const VERSION = Date.now();
 
+/* ---- editable content (CMS) ----
+   Values Erika can change via /admin live here in content.json; this loader
+   falls back to the current defaults per key, so an absent/empty store renders
+   exactly like before. See lib/cms/schema.js for the editable fields. */
+const content = require('../lib/cms/content');
+
 /* ---- shared business data ---- */
 const NAP = {
-  name: 'da Cecot Food Inc',
-  phone: '(825) 888-4218',
-  phoneHref: '+18258884218',
-  email: 'info@dacecotfood.com',
-  street: 'Whyte Ave (82 Ave) & 104 Street',
-  city: 'Edmonton',
-  region: 'AB',
+  name: content.get('businessName'),
+  phone: content.get('phone'),
+  phoneHref: content.phoneHref(),
+  email: content.get('email'),
+  street: content.get('streetDisplay'),
+  city: content.get('city'),
+  region: content.get('region'),
   country: 'CA',
   mapsQuery: 'Whyte Avenue and 104 Street, Edmonton, AB'
 };
@@ -35,14 +41,14 @@ const MAPS_LINK = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.maps
    phone/email. Set it and re-run `node .claude/build.js` to go live.
    NOTE: Sunday pasta classes still book + pay $95/guest via Square checkout
    on the Experiences page — that is intentionally unchanged. */
-const RESERVATION_BOOKING_URL = 'https://dacecotfood.wixsite.com/my-site';
+const RESERVATION_BOOKING_URL = content.url('reservationUrl');
 
 const IMG = {
-  hero:       'images/food/homepage-hero.jpg',
+  hero:       content.get('heroImage') || 'images/food/homepage-hero.jpg',
   pasta:      'images/food/ravioli-butter-sage.jpg',
   food:       'images/food/cicchetti.jpg',
   greenpasta: 'images/raw-pasta/raw-pasta.jpg',
-  family:     'images/general/cecot-family.jpg',
+  family:     content.get('aboutImage') || 'images/general/cecot-family.jpg',
   about2:     'images/general/whatsapp-1.jpg',
   aboutHero:  'images/general/whatsapp-2.jpg',
   storefront: 'images/general/storefront-evening.jpg',
@@ -89,7 +95,10 @@ function header(active) {
     `<li><a href="${p.slug}.html"${active === p.slug ? ' class="active" aria-current="page"' : ''}>${p.label}</a></li>`
   ).join('\n          ');
   const expActive = EXPERIENCE_PAGES.some(p => p.slug === active);
-  return `  <header class="header">
+  const announce = (content.bool('announcementEnabled') && String(content.get('announcementText') || '').trim())
+    ? `  <div class="site-banner" role="region" aria-label="Announcement" style="background:#4a1e18;color:#f9f7ef;text-align:center;padding:9px 16px;font-size:0.9rem;line-height:1.4;font-weight:500;">${content.text('announcementText')}</div>\n`
+    : '';
+  return `${announce}  <header class="header">
     <nav class="nav" aria-label="Primary">
       <a href="index.html" class="logo" aria-label="da Cecot Food — home">da Cecot</a>
       <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav"><span></span><span></span><span></span></button>
@@ -353,8 +362,8 @@ pages.push(page({
   body: `    <section class="hero hero--home hero--parallax" style="background-image:url('${IMG.hero}');">
       <div class="hero__inner reveal">
         <span class="label">da Cecot · On Whyte Avenue, Edmonton</span>
-        <h1 class="hero__brand">Fresh Handmade Pasta on Whyte Ave</h1>
-        <p class="hero__tag">Handmade pasta, Italian hospitality, and a table where everyone belongs. Crafted daily on Whyte Avenue by the Cecot family — inspired by the traditions of sharing food, stories, and meaningful moments around the table.</p>
+        <h1 class="hero__brand">${content.text('heroHeading')}</h1>
+        <p class="hero__tag">${content.text('heroTag')}</p>
         <div class="btn-group">
           <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
           <a href="experiences.html" class="btn btn--brown">Explore Experiences</a>

@@ -309,8 +309,11 @@
     ]));
 
     var tabs = h('div', { class: 'filter-row' }, []);
-    [['today', 'Today'], ['week', 'This Week'], ['upcoming', 'All Upcoming'], ['past', 'Past'], ['__plan', 'Floor Plan'], ['__addimport', 'Add / Import']].forEach(function (t) {
-      tabs.appendChild(h('button', { class: 'btn btn--sm ' + (resView === t[0] ? '' : 'btn--ghost'), onclick: function () { resView = t[0]; renderShell(); } }, [t[1]]));
+    var requestsBtn;
+    [['today', 'Today'], ['week', 'This Week'], ['upcoming', 'All Upcoming'], ['past', 'Past'], ['requests', 'Requests'], ['__plan', 'Floor Plan'], ['__addimport', 'Add / Import']].forEach(function (t) {
+      var b = h('button', { class: 'btn btn--sm ' + (resView === t[0] ? '' : 'btn--ghost'), onclick: function () { resView = t[0]; renderShell(); } }, [t[1]]);
+      if (t[0] === 'requests') requestsBtn = b;
+      tabs.appendChild(b);
     });
     main.appendChild(tabs);
 
@@ -327,10 +330,11 @@
       (r.body.tables || []).forEach(function (t) { tablesById[t.id] = t; });
 
       var totals = r.body.totals || {};
-      wrap.appendChild(h('p', { class: 'res-totals', text: (totals.upcoming || 0) + ' upcoming · ' + (totals.past || 0) + ' past · ' + (totals.all || 0) + ' total' }));
+      if (requestsBtn && totals.requests > 0) requestsBtn.appendChild(h('span', { class: 'req-badge', text: String(totals.requests) }));
+      wrap.appendChild(h('p', { class: 'res-totals', text: (totals.upcoming || 0) + ' upcoming · ' + (totals.past || 0) + ' past · ' + (totals.requests || 0) + ' awaiting approval · ' + (totals.all || 0) + ' total' }));
 
       if (!r.body.days.length) {
-        wrap.appendChild(h('div', { class: 'card', text: resView === 'today' ? 'No reservations today (yet).' : resView === 'past' ? 'No past reservations on record.' : 'No reservations in this view yet.' }));
+        wrap.appendChild(h('div', { class: 'card', text: resView === 'requests' ? 'No requests waiting — larger tables (6+ guests) will appear here for your approval.' : resView === 'today' ? 'No reservations today (yet).' : resView === 'past' ? 'No past reservations on record.' : 'No reservations in this view yet.' }));
         return;
       }
 
@@ -354,6 +358,7 @@
             detailLine('Phone', o.phone ? h('a', { href: 'tel:' + o.phone, text: o.phone }) : h('span', { text: '—' })),
             detailLine('Email', o.email ? h('a', { href: 'mailto:' + o.email, text: o.email }) : h('span', { text: '—' })),
             detailLine('Party', h('span', { text: d.party_size || '—' })),
+            d.allergies ? detailLine('Dietary', h('span', { text: d.allergies })) : null,
             d.notes ? detailLine('Notes', h('span', { text: d.notes })) : null,
             table ? detailLine('Table', h('span', { text: table.name + ' (' + table.seats + ' seats)' + (d.wix_table && d.wix_table.indexOf('+') > -1 ? ' · joined as ' + d.wix_table : '') })) : (d.wix_table ? detailLine('Wix table', h('span', { text: d.wix_table })) : null),
             d.rescheduled_from ? detailLine('Moved from', h('span', { text: d.rescheduled_from })) : null,
@@ -376,7 +381,17 @@
             h('span', { class: 'res-party', text: d.party_size || '' }),
             d.cancelled
               ? h('span', { class: 'chip chip--err', text: 'Cancelled' })
-              : h('button', { class: 'btn btn--sm ' + (table ? 'btn--ghost' : 'btn--green'), text: table ? '🪑 ' + table.name : 'Seat', onclick: function () { openSeatPicker(o, r.body.tables, tablesById, day); } }),
+              : d.approval_status === 'pending'
+                ? h('span', { class: 'res-approve' }, [
+                    h('span', { class: 'chip chip--warn', text: 'Awaiting approval' }),
+                    h('button', { class: 'btn btn--sm btn--green', text: 'Approve', onclick: function () {
+                      resApprove(o, 'approve');
+                    } }),
+                    h('button', { class: 'btn btn--sm btn--danger', text: 'Decline', onclick: function () {
+                      if (window.confirm('Decline ' + (o.name || 'this request') + '? They\'ll be emailed and invited to call.')) resApprove(o, 'decline');
+                    } })
+                  ])
+                : h('button', { class: 'btn btn--sm ' + (table ? 'btn--ghost' : 'btn--green'), text: table ? '🪑 ' + table.name : 'Seat', onclick: function () { openSeatPicker(o, r.body.tables, tablesById, day); } }),
             caret,
             d.cancelled ? null : h('span', { class: 'res-more' }, [
               h('button', { class: 'btn btn--sm btn--ghost', text: '⋯', onclick: function () { openResActions(o); } })
@@ -388,6 +403,13 @@
         wrap.appendChild(list);
       });
     }).catch(function () { wrap.innerHTML = ''; wrap.appendChild(h('div', { class: 'notice', text: 'Could not load reservations.' })); });
+  }
+
+  function resApprove(o, action) {
+    api('reservations', { method: 'POST', csrf: true, body: { action: action, id: o.id } }).then(function (r) {
+      if (r.status === 200 && r.body.ok) { toast(r.body.emailed || 'Done.', 'ok'); renderShell(); }
+      else toast((r.body && r.body.error) || 'Could not update.', 'err');
+    }).catch(function () { toast('Network error.', 'err'); });
   }
 
   function resAction(id, action, extra, done) {

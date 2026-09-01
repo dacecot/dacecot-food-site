@@ -64,8 +64,8 @@ module.exports = async (req, res) => {
   // Table reservations require name, phone and email — enforce server-side too
   // (the form marks them required, but the API must not trust the client).
   if (/table reservation/i.test(String(data._subject || '')) || data.reservation_date) {
-    const missing = ['name', 'phone', 'email'].filter((k) => !String(data[k] == null ? '' : data[k]).trim());
-    if (missing.length) return res.status(400).json({ success: false, error: 'Please fill in your ' + missing.join(', ') + '.' });
+    const missing = ['name', 'phone', 'email', 'allergies'].filter((k) => !String(data[k] == null ? '' : data[k]).trim());
+    if (missing.length) return res.status(400).json({ success: false, error: 'Please fill in your ' + missing.map((k) => k === 'allergies' ? 'allergies/dietary restrictions (type "None" if none)' : k).join(', ') + '.' });
 
     // Capacity guard: the dining room can only hold what the floor plan holds.
     // Sum the party sizes of active reservations within a 2-hour window of the
@@ -242,20 +242,69 @@ module.exports = async (req, res) => {
       closing = 'Questions in the meantime? Just reply to this email or call us at (825) 888-4218.';
     }
 
-    const custHtml =
-      '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;max-width:560px;margin:0 auto">' +
-        '<h2 style="font-family:Georgia,\'Times New Roman\',serif;color:#4a1e18;font-size:22px;margin:0 0 12px">da Cecot Food</h2>' +
-        '<p style="font-size:15px;line-height:1.6;margin:0 0 14px">' + intro + '</p>' +
-        (detailRows ? '<table style="font-size:14px;line-height:1.5;border-collapse:collapse;margin:0 0 16px;background:#f9f7ef;border-radius:8px;padding:4px">' + detailRows + '</table>' : '') +
-        payButton +
-        '<p style="font-size:14px;line-height:1.6;color:#555;margin:0 0 18px">' + closing + '</p>' +
-        '<p style="font-size:12px;color:#999;margin:0">da Cecot Food Inc · Whyte Avenue, Edmonton · dacecotfood.com</p>' +
-      '</div>';
-    const custText = intro.replace(/&#39;/g, "'") + '\n\n' +
-      detailKeys.filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
-        .map((k) => humanize(k) + ': ' + String(data[k]).replace(/\n/g, ' ')).join('\n') +
-      payLine +
-      '\n\n' + closing.replace(/&#39;/g, "'") + '\n\nda Cecot Food Inc · Whyte Avenue, Edmonton';
+    let custHtml, custText;
+    if (isReservation) {
+      // Structured confirmation (mirrors the layout guests knew from Wix):
+      // Reservation details / Restaurant info / Guest details.
+      const niceDate = (() => {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(data.reservation_date || '').trim());
+        if (!m) return String(data.reservation_date || '');
+        const MO = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return MO[+m[2] - 1] + ' ' + (+m[3]) + ', ' + m[1];
+      })();
+      const secHead = (t) => '<p style="font-size:14px;font-weight:700;color:#4a1e18;margin:18px 0 6px">' + t + '</p>';
+      const line = (l, v) => v ? '<p style="font-size:14px;line-height:1.55;margin:0"><span style="color:#6b6157">' + l + ':</span> ' + esc(v) + '</p>' : '';
+      const ADDR = '8137 104 Street NW, Edmonton, AB T6E 4E4, Canada';
+      // Parties above 5 wait for Erika's approval — their email says so.
+      const bigParty = (parseInt(String(data.party_size || '').replace(/[^\d]/g, ''), 10) || 1) > 5;
+      const headline = bigParty ? 'We’ve received your table request' : 'Your reservation is confirmed';
+      const opening = bigParty
+        ? 'Thank you for booking with us! For larger tables we double-check the room first — we’ll confirm your reservation shortly by email.'
+        : 'Thank you for booking with us — this email is your confirmation. Please let us know about any changes.';
+      subjectLine = bigParty ? 'We’ve received your table request — da Cecot Food' : subjectLine;
+      custHtml =
+        '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;max-width:560px;margin:0 auto">' +
+          '<h2 style="font-family:Georgia,\'Times New Roman\',serif;color:#4a1e18;font-size:22px;margin:0 0 4px">da Cecot Food</h2>' +
+          '<p style="font-size:17px;font-weight:700;margin:0 0 14px">' + headline + '</p>' +
+          '<p style="font-size:15px;line-height:1.6;margin:0">Hi ' + esc(firstName) + ',</p>' +
+          '<p style="font-size:15px;line-height:1.6;margin:8px 0 0">' + opening + '</p>' +
+          secHead('Reservation details') +
+          line('Date', niceDate) +
+          line('Time', data.reservation_time) +
+          line('Party size', data.party_size) +
+          line('Dietary restrictions', data.allergies) +
+          (String(data.notes || '').trim() ? line('Notes', data.notes) : '') +
+          secHead('Restaurant info') +
+          '<p style="font-size:14px;line-height:1.55;margin:0">Da Cecot Food Inc<br>' + ADDR + '<br><a href="tel:+18258884218" style="color:#ad5217">+1 825-888-4218</a></p>' +
+          secHead('Guest details') +
+          line('Name', data.name) +
+          line('Phone', data.phone) +
+          line('Email', data.email) +
+          '<p style="font-size:14px;line-height:1.6;color:#555;margin:20px 0 18px">Need to change or cancel? Just reply to this email or call us at (825) 888-4218. A presto!</p>' +
+          '<p style="font-size:12px;color:#999;margin:0">da Cecot Food Inc · Whyte Avenue, Edmonton · dacecotfood.com</p>' +
+        '</div>';
+      custText = headline + '\n\nHi ' + firstName + ',\n' + opening + '\n\n' +
+        'Reservation details:\nDate: ' + niceDate + '\nTime: ' + (data.reservation_time || '') + '\nParty size: ' + (data.party_size || '') + '\nDietary restrictions: ' + (data.allergies || '') +
+        (String(data.notes || '').trim() ? '\nNotes: ' + data.notes : '') +
+        '\n\nRestaurant info:\nDa Cecot Food Inc\n' + ADDR + '\n+1 825-888-4218' +
+        '\n\nGuest details:\nName: ' + (data.name || '') + '\nPhone: ' + (data.phone || '') + '\nEmail: ' + (data.email || '') +
+        '\n\nNeed to change or cancel? Reply to this email or call (825) 888-4218. A presto!';
+    } else {
+      custHtml =
+        '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;max-width:560px;margin:0 auto">' +
+          '<h2 style="font-family:Georgia,\'Times New Roman\',serif;color:#4a1e18;font-size:22px;margin:0 0 12px">da Cecot Food</h2>' +
+          '<p style="font-size:15px;line-height:1.6;margin:0 0 14px">' + intro + '</p>' +
+          (detailRows ? '<table style="font-size:14px;line-height:1.5;border-collapse:collapse;margin:0 0 16px;background:#f9f7ef;border-radius:8px;padding:4px">' + detailRows + '</table>' : '') +
+          payButton +
+          '<p style="font-size:14px;line-height:1.6;color:#555;margin:0 0 18px">' + closing + '</p>' +
+          '<p style="font-size:12px;color:#999;margin:0">da Cecot Food Inc · Whyte Avenue, Edmonton · dacecotfood.com</p>' +
+        '</div>';
+      custText = intro.replace(/&#39;/g, "'") + '\n\n' +
+        detailKeys.filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
+          .map((k) => humanize(k) + ': ' + String(data[k]).replace(/\n/g, ' ')).join('\n') +
+        payLine +
+        '\n\n' + closing.replace(/&#39;/g, "'") + '\n\nda Cecot Food Inc · Whyte Avenue, Edmonton';
+    }
 
     const custRes = await sendEmail(key, {
       to: customerEmail,

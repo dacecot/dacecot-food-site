@@ -11,15 +11,21 @@ const BASE = 'https://www.dacecotfood.com';
 // Safari) always fetch the latest assets after each deploy instead of stale cache.
 const VERSION = Date.now();
 
+/* ---- editable content (CMS) ----
+   Values Erika can change via /admin live here in content.json; this loader
+   falls back to the current defaults per key, so an absent/empty store renders
+   exactly like before. See lib/cms/schema.js for the editable fields. */
+const content = require('../lib/cms/content');
+
 /* ---- shared business data ---- */
 const NAP = {
-  name: 'da Cecot Food Inc',
-  phone: '(825) 888-4218',
-  phoneHref: '+18258884218',
-  email: 'info@dacecotfood.com',
-  street: 'Whyte Ave (82 Ave) & 104 Street',
-  city: 'Edmonton',
-  region: 'AB',
+  name: content.get('businessName'),
+  phone: content.get('phone'),
+  phoneHref: content.phoneHref(),
+  email: content.get('email'),
+  street: content.get('streetDisplay'),
+  city: content.get('city'),
+  region: content.get('region'),
   country: 'CA',
   mapsQuery: 'Whyte Avenue and 104 Street, Edmonton, AB'
 };
@@ -35,14 +41,14 @@ const MAPS_LINK = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.maps
    phone/email. Set it and re-run `node .claude/build.js` to go live.
    NOTE: Sunday pasta classes still book + pay $95/guest via Square checkout
    on the Experiences page — that is intentionally unchanged. */
-const RESERVATION_BOOKING_URL = 'https://dacecotfood.wixsite.com/my-site';
+const RESERVATION_BOOKING_URL = content.url('reservationUrl');
 
 const IMG = {
-  hero:       'images/food/homepage-hero.jpg',
+  hero:       content.get('heroImage') || 'images/food/homepage-hero.jpg',
   pasta:      'images/food/ravioli-butter-sage.jpg',
   food:       'images/food/cicchetti.jpg',
   greenpasta: 'images/raw-pasta/raw-pasta.jpg',
-  family:     'images/general/cecot-family.jpg',
+  family:     content.get('aboutImage') || 'images/general/cecot-family.jpg',
   about2:     'images/general/whatsapp-1.jpg',
   aboutHero:  'images/general/whatsapp-2.jpg',
   storefront: 'images/general/storefront-evening.jpg',
@@ -89,7 +95,10 @@ function header(active) {
     `<li><a href="${p.slug}.html"${active === p.slug ? ' class="active" aria-current="page"' : ''}>${p.label}</a></li>`
   ).join('\n          ');
   const expActive = EXPERIENCE_PAGES.some(p => p.slug === active);
-  return `  <header class="header">
+  const announce = (content.bool('announcementEnabled') && String(content.get('announcementText') || '').trim())
+    ? `  <div class="site-banner" role="region" aria-label="Announcement" style="background:#4a1e18;color:#f9f7ef;text-align:center;padding:9px 16px;font-size:0.9rem;line-height:1.4;font-weight:500;">${content.text('announcementText')}</div>\n`
+    : '';
+  return `${announce}  <header class="header">
     <nav class="nav" aria-label="Primary">
       <a href="index.html" class="logo" aria-label="da Cecot Food — home">da Cecot</a>
       <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav"><span></span><span></span><span></span></button>
@@ -173,8 +182,8 @@ function footer() {
     </div>
     <div class="footer__bottom">
       <div class="footer__bottom-inner">
-        <p>© 2025 da Cecot Food Inc. · Made by hand on Whyte Avenue, Edmonton.</p>
-        <p class="footer__credit">Built by <a href="https://bespokeautomations.ca" target="_blank" rel="noopener">Bespoke Automations</a> &amp; <a href="https://www.unconventionalgroup.ca" target="_blank" rel="noopener">Unconventional Group</a></p>
+        <p>© 2026 da Cecot Food Inc. · Made by hand on Whyte Avenue, Edmonton.</p>
+        <p class="footer__credit">Built by AltaPro AI, an <a href="https://www.unconventionalgroup.ca" target="_blank" rel="noopener">Unconventional Group</a> company</p>
       </div>
     </div>
   </footer>
@@ -200,6 +209,20 @@ const HOURS_SPEC = [
   opens: h.o,
   closes: h.c
 }));
+
+/* ---- Pickup hours by weekday (0=Sun … 6=Sat), as minutes-from-midnight ranges.
+   Mirrors HOURS_SPEC above. Wednesday is closed (absent). The first Sunday of
+   each month is also closed. Consumed client-side by the Pasta Shop order modal
+   to offer only valid pickup times for the chosen day. */
+const PICKUP_HOURS = {
+  0: [[720, 960]],              // Sun 12:00–16:00
+  1: [[990, 1200]],             // Mon 16:30–20:00
+  2: [[720, 900], [990, 1200]], // Tue 12:00–15:00, 16:30–20:00
+  3: [],                        // Wed closed
+  4: [[720, 900], [990, 1200]], // Thu 12:00–15:00, 16:30–20:00
+  5: [[720, 900], [960, 1260]], // Fri 12:00–15:00, 16:00–21:00
+  6: [[720, 1260]]              // Sat 12:00–21:00
+};
 
 const POSTAL_ADDRESS = {
   '@type': 'PostalAddress',
@@ -339,8 +362,8 @@ pages.push(page({
   body: `    <section class="hero hero--home hero--parallax" style="background-image:url('${IMG.hero}');">
       <div class="hero__inner reveal">
         <span class="label">da Cecot · On Whyte Avenue, Edmonton</span>
-        <h1 class="hero__brand">Fresh Handmade Pasta on Whyte Ave</h1>
-        <p class="hero__tag">Handmade pasta, Italian hospitality, and a table where everyone belongs. Crafted daily on Whyte Avenue by the Cecot family — inspired by the traditions of sharing food, stories, and meaningful moments around the table.</p>
+        <h1 class="hero__brand">${content.text('heroHeading')}</h1>
+        <p class="hero__tag">${content.text('heroTag')}</p>
         <div class="btn-group">
           <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
           <a href="experiences.html" class="btn btn--brown">Explore Experiences</a>
@@ -867,8 +890,8 @@ pages.push(page({
 pages.push(page({
   slug: 'pasta-shop',
   active: 'pasta-shop',
-  title: 'Pasta Shop | Fresh Pasta, Ravioli & Sauces — da Cecot, Edmonton',
-  description: 'Fresh pasta made in Edmonton with traditional Italian methods. 450g from $9.95, ravioli, house sauces & the Family Bundle. Order for pickup on Whyte Ave.',
+  title: 'Pasta Shop & Meals | Fresh Pasta, Ravioli & Sauces — da Cecot, Edmonton',
+  description: 'Fresh pasta made in Edmonton with traditional Italian methods. 450g from $9.95, ravioli, lasagna trays & house sauces. Order for pickup on Whyte Ave.',
   ogImage: IMG.product,
   schema: [
     breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'pasta-shop', label: 'Pasta Shop' }])
@@ -878,11 +901,11 @@ pages.push(page({
     <section class="hero hero--page hero--dark hero--parallax" style="background-image:url('images/food/ravioli-making.jpg');" aria-labelledby="shop-h1">
       <div class="hero__inner reveal">
         <span class="label">Our Pastificio</span>
-        <h1 id="shop-h1">Fresh Pasta for Home</h1>
+        <h1 id="shop-h1">Pasta Shop &amp; Meals</h1>
         <p>Fresh pasta made in Edmonton using traditional Italian methods. Prepared fresh for pickup, freezer-friendly, and ready in minutes — perfect for busy families, pasta lovers, and anyone keeping authentic Italian meals ready at home.</p>
         <div class="btn-group">
           <a href="tel:${NAP.phoneHref}" class="btn btn--terra">Call to Order</a>
-          <a href="#bundle-h" class="btn btn--outline">Family Bundle — $39.99</a>
+          <a href="#fresh-pasta-h" class="btn btn--outline">Shop Fresh Pasta</a>
         </div>
       </div>
     </section>
@@ -998,25 +1021,13 @@ pages.push(page({
       </div>
     </section>
 
-    <section class="section section--brown" aria-labelledby="bundle-h">
-      <div class="container text-center narrow reveal">
-        <span class="label">Mix &amp; Match</span>
-        <h2 id="bundle-h">Family Pasta Bundle — $39.99</h2>
-        <p>1 kg of fresh pasta (choose up to 2 shapes) + two 12 oz house sauces. Mix and match your favourites — perfect for freezer stocking and quick weeknight dinners.</p>
-        <div class="btn-group" style="justify-content:center; margin-top:24px;">
-          <button type="button" class="btn btn--terra" data-order-open data-product="Family Pasta Bundle" data-price="$39.99" data-pay="https://square.link/u/4kQeTAoi">Order Bundle · $39.99</button>
-          <a href="tel:${NAP.phoneHref}" class="btn btn--outline">Call to Order</a>
-        </div>
-      </div>
-    </section>
-
     <section class="section section--cream" aria-labelledby="how-h">
       <div class="container">
         <div class="text-center narrow reveal" style="margin-bottom:40px;">
           <h2 id="how-h">How it works.</h2>
         </div>
         <div class="info-grid reveal" data-stagger style="text-align:center;">
-          <div><h3>1 · Choose</h3><p>Pick your pasta shapes, ravioli, sauces, or bundle.</p></div>
+          <div><h3>1 · Choose</h3><p>Pick your pasta shapes, ravioli, or sauces.</p></div>
           <div><h3>2 · Order</h3><p>Call <a href="tel:${NAP.phoneHref}">${NAP.phone}</a> or order online.</p></div>
           <div><h3>3 · Pick up</h3><p>Collect from da Cecot on Whyte Avenue.</p></div>
           <div><h3>4 · Enjoy</h3><p>Cook in minutes — fresh or straight from your freezer.</p></div>
@@ -1094,8 +1105,14 @@ pages.push(page({
             <div class="field"><label for="om-qty">Quantity</label><input type="number" id="om-qty" name="quantity" min="1" value="1" required></div>
             <div class="field"><label for="om-pickup">Day of pickup</label><input type="date" id="om-pickup" name="pickup_day" required></div>
           </div>
+          <div class="field">
+            <label for="om-time">Pickup time</label>
+            <select id="om-time" name="pickup_time" required disabled><option value="">Choose a pickup day first…</option></select>
+            <p class="field__hint" data-pickup-note style="margin-top:6px; font-size:0.85em; opacity:0.75;">Pickup times follow our opening hours.</p>
+          </div>
+          <script id="pickup-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: true })}</script>
           <div class="field"><label for="om-allergies">Any allergies?</label><input type="text" id="om-allergies" name="allergies" placeholder="Gluten, nuts, none…"></div>
-          <div class="field"><label for="om-notes">Pasta shapes &amp; sauces <span style="font-weight:400;opacity:0.7;">(for the bundle, list your choices)</span></label><textarea id="om-notes" name="notes" placeholder="Family Bundle — choose up to 2 pasta shapes + 2 sauces (e.g. tagliatelle &amp; rigatoni, Plasé &amp; Ragù). For single items, note your pasta shape or any preferences."></textarea></div>
+          <div class="field"><label for="om-notes">Pasta shape &amp; preferences <span style="font-weight:400;opacity:0.7;">(optional)</span></label><textarea id="om-notes" name="notes" placeholder="Note your pasta shape, sauce choice, or any preferences (e.g. tagliatelle, Salsa Plasé)."></textarea></div>
           <div class="form-row">
             <div class="field"><label for="om-name">Name</label><input type="text" id="om-name" name="name" required></div>
             <div class="field"><label for="om-phone">Phone</label><input type="tel" id="om-phone" name="phone" required></div>

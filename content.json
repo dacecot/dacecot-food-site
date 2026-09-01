@@ -1,0 +1,27 @@
+{
+  "businessName": "da Cecot Food Inc",
+  "phone": "(825) 888-4218",
+  "email": "info@dacecotfood.com",
+  "streetDisplay": "Whyte Ave (82 Ave) & 104 Street",
+  "city": "Edmonton",
+  "region": "AB",
+  "reservationUrl": "https://dacecotfood.wixsite.com/my-site",
+  "heroHeading": "Fresh Handmade Pasta on Whyte Ave",
+  "heroTag": "Handmade pasta, Italian hospitality, and a table where everyone belongs. Crafted daily on Whyte Avenue by the Cecot family — inspired by the traditions of sharing food, stories, and meaningful moments around the table.",
+  "announcementEnabled": false,
+  "announcementText": "",
+  "classMax": 12,
+  "classDates": [
+    "Sunday, September 20, 2026",
+    "Sunday, September 27, 2026",
+    "Sunday, October 11, 2026",
+    "Sunday, October 18, 2026",
+    "Sunday, October 25, 2026",
+    "Sunday, November 8, 2026",
+    "Sunday, November 15, 2026",
+    "Sunday, November 22, 2026",
+    "Sunday, November 29, 2026"
+  ],
+  "heroImage": "images/food/homepage-hero.jpg",
+  "aboutImage": "images/general/cecot-family.jpg"
+}

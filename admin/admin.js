@@ -1,0 +1,267 @@
+/* da Cecot — Site Manager (admin) SPA. Vanilla JS, no dependencies.
+   Talks to /api/admin/* with the session cookie; mutations carry X-CSRF-Token. */
+(function () {
+  'use strict';
+  var app = document.getElementById('app');
+  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, dirty: {} };
+
+  /* ---------- helpers ---------- */
+  function h(tag, attrs, kids) {
+    var el = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (k) {
+      if (k === 'class') el.className = attrs[k];
+      else if (k === 'html') el.innerHTML = attrs[k];
+      else if (k === 'text') el.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on' && typeof attrs[k] === 'function') el.addEventListener(k.slice(2), attrs[k]);
+      else if (attrs[k] != null) el.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c != null) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return el;
+  }
+  function api(path, opts) {
+    opts = opts || {};
+    var headers = { 'Content-Type': 'application/json' };
+    if (opts.csrf && state.csrf) headers['X-CSRF-Token'] = state.csrf;
+    return fetch('/api/admin/' + path, {
+      method: opts.method || 'GET',
+      credentials: 'same-origin',
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
+  }
+  function toast(msg, kind) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast ' + (kind || ''); t.hidden = false;
+    clearTimeout(toast._t); toast._t = setTimeout(function () { t.hidden = true; }, 3200);
+  }
+
+  /* ---------- boot ---------- */
+  function boot() {
+    api('session').then(function (r) {
+      if (r.body && r.body.authed) { state.csrf = r.body.csrf; state.email = r.body.email; loadDashboard(); }
+      else renderLogin(r.body && r.body.configured === false);
+    }).catch(function () { renderLogin(false); });
+  }
+
+  /* ---------- login ---------- */
+  function renderLogin(notConfigured) {
+    var emailField = h('div', { class: 'field' }, [
+      h('label', { for: 'lg-email', text: 'Email' }),
+      h('input', { id: 'lg-email', type: 'email', autocomplete: 'username', placeholder: 'you@dacecotfood.com' })
+    ]);
+    var pwField = h('div', { class: 'field' }, [
+      h('label', { for: 'lg-pw', text: 'Password' }),
+      h('input', { id: 'lg-pw', type: 'password', autocomplete: 'current-password', placeholder: '••••••••' })
+    ]);
+    var errBox = h('div', { class: 'msg msg--err' });
+    var btn = h('button', { class: 'btn btn--full', type: 'submit', text: 'Sign in' });
+    var form = h('form', { onsubmit: function (e) {
+      e.preventDefault();
+      errBox.classList.remove('show');
+      var email = document.getElementById('lg-email').value.trim();
+      var password = document.getElementById('lg-pw').value;
+      if (!password) { errBox.textContent = 'Please enter your password.'; errBox.classList.add('show'); return; }
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      api('login', { method: 'POST', body: { email: email, password: password } }).then(function (r) {
+        if (r.status === 200 && r.body.ok) { state.csrf = r.body.csrf; loadDashboard(); }
+        else { errBox.textContent = r.body.error || 'Sign in failed.'; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign in'; }
+      }).catch(function () { errBox.textContent = 'Network error. Please try again.'; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign in'; });
+    } }, [emailField, pwField, btn, errBox]);
+
+    var card = h('div', { class: 'login-card' }, [
+      h('div', { class: 'logo', text: 'da Cecot' }),
+      h('p', { class: 'sub', text: 'Site Manager — sign in to edit your website.' }),
+      notConfigured
+        ? h('div', { class: 'msg msg--err show', text: 'Admin isn’t set up yet. Your developer needs to set the admin password first.' })
+        : form
+    ]);
+    app.innerHTML = ''; app.appendChild(h('div', { class: 'login-wrap' }, [card]));
+  }
+
+  /* ---------- dashboard ---------- */
+  function loadDashboard() {
+    api('content').then(function (r) {
+      if (r.status !== 200) { renderLogin(false); return; }
+      state.groups = r.body.groups; state.content = r.body.content || {}; state.base = JSON.parse(JSON.stringify(state.content));
+      state.store = r.body.store; state.active = state.groups[0].id; state.dirty = {};
+      renderShell();
+    });
+  }
+
+  function renderShell() {
+    var nav = h('nav', { class: 'side' }, []);
+    nav.appendChild(h('div', { class: 'logo', text: 'da Cecot' }));
+    state.groups.forEach(function (g) {
+      nav.appendChild(h('button', { class: 'navbtn' + (state.active === g.id ? ' active' : ''), onclick: function () { state.active = g.id; renderShell(); } }, [
+        h('span', { class: 'ic', text: g.icon || '•' }), h('span', { text: g.title })
+      ]));
+    });
+    nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__assistant' ? ' active' : ''), onclick: function () { state.active = '__assistant'; renderShell(); } }, [
+      h('span', { class: 'ic', text: '💬' }), h('span', { text: 'Assistant' })
+    ]));
+    nav.appendChild(h('div', { class: 'spacer' }));
+    nav.appendChild(h('a', { class: 'navbtn', href: '/', target: '_blank' }, [h('span', { class: 'ic', text: '🔗' }), h('span', { text: 'View site' })]));
+    if (state.email) nav.appendChild(h('div', { class: 'who', text: state.email }));
+    nav.appendChild(h('button', { class: 'navbtn', onclick: logout }, [h('span', { class: 'ic', text: '↩' }), h('span', { text: 'Sign out' })]));
+
+    var main = h('main', { class: 'main' }, []);
+    if (state.active === '__assistant') renderAssistant(main);
+    else renderGroup(main, state.groups.filter(function (g) { return g.id === state.active; })[0]);
+
+    app.innerHTML = ''; app.appendChild(h('div', { class: 'shell' }, [nav, main]));
+  }
+
+  function logout() {
+    api('logout', { method: 'POST', csrf: true }).then(function () { state.csrf = null; renderLogin(false); });
+  }
+
+  /* ---------- group form ---------- */
+  function renderGroup(main, group) {
+    main.appendChild(h('div', { class: 'page-head' }, [
+      h('h1', { text: group.title }),
+      group.intro ? h('p', { text: group.intro }) : null
+    ]));
+    var card = h('div', { class: 'card' }, []);
+    group.fields.forEach(function (f) { card.appendChild(renderField(f)); });
+    main.appendChild(card);
+
+    var saveBtn = h('button', { class: 'btn', text: 'Save changes', onclick: function () { saveGroup(group, saveBtn); } });
+    var dirtyLbl = h('span', { class: 'dirty' });
+    var bar = h('div', { class: 'savebar' }, [saveBtn, dirtyLbl]);
+    main.appendChild(bar);
+    updateDirtyLabel(dirtyLbl);
+    main._dirtyLbl = dirtyLbl;
+  }
+
+  function fieldWrap(f, control, extra) {
+    return h('div', { class: 'field' }, [
+      h('label', { for: 'f-' + f.key, text: f.label }),
+      control,
+      extra || null,
+      f.help ? h('p', { class: 'help', text: f.help }) : null
+    ]);
+  }
+  function markDirty(key, val) { state.content[key] = val; state.dirty[key] = JSON.stringify(val) !== JSON.stringify(state.base[key]); refreshDirty(); }
+  function refreshDirty() {
+    var lbl = document.querySelector('.savebar .dirty'); if (lbl) updateDirtyLabel(lbl);
+  }
+  function updateDirtyLabel(lbl) {
+    var n = Object.keys(state.dirty).filter(function (k) { return state.dirty[k]; }).length;
+    lbl.textContent = n ? (n + ' unsaved change' + (n > 1 ? 's' : '')) : 'All changes saved';
+  }
+
+  function renderField(f) {
+    var val = state.content[f.key];
+    if (f.type === 'textarea') {
+      var ta = h('textarea', { id: 'f-' + f.key, maxlength: f.maxlength || 5000, oninput: function () { markDirty(f.key, ta.value); } });
+      ta.value = val == null ? '' : val;
+      return fieldWrap(f, ta);
+    }
+    if (f.type === 'toggle') {
+      var cb = h('input', { id: 'f-' + f.key, type: 'checkbox', oninput: function () { markDirty(f.key, cb.checked); } });
+      cb.checked = !!val;
+      return h('div', { class: 'field' }, [
+        h('label', { class: 'toggle', for: 'f-' + f.key }, [cb, h('span', { text: f.label })]),
+        f.help ? h('p', { class: 'help', text: f.help }) : null
+      ]);
+    }
+    if (f.type === 'number') {
+      var ni = h('input', { id: 'f-' + f.key, type: 'number', min: f.min, max: f.max, oninput: function () { markDirty(f.key, ni.value === '' ? '' : Number(ni.value)); } });
+      ni.value = val == null ? '' : val;
+      return fieldWrap(f, ni);
+    }
+    if (f.type === 'list') {
+      var lta = h('textarea', { id: 'f-' + f.key, style: 'min-height:150px', oninput: function () { markDirty(f.key, lta.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean)); } });
+      lta.value = Array.isArray(val) ? val.join('\n') : '';
+      return fieldWrap(f, lta);
+    }
+    if (f.type === 'image') {
+      var img = h('img', { src: '/' + (val || ''), alt: '' });
+      var fileIn = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', style: 'display:none' });
+      var upBtn = h('button', { class: 'btn btn--ghost btn--sm', type: 'button', text: 'Upload new photo', onclick: function () { fileIn.click(); } });
+      fileIn.addEventListener('change', function () {
+        var file = fileIn.files && fileIn.files[0]; if (!file) return;
+        if (file.size > 3 * 1024 * 1024) { toast('Please choose an image under 3 MB.', 'err'); return; }
+        upBtn.disabled = true; upBtn.textContent = 'Uploading…';
+        var reader = new FileReader();
+        reader.onload = function () {
+          api('upload', { method: 'POST', csrf: true, body: { data: reader.result, filename: file.name } }).then(function (r) {
+            if (r.status === 200 && r.body.ok) { img.src = '/' + r.body.path + '?t=' + Date.now(); markDirty(f.key, r.body.path); toast('Photo uploaded — remember to Save.', 'ok'); }
+            else toast(r.body.error || 'Upload failed.', 'err');
+          }).catch(function () { toast('Upload failed.', 'err'); }).finally(function () { upBtn.disabled = false; upBtn.textContent = 'Upload new photo'; });
+        };
+        reader.readAsDataURL(file);
+      });
+      return fieldWrap(f, h('div', { class: 'thumb' }, [img, upBtn]));
+    }
+    // text / tel / email / url
+    var input = h('input', { id: 'f-' + f.key, type: (f.type === 'email' ? 'email' : f.type === 'url' ? 'url' : f.type === 'tel' ? 'tel' : 'text'), maxlength: f.maxlength || 300, oninput: function () { markDirty(f.key, input.value); } });
+    input.value = val == null ? '' : val;
+    return fieldWrap(f, input);
+  }
+
+  function saveGroup(group, btn) {
+    var patch = {};
+    group.fields.forEach(function (f) { if (state.dirty[f.key]) patch[f.key] = state.content[f.key]; });
+    if (!Object.keys(patch).length) { toast('Nothing to save.', ''); return; }
+    btn.disabled = true; btn.textContent = 'Saving…';
+    api('content', { method: 'POST', csrf: true, body: { content: patch } }).then(function (r) {
+      if (r.status === 200 && r.body.ok) {
+        state.content = Object.assign(state.content, r.body.content); state.base = JSON.parse(JSON.stringify(state.content)); state.dirty = {};
+        refreshDirty();
+        var live = state.store === 'github';
+        toast(live ? 'Saved! Your site is updating (about a minute).' : 'Saved!', 'ok');
+      } else { toast(r.body.error || 'Could not save.', 'err'); }
+    }).catch(function () { toast('Network error while saving.', 'err'); })
+      .finally(function () { btn.disabled = false; btn.textContent = 'Save changes'; });
+  }
+
+  /* ---------- assistant ---------- */
+  function renderAssistant(main) {
+    main.appendChild(h('div', { class: 'page-head' }, [
+      h('h1', { text: 'Assistant' }),
+      h('p', { text: 'Ask me to make edits in plain English — e.g. "change the phone number to …" or "add a class date for December 6".' })
+    ]));
+    var log = h('div', { class: 'chat-log' }, []);
+    var msgs = [];
+    function addBubble(role, text) { var b = h('div', { class: 'bubble ' + role, text: text }); log.appendChild(b); log.scrollTop = log.scrollHeight; return b; }
+
+    var ta = h('textarea', { placeholder: 'Type a request…', onkeydown: function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } } });
+    var sendBtn = h('button', { class: 'btn', text: 'Send', onclick: send });
+
+    function send() {
+      var text = ta.value.trim(); if (!text) return;
+      ta.value = ''; addBubble('me', text); msgs.push({ role: 'user', content: text });
+      sendBtn.disabled = true;
+      var thinking = addBubble('ai', '…');
+      api('chat', { method: 'POST', csrf: true, body: { messages: msgs } }).then(function (r) {
+        thinking.remove();
+        if (r.body && r.body.configured === false) { showNotice(main, log, r.body.message); return; }
+        if (r.status !== 200) { addBubble('ai', (r.body && r.body.error) || 'Sorry, something went wrong.'); return; }
+        (r.body.steps || []).forEach(function (s) { addBubble('tool', s); });
+        addBubble('ai', r.body.reply || '');
+        msgs.push({ role: 'assistant', content: r.body.reply || '' });
+        if (r.body.changed) { // refresh content so forms reflect edits
+          api('content').then(function (rr) { if (rr.status === 200) { state.content = rr.body.content; state.base = JSON.parse(JSON.stringify(state.content)); } });
+          if (r.body.rebuilding) toast('Change saved — site updating (about a minute).', 'ok');
+        }
+      }).catch(function () { thinking.remove(); addBubble('ai', 'Network error — please try again.'); })
+        .finally(function () { sendBtn.disabled = false; });
+    }
+
+    // Probe configuration first.
+    api('chat', { method: 'GET' }).then(function (r) {
+      if (r.body && r.body.configured === false) { showNotice(main, log, r.body.message); }
+    });
+
+    main.appendChild(h('div', { class: 'assistant' }, [log, h('div', { class: 'chat-input' }, [ta, sendBtn])]));
+  }
+  function showNotice(main, log, message) {
+    var wrap = main.querySelector('.assistant');
+    if (wrap) wrap.style.display = 'none';
+    main.appendChild(h('div', { class: 'notice', text: message || 'The AI assistant isn’t switched on yet. You can still make every edit using the tabs on the left.' }));
+  }
+
+  boot();
+})();

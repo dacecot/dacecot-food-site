@@ -1,0 +1,14 @@
+{
+  "name": "dacecot-food-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "da Cecot Food — static site + lightweight admin CMS",
+  "scripts": {
+    "build": "node .claude/build.js",
+    "dev": "node .claude/static-server.js",
+    "hash": "node lib/cms/hash-password.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3"
+  }
+}

@@ -118,7 +118,7 @@ function header(active) {
           ${expItems}
           </ul>
         </li>
-        ${link('pasta-shop', 'Pasta Shop', 'pasta-shop')}
+        ${link('pasta-shop', 'Pasta Shop &amp; Meals', 'pasta-shop')}
         ${link('our-story', 'Our Story', 'our-story')}
         ${link('reservations', 'Reserve', 'reservations')}
         ${link('visit-us', 'Visit Us', 'visit-us')}
@@ -169,7 +169,7 @@ function footer() {
         <a href="index.html">Home</a>
         <a href="menu.html">Menu</a>
         <a href="experiences.html">Experiences</a>
-        <a href="pasta-shop.html">Pasta Shop</a>
+        <a href="pasta-shop.html">Pasta Shop &amp; Meals</a>
         <a href="our-story.html">Our Story</a>
         <a href="visit-us.html">Visit Us</a>
         <a href="partnerships.html">Catering &amp; Wholesale</a>

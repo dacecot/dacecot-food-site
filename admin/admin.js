@@ -651,7 +651,8 @@
     ]));
 
     var tabs = h('div', { class: 'filter-row' }, []);
-    [['all', 'All'], ['reservation', 'Reservations'], ['order', 'Pasta Shop'], ['class', 'Classes'], ['contact', 'Inquiries'], ['wholesale', 'Wholesale']].forEach(function (t) {
+    // Reservations live in their own tab — this view covers everything else.
+    [['all', 'All'], ['order', 'Pasta Shop & Meals'], ['class', 'Classes'], ['contact', 'Inquiries'], ['wholesale', 'Wholesale']].forEach(function (t) {
       tabs.appendChild(h('button', { class: 'btn btn--sm ' + (ordersFilter === t[0] ? '' : 'btn--ghost'), onclick: function () { ordersFilter = t[0]; renderShell(); } }, [t[1]]));
     });
     main.appendChild(tabs);
@@ -663,7 +664,8 @@
     api(path).then(function (r) {
       listWrap.innerHTML = '';
       if (r.status !== 200 || !r.body.ok) { listWrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load orders.' })); return; }
-      var orders = r.body.orders || [];
+      // Reservations are handled in the Reservations tab, never here.
+      var orders = (r.body.orders || []).filter(function (o) { return o.type !== 'reservation'; });
       if (r.body.store === 'local') {
         listWrap.appendChild(h('div', { class: 'notice', text: 'Heads up: orders are stored locally on this server. On the live site a database keeps them permanently.' }));
       }

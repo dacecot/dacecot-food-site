@@ -4,6 +4,7 @@
 // Reuses the CMS session/CSRF auth. JSON only.
 const auth = require('../../lib/cms/auth');
 const store = require('../../lib/orders/store');
+const mailer = require('../../lib/orders/mailer');
 
 function parseQuery(req) {
   const q = {};
@@ -52,16 +53,38 @@ module.exports = async (req, res) => {
       const existing = await store.get(id);
       if (!existing) return res.status(404).json({ error: 'Order not found.' });
 
-      let updated;
+      let updated, emailed = null;
       if (action === 'mark_paid') {
         updated = await store.markPaid(id, { paidAt: new Date().toISOString() });
       } else if (action === 'mark_fulfilled') {
         const details = Object.assign({}, existing.details, { fulfilled: true, fulfilled_at: new Date().toISOString() });
         updated = await store.update(id, { details });
+      } else if (action === 'cancel') {
+        const details = Object.assign({}, existing.details, { cancelled: true, cancelled_at: new Date().toISOString() });
+        updated = await store.update(id, { details });
+        if (existing.email) { const r2 = await mailer.sendCancelled(updated); emailed = r2 && r2.ok ? 'cancellation email sent' : 'cancellation email failed'; }
+      } else if (action === 'reschedule') {
+        // new_date: free-form date string shown to the customer (class_date or pickup_day).
+        const newDate = String(body.new_date || '').replace(/[<>]/g, '').trim().slice(0, 60);
+        if (!newDate) return res.status(400).json({ error: 'Please provide the new date.' });
+        const oldDate = (existing.details && (existing.details.class_date || existing.details.pickup_day)) || null;
+        const dateKey = (existing.details && existing.details.class_date != null) ? 'class_date' : 'pickup_day';
+        const details = Object.assign({}, existing.details);
+        details[dateKey] = newDate;
+        details.rescheduled_from = oldDate;
+        details.rescheduled_at = new Date().toISOString();
+        updated = await store.update(id, { details });
+        if (existing.email) { const r2 = await mailer.sendRescheduled(updated, oldDate); emailed = r2 && r2.ok ? 'reschedule email sent' : 'reschedule email failed'; }
+      } else if (action === 'send_reminder') {
+        if (!existing.email) return res.status(400).json({ error: 'This submission has no email address.' });
+        const r2 = await mailer.sendReminder(existing);
+        if (!(r2 && r2.ok)) return res.status(502).json({ error: 'The reminder email could not be sent.' });
+        updated = await store.markReminded(id);
+        emailed = 'payment reminder sent';
       } else {
-        return res.status(400).json({ error: "Unknown action. Use 'mark_paid' or 'mark_fulfilled'." });
+        return res.status(400).json({ error: "Unknown action. Use 'mark_paid', 'mark_fulfilled', 'cancel', 'reschedule' or 'send_reminder'." });
       }
-      return res.status(200).json({ ok: true, order: updated });
+      return res.status(200).json({ ok: true, order: updated, emailed });
     } catch (e) {
       return res.status(502).json({ error: 'Could not update order: ' + (e && e.message || e) });
     }

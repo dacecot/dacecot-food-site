@@ -149,6 +149,9 @@
     nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__orders' ? ' active' : ''), onclick: function () { state.active = '__orders'; renderShell(); } }, [
       h('span', { class: 'ic', text: '🧾' }), h('span', { text: 'Orders & Bookings' })
     ]));
+    nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__contacts' ? ' active' : ''), onclick: function () { state.active = '__contacts'; renderShell(); } }, [
+      h('span', { class: 'ic', text: '👥' }), h('span', { text: 'Contacts' })
+    ]));
     state.groups.forEach(function (g) {
       nav.appendChild(h('button', { class: 'navbtn' + (state.active === g.id ? ' active' : ''), onclick: function () { state.active = g.id; renderShell(); } }, [
         h('span', { class: 'ic', text: g.icon || '•' }), h('span', { text: g.title })
@@ -167,6 +170,7 @@
     }
     if (state.active === '__orders') renderOrders(main);
     else if (state.active === '__reservations') renderReservations(main);
+    else if (state.active === '__contacts') renderContacts(main);
     else renderGroup(main, state.groups.filter(function (g) { return g.id === state.active; })[0]);
 
     app.innerHTML = ''; app.appendChild(h('div', { class: 'shell' }, [nav, main]));
@@ -625,6 +629,69 @@
       h('div', { class: 'field' }, [csvIn]),
       importBtn
     ]));
+  }
+
+  /* ---------- contacts (every guest, deduplicated) ---------- */
+  function renderContacts(main) {
+    main.appendChild(h('div', { class: 'page-head' }, [
+      h('h1', { text: 'Contacts' }),
+      h('p', { text: 'Everyone who has booked a table, ordered, taken a class, or reached out — one entry per person.' })
+    ]));
+
+    var search = h('input', { type: 'search', placeholder: 'Search by name, email or phone…', class: 'contact-search' });
+    main.appendChild(h('div', { class: 'field' }, [search]));
+
+    var wrap = h('div', {}, [h('div', { class: 'boot', text: 'Loading…' })]);
+    main.appendChild(wrap);
+
+    var TYPE_WORD = { reservation: 'reservation', order: 'order', class: 'class', contact: 'inquiry', wholesale: 'wholesale' };
+    function label(type, n) {
+      var w = TYPE_WORD[type] || type;
+      if (n > 1) w = w === 'class' ? 'classes' : w === 'inquiry' ? 'inquiries' : w + 's';
+      return n + ' ' + w;
+    }
+    function lastSeen(iso) {
+      try { var d = new Date(iso); return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }); }
+      catch (e) { return ''; }
+    }
+
+    var all = [];
+    function draw() {
+      wrap.innerHTML = '';
+      var q = search.value.trim().toLowerCase();
+      var list = !q ? all : all.filter(function (c) {
+        return [c.name, c.email, c.phone].some(function (v) { return v && String(v).toLowerCase().indexOf(q) > -1; });
+      });
+      wrap.appendChild(h('p', { class: 'res-totals', text: list.length + ' contact' + (list.length === 1 ? '' : 's') + (q ? ' matching "' + q + '"' : '') }));
+      if (!list.length) { wrap.appendChild(h('div', { class: 'card', text: q ? 'No contacts match that search.' : 'No contacts yet.' })); return; }
+      var card = h('div', { class: 'card res-day' }, []);
+      list.slice(0, 400).forEach(function (c) {
+        var chips = Object.keys(c.counts).map(function (t) { return h('span', { class: 'chip chip--type', text: label(t, c.counts[t]) }); });
+        if (c.spend_cents > 0) chips.push(h('span', { class: 'chip chip--ok', text: '$' + (c.spend_cents / 100).toFixed(2) + ' paid' }));
+        card.appendChild(h('div', { class: 'contact-row' }, [
+          h('div', { class: 'contact-main' }, [
+            h('strong', { text: c.name || 'Unknown' }),
+            h('span', { class: 'contact-links' }, [
+              c.phone ? h('a', { href: 'tel:' + c.phone, text: c.phone }) : null,
+              c.phone && c.email ? h('span', { text: ' · ' }) : null,
+              c.email ? h('a', { href: 'mailto:' + c.email, text: c.email }) : null
+            ])
+          ]),
+          h('div', { class: 'contact-meta' }, chips.concat([
+            h('span', { class: 'order-when', text: 'last: ' + lastSeen(c.last_seen) })
+          ]))
+        ]));
+      });
+      wrap.appendChild(card);
+      if (list.length > 400) wrap.appendChild(h('p', { class: 'res-totals', text: 'Showing the 400 most recent — use search to narrow down.' }));
+    }
+
+    search.addEventListener('input', draw);
+    api('orders?sub=contacts').then(function (r) {
+      if (r.status !== 200 || !r.body.ok) { wrap.innerHTML = ''; wrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load contacts.' })); return; }
+      all = r.body.contacts || [];
+      draw();
+    }).catch(function () { wrap.innerHTML = ''; wrap.appendChild(h('div', { class: 'notice', text: 'Could not load contacts.' })); });
   }
 
   /* ---------- orders & bookings ---------- */

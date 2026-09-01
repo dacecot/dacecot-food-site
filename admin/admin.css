@@ -157,6 +157,16 @@ textarea { min-height: 96px; resize: vertical; }
 .res-detail-line a { color: var(--terracotta); font-weight: 600; }
 @media (max-width: 720px) { .res-detail { padding-left: 18px; } }
 
+/* ---------- Contacts ---------- */
+.contact-search { max-width: 420px; }
+.contact-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.contact-row:last-child { border-bottom: 0; }
+.contact-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.contact-main strong { color: var(--brown); }
+.contact-links { font-size: 0.85rem; }
+.contact-links a { color: var(--terracotta); text-decoration: none; font-weight: 600; }
+.contact-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
 /* ---------- Modal ---------- */
 .modal-back { position: fixed; inset: 0; background: rgba(43, 30, 24, 0.45); display: grid; place-items: center; z-index: 60; padding: 18px; }
 .modal-box { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); width: 100%; max-width: 420px; padding: 20px 22px; max-height: 85dvh; overflow-y: auto; }

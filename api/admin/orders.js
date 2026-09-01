@@ -25,6 +25,14 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     if (!auth.requireAuth(req, res, false)) return;
     const q = parseQuery(req);
+    // ?sub=contacts → deduplicated people across every submission type.
+    if (q.sub === 'contacts') {
+      try {
+        const { aggregate } = require('../../lib/orders/contacts');
+        const contacts = aggregate(await store.list({}));
+        return res.status(200).json({ ok: true, count: contacts.length, contacts });
+      } catch (e) { return res.status(502).json({ error: 'Could not load contacts: ' + (e && e.message || e) }); }
+    }
     const opts = {};
     if (q.type) opts.type = String(q.type);
     if (q.status) opts.status = String(q.status);

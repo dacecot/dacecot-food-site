@@ -129,6 +129,9 @@ textarea { min-height: 96px; resize: vertical; }
 .chip--type { background: rgba(173, 82, 23, 0.14); color: var(--terracotta); }
 .chip--ok { background: rgba(48, 99, 30, 0.15); color: var(--ok); }
 .chip--warn { background: rgba(196, 160, 53, 0.2); color: #7a6116; }
+.chip--err { background: rgba(178, 59, 46, 0.14); color: var(--err); }
+.btn--danger { background: transparent; color: var(--err); border: 1px solid rgba(178, 59, 46, 0.4); }
+.order-actions { flex-wrap: wrap; }
 
 /* ---------- Toast ---------- */
 .toast {

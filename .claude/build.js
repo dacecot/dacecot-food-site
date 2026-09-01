@@ -192,37 +192,26 @@ function footer() {
   <script src="js/main.js?v=${VERSION}"></script>`;
 }
 
-/* ---- opening hours for schema ---- */
-const HOURS_SPEC = [
-  { d: ['Monday'], o: '16:30', c: '20:00' },
-  { d: ['Tuesday'], o: '12:00', c: '15:00' },
-  { d: ['Tuesday'], o: '16:30', c: '20:00' },
-  { d: ['Thursday'], o: '12:00', c: '15:00' },
-  { d: ['Thursday'], o: '16:30', c: '20:00' },
-  { d: ['Friday'], o: '12:00', c: '15:00' },
-  { d: ['Friday'], o: '16:00', c: '21:00' },
-  { d: ['Saturday'], o: '12:00', c: '21:00' },
-  { d: ['Sunday'], o: '12:00', c: '16:00' }
-].map(h => ({
-  '@type': 'OpeningHoursSpecification',
-  dayOfWeek: h.d,
-  opens: h.o,
-  closes: h.c
-}));
+/* ---- opening hours — single source of truth (CMS-editable) ---- */
+const hours = require('../lib/cms/hours');
+const HOURS_SPEC = hours.jsonLdSpec(content);
+const FIRST_SUNDAY_CLOSED = content.bool('firstSundayClosed');
 
-/* ---- Pickup hours by weekday (0=Sun … 6=Sat), as minutes-from-midnight ranges.
-   Mirrors HOURS_SPEC above. Wednesday is closed (absent). The first Sunday of
-   each month is also closed. Consumed client-side by the Pasta Shop order modal
-   to offer only valid pickup times for the chosen day. */
-const PICKUP_HOURS = {
-  0: [[720, 960]],              // Sun 12:00–16:00
-  1: [[990, 1200]],             // Mon 16:30–20:00
-  2: [[720, 900], [990, 1200]], // Tue 12:00–15:00, 16:30–20:00
-  3: [],                        // Wed closed
-  4: [[720, 900], [990, 1200]], // Thu 12:00–15:00, 16:30–20:00
-  5: [[720, 900], [960, 1260]], // Fri 12:00–15:00, 16:00–21:00
-  6: [[720, 1260]]              // Sat 12:00–21:00
-};
+// Visible Hours table (homepage + Visit Us) rendered from the same data.
+function hoursTable() {
+  const rows = hours.displayRows(content)
+    .map(r => `                <tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('\n');
+  return `<table>
+${rows}
+                <tr><th>Sunday Pasta Classes</th><td>5 – 9 PM</td></tr>
+              </table>${FIRST_SUNDAY_CLOSED ? `
+              <p style="margin-top:14px; opacity:0.78; font-size:0.92em;"><em>First Sunday of every month: closed.</em></p>` : ''}`;
+}
+
+/* ---- Pickup hours by weekday (0=Sun … 6=Sat), minutes-from-midnight ranges.
+   Derived from the CMS hours — edit them in /admin, not here. Consumed
+   client-side by the Pasta Shop order modal and the reservation time picker. */
+const PICKUP_HOURS = hours.windows(content);
 
 const POSTAL_ADDRESS = {
   '@type': 'PostalAddress',
@@ -469,17 +458,7 @@ pages.push(page({
             </ul>
             <div class="visit__hours">
               <h3>Hours</h3>
-              <table>
-                <tr><th>Mon</th><td>4:30 – 8 PM</td></tr>
-                <tr><th>Tue</th><td>12 – 3 PM · 4:30 – 8 PM</td></tr>
-                <tr><th>Wed</th><td>Closed</td></tr>
-                <tr><th>Thu</th><td>12 – 3 PM · 4:30 – 8 PM</td></tr>
-                <tr><th>Fri</th><td>12 – 3 PM · 4 – 9 PM</td></tr>
-                <tr><th>Sat</th><td>12 – 9 PM</td></tr>
-                <tr><th>Sun</th><td>12 – 4 PM</td></tr>
-                <tr><th>Sunday Pasta Classes</th><td>5 – 9 PM</td></tr>
-              </table>
-              <p style="margin-top:14px; opacity:0.78; font-size:0.92em;"><em>First Sunday of every month: closed.</em></p>
+              ${hoursTable()}
             </div>
             <div class="btn-group">
               <a href="reservations.html" class="btn btn--terra">Reserve a Table</a>
@@ -792,17 +771,7 @@ pages.push(page({
             </ul>
             <div class="visit__hours">
               <h3>Hours</h3>
-              <table>
-                <tr><th>Mon</th><td>4:30 – 8 PM</td></tr>
-                <tr><th>Tue</th><td>12 – 3 PM · 4:30 – 8 PM</td></tr>
-                <tr><th>Wed</th><td>Closed</td></tr>
-                <tr><th>Thu</th><td>12 – 3 PM · 4:30 – 8 PM</td></tr>
-                <tr><th>Fri</th><td>12 – 3 PM · 4 – 9 PM</td></tr>
-                <tr><th>Sat</th><td>12 – 9 PM</td></tr>
-                <tr><th>Sun</th><td>12 – 4 PM</td></tr>
-                <tr><th>Sunday Pasta Classes</th><td>5 – 9 PM</td></tr>
-              </table>
-              <p style="margin-top:14px; opacity:0.78; font-size:0.92em;"><em>First Sunday of every month: closed.</em></p>
+              ${hoursTable()}
             </div>
             <div class="btn-group">
               <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
@@ -1110,7 +1079,7 @@ pages.push(page({
             <select id="om-time" name="pickup_time" required disabled><option value="">Choose a pickup day first…</option></select>
             <p class="field__hint" data-pickup-note style="margin-top:6px; font-size:0.85em; opacity:0.75;">Pickup times follow our opening hours.</p>
           </div>
-          <script id="pickup-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: true })}</script>
+          <script id="pickup-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED })}</script>
           <div class="field"><label for="om-allergies">Any allergies?</label><input type="text" id="om-allergies" name="allergies" placeholder="Gluten, nuts, none…"></div>
           <div class="field"><label for="om-notes">Pasta shape &amp; preferences <span style="font-weight:400;opacity:0.7;">(optional)</span></label><textarea id="om-notes" name="notes" placeholder="Note your pasta shape, sauce choice, or any preferences (e.g. tagliatelle, Salsa Plasé)."></textarea></div>
           <div class="form-row">

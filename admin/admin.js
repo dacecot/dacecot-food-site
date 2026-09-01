@@ -282,6 +282,7 @@
     catch (e) { return iso || ''; }
   }
   function statusChip(o) {
+    if (o.details && o.details.cancelled) return h('span', { class: 'chip chip--err', text: 'Cancelled' });
     if (o.details && o.details.fulfilled) return h('span', { class: 'chip chip--ok', text: 'Fulfilled' });
     if (o.payment_status === 'paid') return h('span', { class: 'chip chip--ok', text: 'Paid' });
     if (o.payment_status === 'reminded') return h('span', { class: 'chip chip--warn', text: 'Reminded' });
@@ -325,18 +326,39 @@
         if (d.message) bits.push(d.message);
 
         var actions = h('div', { class: 'order-actions' }, []);
-        function act(action, label, btnCls) {
+        function act(action, label, btnCls, extraBody, confirmMsg) {
           var b = h('button', { class: 'btn btn--sm ' + btnCls, text: label, onclick: function () {
+            if (confirmMsg && !window.confirm(confirmMsg)) return;
+            var payload = Object.assign({ id: o.id, action: action }, extraBody ? extraBody() : {});
+            if (extraBody && payload.__abort) return;
             b.disabled = true;
-            api('orders', { method: 'POST', csrf: true, body: { id: o.id, action: action } }).then(function (rr) {
-              if (rr.status === 200 && rr.body.ok) { toast('Updated.', 'ok'); renderShell(); }
+            api('orders', { method: 'POST', csrf: true, body: payload }).then(function (rr) {
+              if (rr.status === 200 && rr.body.ok) { toast(rr.body.emailed || 'Updated.', 'ok'); renderShell(); }
               else { toast((rr.body && rr.body.error) || 'Could not update.', 'err'); b.disabled = false; }
             }).catch(function () { toast('Network error.', 'err'); b.disabled = false; });
           } });
           return b;
         }
-        if ((o.payment_status === 'pending' || o.payment_status === 'reminded')) actions.appendChild(act('mark_paid', 'Mark paid', 'btn--green'));
-        if (!(d.fulfilled) && (o.type === 'order' || o.type === 'class')) actions.appendChild(act('mark_fulfilled', 'Mark fulfilled', 'btn--ghost'));
+        var cancelled = !!d.cancelled;
+        var unpaid = (o.payment_status === 'pending' || o.payment_status === 'reminded');
+        if (!cancelled && unpaid) actions.appendChild(act('mark_paid', 'Mark paid', 'btn--green'));
+        if (!cancelled && unpaid && o.email && o.payment_link_url) {
+          actions.appendChild(act('send_reminder', 'Email payment reminder', 'btn--ghost', null,
+            'Email ' + (o.name || 'the customer') + ' a payment reminder with their payment link?'));
+        }
+        if (!cancelled && (o.type === 'order' || o.type === 'class') && (d.class_date || d.pickup_day)) {
+          actions.appendChild(act('reschedule', 'Reschedule', 'btn--ghost', function () {
+            var current = d.class_date || d.pickup_day;
+            var nd = window.prompt('New date for this booking (the customer will be emailed):', current || '');
+            if (nd == null || !nd.trim()) return { __abort: true };
+            return { new_date: nd.trim() };
+          }));
+        }
+        if (!cancelled && !(d.fulfilled) && (o.type === 'order' || o.type === 'class')) actions.appendChild(act('mark_fulfilled', 'Mark fulfilled', 'btn--ghost'));
+        if (!cancelled && (o.type === 'order' || o.type === 'class')) {
+          actions.appendChild(act('cancel', 'Cancel booking', 'btn--danger', null,
+            'Cancel this booking' + (o.email ? ' and email ' + (o.name || 'the customer') + '?' : '?')));
+        }
 
         listWrap.appendChild(h('div', { class: 'card order-card' }, [
           h('div', { class: 'order-top' }, [

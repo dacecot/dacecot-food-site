@@ -1,16 +1,30 @@
-// /api/cron/reminders — email a payment reminder for still-unpaid orders.
+// /api/cron/reminders — two jobs in one secured endpoint:
+//   1. Payment reminders for still-unpaid orders (older than 3h, has a pay link).
+//   2. Booking reminders ~1–2 hours before today's table reservations.
 //
-// Guarded by CRON_SECRET: the caller must pass ?secret=<CRON_SECRET> or an
-// x-cron-secret header equal to it. If CRON_SECRET is unset, this endpoint NEVER
-// sends and returns 503 — no unauthenticated mail blasts, ever.
+// Guarded by CRON_SECRET: the caller must pass ?secret=<CRON_SECRET>, an
+// x-cron-secret header, or Vercel cron's Bearer token. If CRON_SECRET is unset,
+// this endpoint NEVER sends and returns 503 — no unauthenticated mail blasts.
 //
-// It finds unpaid submissions older than 180 minutes that carry a payment link,
-// emails each one a reminder, then marks them 'reminded' so they aren't nagged
-// again. Returns a JSON summary.
+// Triggers: Vercel's daily cron (payment nudges) + a GitHub Actions schedule
+// every 30 minutes (so booking reminders land 1–2h before the table). Both hit
+// this same endpoint; every reminder is sent at most once per submission.
 const store = require('../../lib/orders/store');
 const mailer = require('../../lib/orders/mailer');
+const R = require('../../lib/orders/reservations');
 
 const OLDER_THAN_MINUTES = 180;
+const BOOKING_WINDOW_MIN = 150;   // remind when the table is at most 2.5h away
+const JUST_BOOKED_GRACE_MS = 2 * 60 * 60 * 1000; // they just got a confirmation
+
+// Current minutes-from-midnight in Edmonton (restaurant local time).
+function nowEdmontonMinutes() {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Edmonton', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+    const m = /(\d{1,2}):(\d{2})/.exec(parts);
+    return m ? (+m[1]) * 60 + (+m[2]) : null;
+  } catch (e) { return null; }
+}
 
 function getSecret(req) {
   const header = req.headers['x-cron-secret'];
@@ -71,12 +85,49 @@ module.exports = async (req, res) => {
     }
   }
 
+  // ---- Booking reminders: today's tables starting within the next ~2.5h ----
+  let bookingSent = 0, bookingFailed = 0;
+  try {
+    const today = R.todayISO();
+    const nowMin = nowEdmontonMinutes();
+    if (nowMin != null) {
+      const reservations = await store.list({ type: 'reservation' });
+      const dueBookings = reservations.filter((s) => {
+        const d = s.details || {};
+        if (d.cancelled || d.booking_reminded_at) return false;
+        if (!s.email) return false;
+        if (R.parseDate(d.reservation_date) !== today) return false;
+        const t = R.parseTime(d.reservation_time);
+        if (t == null) return false;                       // no time — can't judge "soon"
+        const untilStart = t - nowMin;
+        if (untilStart <= 0 || untilStart > BOOKING_WINDOW_MIN) return false;
+        // Skip guests who booked moments ago — their confirmation just arrived.
+        const created = Date.parse(s.created_at || '');
+        if (Number.isFinite(created) && Date.now() - created < JUST_BOOKED_GRACE_MS) return false;
+        return true;
+      });
+      for (const sub of dueBookings) {
+        let result = { ok: false };
+        try { result = await mailer.sendBookingReminder(sub); } catch (e) { result = { ok: false }; }
+        if (result.ok) {
+          try {
+            const details = Object.assign({}, sub.details, { booking_reminded_at: new Date().toISOString() });
+            await store.update(sub.id, { details });
+            bookingSent += 1;
+          } catch (e) { bookingFailed += 1; }
+        } else if (!result.skipped) {
+          bookingFailed += 1;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('booking reminders failed', e && e.message);
+    bookingFailed = -1; // sentinel: the whole pass errored
+  }
+
   return res.status(200).json({
     ok: true,
-    scanned: candidates.length,
-    due: due.length,
-    reminded: sent,
-    skipped: skipped,
-    failed: failed
+    payments: { scanned: candidates.length, due: due.length, reminded: sent, skipped: skipped, failed: failed },
+    bookings: { reminded: bookingSent, failed: bookingFailed }
   });
 };

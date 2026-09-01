@@ -97,6 +97,9 @@
         h('span', { class: 'ic', text: g.icon || '•' }), h('span', { text: g.title })
       ]));
     });
+    nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__orders' ? ' active' : ''), onclick: function () { state.active = '__orders'; renderShell(); } }, [
+      h('span', { class: 'ic', text: '🧾' }), h('span', { text: 'Orders & Bookings' })
+    ]));
     nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__assistant' ? ' active' : ''), onclick: function () { state.active = '__assistant'; renderShell(); } }, [
       h('span', { class: 'ic', text: '💬' }), h('span', { text: 'Assistant' })
     ]));
@@ -107,6 +110,7 @@
 
     var main = h('main', { class: 'main' }, []);
     if (state.active === '__assistant') renderAssistant(main);
+    else if (state.active === '__orders') renderOrders(main);
     else renderGroup(main, state.groups.filter(function (g) { return g.id === state.active; })[0]);
 
     app.innerHTML = ''; app.appendChild(h('div', { class: 'shell' }, [nav, main]));
@@ -215,6 +219,91 @@
       } else { toast(r.body.error || 'Could not save.', 'err'); }
     }).catch(function () { toast('Network error while saving.', 'err'); })
       .finally(function () { btn.disabled = false; btn.textContent = 'Save changes'; });
+  }
+
+  /* ---------- orders & bookings ---------- */
+  var ordersFilter = 'all';
+  var TYPE_LABEL = { order: 'Pasta Shop', class: 'Class', reservation: 'Reservation', wholesale: 'Wholesale', contact: 'Inquiry' };
+  function money(cents) { return cents == null ? '' : '$' + (cents / 100).toFixed(2); }
+  function when(iso) {
+    try { var d = new Date(iso); return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }); }
+    catch (e) { return iso || ''; }
+  }
+  function statusChip(o) {
+    if (o.details && o.details.fulfilled) return h('span', { class: 'chip chip--ok', text: 'Fulfilled' });
+    if (o.payment_status === 'paid') return h('span', { class: 'chip chip--ok', text: 'Paid' });
+    if (o.payment_status === 'reminded') return h('span', { class: 'chip chip--warn', text: 'Reminded' });
+    if (o.payment_status === 'pending') return h('span', { class: 'chip chip--warn', text: 'Unpaid' });
+    return h('span', { class: 'chip', text: '—' });
+  }
+
+  function renderOrders(main) {
+    main.appendChild(h('div', { class: 'page-head' }, [
+      h('h1', { text: 'Orders & Bookings' }),
+      h('p', { text: 'Everything submitted through the website — pasta-shop orders, class bookings, and inquiries.' })
+    ]));
+
+    var tabs = h('div', { class: 'filter-row' }, []);
+    [['all', 'All'], ['order', 'Pasta Shop'], ['class', 'Classes'], ['contact', 'Inquiries'], ['wholesale', 'Wholesale']].forEach(function (t) {
+      tabs.appendChild(h('button', { class: 'btn btn--sm ' + (ordersFilter === t[0] ? '' : 'btn--ghost'), onclick: function () { ordersFilter = t[0]; renderShell(); } }, [t[1]]));
+    });
+    main.appendChild(tabs);
+
+    var listWrap = h('div', {}, [h('div', { class: 'boot', text: 'Loading…' })]);
+    main.appendChild(listWrap);
+
+    var path = 'orders' + (ordersFilter !== 'all' ? '?type=' + ordersFilter : '');
+    api(path).then(function (r) {
+      listWrap.innerHTML = '';
+      if (r.status !== 200 || !r.body.ok) { listWrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load orders.' })); return; }
+      var orders = r.body.orders || [];
+      if (r.body.store === 'local') {
+        listWrap.appendChild(h('div', { class: 'notice', text: 'Heads up: orders are stored locally on this server. On the live site a database keeps them permanently.' }));
+      }
+      if (!orders.length) { listWrap.appendChild(h('div', { class: 'card', text: 'Nothing here yet — new orders and bookings will appear as customers submit them.' })); return; }
+
+      orders.forEach(function (o) {
+        var d = o.details || {};
+        var bits = [];
+        if (d.item) bits.push(d.item + (d.quantity ? ' × ' + d.quantity : ''));
+        if (d.class_date) bits.push(d.class_date + (d.guests ? ' · ' + d.guests : ''));
+        if (d.pickup_day) bits.push('Pickup ' + d.pickup_day + (d.pickup_time ? ' at ' + d.pickup_time : ''));
+        if (d.allergies && d.allergies.toLowerCase() !== 'none') bits.push('Allergies: ' + d.allergies);
+        if (d.notes) bits.push(d.notes);
+        if (d.message) bits.push(d.message);
+
+        var actions = h('div', { class: 'order-actions' }, []);
+        function act(action, label, btnCls) {
+          var b = h('button', { class: 'btn btn--sm ' + btnCls, text: label, onclick: function () {
+            b.disabled = true;
+            api('orders', { method: 'POST', csrf: true, body: { id: o.id, action: action } }).then(function (rr) {
+              if (rr.status === 200 && rr.body.ok) { toast('Updated.', 'ok'); renderShell(); }
+              else { toast((rr.body && rr.body.error) || 'Could not update.', 'err'); b.disabled = false; }
+            }).catch(function () { toast('Network error.', 'err'); b.disabled = false; });
+          } });
+          return b;
+        }
+        if ((o.payment_status === 'pending' || o.payment_status === 'reminded')) actions.appendChild(act('mark_paid', 'Mark paid', 'btn--green'));
+        if (!(d.fulfilled) && (o.type === 'order' || o.type === 'class')) actions.appendChild(act('mark_fulfilled', 'Mark fulfilled', 'btn--ghost'));
+
+        listWrap.appendChild(h('div', { class: 'card order-card' }, [
+          h('div', { class: 'order-top' }, [
+            h('span', { class: 'chip chip--type', text: TYPE_LABEL[o.type] || o.type }),
+            h('strong', { text: o.name || 'Unknown' }),
+            statusChip(o),
+            o.amount_cents != null ? h('span', { class: 'order-amt', text: money(o.amount_cents) }) : null,
+            h('span', { class: 'order-when', text: when(o.created_at) })
+          ]),
+          bits.length ? h('p', { class: 'order-bits', text: bits.join(' · ') }) : null,
+          h('p', { class: 'order-contact' }, [
+            o.email ? h('a', { href: 'mailto:' + o.email, text: o.email }) : null,
+            o.email && o.phone ? h('span', { text: ' · ' }) : null,
+            o.phone ? h('a', { href: 'tel:' + o.phone, text: o.phone }) : null
+          ]),
+          actions
+        ]));
+      });
+    }).catch(function () { listWrap.innerHTML = ''; listWrap.appendChild(h('div', { class: 'notice', text: 'Could not load orders.' })); });
   }
 
   /* ---------- assistant ---------- */

@@ -115,6 +115,21 @@ textarea { min-height: 96px; resize: vertical; }
 .chat-input textarea { min-height: 46px; max-height: 140px; }
 .notice { background: rgba(196,160,53,0.12); border: 1px solid rgba(196,160,53,0.4); border-radius: var(--radius); padding: 16px 18px; color: var(--brown); }
 
+/* ---------- Orders & Bookings ---------- */
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.order-card { padding: 16px 18px; }
+.order-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.order-when { margin-left: auto; color: var(--muted); font-size: 0.82rem; }
+.order-amt { font-weight: 600; color: var(--olive); }
+.order-bits { margin: 8px 0 0; font-size: 0.9rem; color: var(--ink); }
+.order-contact { margin: 6px 0 0; font-size: 0.85rem; }
+.order-actions { display: flex; gap: 8px; margin-top: 10px; }
+.order-actions:empty { display: none; }
+.chip { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--line); color: var(--muted); }
+.chip--type { background: rgba(173, 82, 23, 0.14); color: var(--terracotta); }
+.chip--ok { background: rgba(48, 99, 30, 0.15); color: var(--ok); }
+.chip--warn { background: rgba(196, 160, 53, 0.2); color: #7a6116; }
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);

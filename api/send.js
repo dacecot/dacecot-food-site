@@ -61,6 +61,16 @@ module.exports = async (req, res) => {
   // Honeypot — silently accept so bots think they succeeded and don't retry.
   if (data._honey) return res.status(200).json({ success: true });
 
+  // Capture the submission to the orders store (best-effort, never blocks email).
+  let submissionId = null;
+  try {
+    const ordersStore = require('../lib/orders/store');
+    const { normalize } = require('../lib/orders/submission');
+    await ordersStore.init();
+    const rec = await ordersStore.record(normalize(data));
+    submissionId = rec && rec.id;
+  } catch (e) { console.error('order capture failed (non-blocking)', e && e.message); }
+
   const subject = String(data._subject || 'New message — da Cecot Food').slice(0, 200);
   const formName = subject.replace(/\s*[—–-]\s*da Cecot.*$/i, '').trim() || 'website enquiry';
 

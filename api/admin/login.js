@@ -1,11 +1,14 @@
 // POST /api/admin/login — verify the admin password, issue a session cookie.
+// Password chain: database-stored hash → ADMIN_PASSWORD_HASH env → first-run
+// default (which forces a password change in the UI).
 const auth = require('../../lib/cms/auth');
+const authstore = require('../../lib/cms/authstore');
 const rl = require('../../lib/cms/ratelimit');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'Method not allowed' }); }
   if (!auth.configured()) {
-    return res.status(503).json({ error: 'Admin is not set up yet. Ask your developer to set ADMIN_PASSWORD_HASH and SESSION_SECRET.' });
+    return res.status(503).json({ error: 'Admin is not set up yet. Ask your developer to set SESSION_SECRET.' });
   }
 
   let body = req.body;
@@ -26,9 +29,9 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Incorrect email or password.' });
   }
 
-  const ok = await auth.verifyPassword(body.password);
-  if (!ok) return res.status(401).json({ error: adminEmail ? 'Incorrect email or password.' : 'Incorrect password.' });
+  const result = await authstore.verify(body.password);
+  if (!result.ok) return res.status(401).json({ error: adminEmail ? 'Incorrect email or password.' : 'Incorrect password.' });
 
-  const csrf = auth.issueSession(res);
-  return res.status(200).json({ ok: true, csrf });
+  const csrf = auth.issueSession(res, { mustChange: !!result.mustChange });
+  return res.status(200).json({ ok: true, csrf, mustChange: !!result.mustChange, canChange: !!result.canChange });
 };

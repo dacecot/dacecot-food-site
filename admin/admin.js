@@ -38,7 +38,7 @@
 
   /* ---------- boot ---------- */
   function boot() {
-    api('session').then(function (r) {
+    api('auth?action=session').then(function (r) {
       if (r.body && r.body.authed) {
         state.csrf = r.body.csrf; state.email = r.body.email;
         state.mustChange = !!r.body.mustChange; state.canChange = !!r.body.canChange;
@@ -67,7 +67,7 @@
       var password = document.getElementById('lg-pw').value;
       if (!password) { errBox.textContent = 'Please enter your password.'; errBox.classList.add('show'); return; }
       btn.disabled = true; btn.textContent = 'Signing in…';
-      api('login', { method: 'POST', body: { email: email, password: password } }).then(function (r) {
+      api('auth?action=login', { method: 'POST', body: { email: email, password: password } }).then(function (r) {
         if (r.status === 200 && r.body.ok) {
           state.csrf = r.body.csrf;
           state.mustChange = !!r.body.mustChange; state.canChange = !!r.body.canChange;
@@ -123,7 +123,7 @@
       if (nw.length < 10) { errBox.textContent = 'Please choose a password of at least 10 characters.'; errBox.classList.add('show'); return; }
       if (nw !== nw2) { errBox.textContent = 'The two passwords don’t match.'; errBox.classList.add('show'); return; }
       btn.disabled = true; btn.textContent = 'Saving…';
-      api('password', { method: 'POST', csrf: true, body: { current: cur, next: nw } }).then(function (r) {
+      api('auth?action=password', { method: 'POST', csrf: true, body: { current: cur, next: nw } }).then(function (r) {
         if (r.status === 200 && r.body.ok) { state.csrf = r.body.csrf; state.mustChange = false; toast('Password updated!', 'ok'); loadDashboard(); }
         else { errBox.textContent = r.body.error || 'Could not change the password.'; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Set new password'; }
       }).catch(function () { errBox.textContent = 'Network error — please try again.'; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Set new password'; });
@@ -173,7 +173,7 @@
   }
 
   function logout() {
-    api('logout', { method: 'POST', csrf: true }).then(function () { state.csrf = null; renderLogin(false); });
+    api('auth?action=logout', { method: 'POST', csrf: true }).then(function () { state.csrf = null; renderLogin(false); });
   }
 
   /* ---------- group form ---------- */
@@ -433,7 +433,7 @@
 
   /* ---- floor plan editor ---- */
   function renderFloorPlan(wrap) {
-    api('tables').then(function (r) {
+    api('reservations?sub=tables').then(function (r) {
       wrap.innerHTML = '';
       if (r.status !== 200 || !r.body.ok) { wrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load the floor plan.' })); return; }
       var tbls = r.body.tables || [];
@@ -443,7 +443,7 @@
           var name = window.prompt('Table name (e.g. T1, Window, Patio 2):', 'T' + (tbls.length + 1));
           if (name == null || !name.trim()) return;
           var seats = parseInt(window.prompt('How many seats?', '2') || '', 10);
-          api('tables', { method: 'POST', csrf: true, body: { action: 'create', table: { name: name.trim(), seats: Number.isFinite(seats) ? seats : 2, x: 20 + Math.random() * 60, y: 20 + Math.random() * 60 } } }).then(function (rr) {
+          api('reservations?sub=tables', { method: 'POST', csrf: true, body: { action: 'create', table: { name: name.trim(), seats: Number.isFinite(seats) ? seats : 2, x: 20 + Math.random() * 60, y: 20 + Math.random() * 60 } } }).then(function (rr) {
             if (rr.status === 200 && rr.body.ok) { toast('Table added — drag it into place.', 'ok'); renderShell(); }
             else toast((rr.body && rr.body.error) || 'Could not add.', 'err');
           });
@@ -501,7 +501,7 @@
           document.removeEventListener('pointermove', onMove);
           document.removeEventListener('pointerup', onUp);
           if (moved) {
-            api('tables', { method: 'POST', csrf: true, body: { action: 'update', id: t.id, table: { x: t.x, y: t.y } } });
+            api('reservations?sub=tables', { method: 'POST', csrf: true, body: { action: 'update', id: t.id, table: { x: t.x, y: t.y } } });
           } else {
             editTable(t);
           }
@@ -528,14 +528,14 @@
             h('div', { class: 'field' }, [h('label', { text: 'Shape' }), shapeSel])
           ]),
           h('button', { class: 'btn btn--full', text: 'Save table', onclick: function () {
-            api('tables', { method: 'POST', csrf: true, body: { action: 'update', id: t.id, table: { name: nameIn.value, seats: seatsIn.value, shape: shapeSel.value } } }).then(function (rr) {
+            api('reservations?sub=tables', { method: 'POST', csrf: true, body: { action: 'update', id: t.id, table: { name: nameIn.value, seats: seatsIn.value, shape: shapeSel.value } } }).then(function (rr) {
               if (rr.status === 200 && rr.body.ok) { m.close(); toast('Saved.', 'ok'); renderShell(); }
               else toast((rr.body && rr.body.error) || 'Could not save.', 'err');
             });
           } }),
           h('button', { class: 'btn btn--full btn--danger', style: 'margin-top:10px', text: 'Remove this table', onclick: function () {
             if (!window.confirm('Remove ' + t.name + ' from the floor plan?')) return;
-            api('tables', { method: 'POST', csrf: true, body: { action: 'remove', id: t.id } }).then(function (rr) {
+            api('reservations?sub=tables', { method: 'POST', csrf: true, body: { action: 'remove', id: t.id } }).then(function (rr) {
               if (rr.status === 200 && rr.body.ok) { m.close(); toast('Removed.', 'ok'); renderShell(); }
               else toast((rr.body && rr.body.error) || 'Could not remove.', 'err');
             });

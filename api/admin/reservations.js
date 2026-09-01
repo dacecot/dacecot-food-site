@@ -82,7 +82,13 @@ function mapWixRow(o) {
   };
 }
 
+const tablesHandler = require('../../lib/cms/handlers/tables');
+
 module.exports = async (req, res) => {
+  // ?sub=tables → the floor-plan tables sub-endpoint (kept in this function to
+  // stay under Vercel Hobby's 12-function deployment cap).
+  if (/(?:^|[?&])sub=tables(?:&|$)/.test((req.url || '').split('?')[1] || '')) return tablesHandler(req, res);
+
   if (req.method === 'GET') {
     if (!auth.requireAuth(req, res, false)) return;
     const qs = (req.url || '').split('?')[1] || '';

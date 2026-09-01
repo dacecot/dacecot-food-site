@@ -95,6 +95,7 @@ module.exports = async (req, res) => {
       const dueBookings = reservations.filter((s) => {
         const d = s.details || {};
         if (d.cancelled || d.booking_reminded_at) return false;
+        if (d.approval_status === 'pending') return false; // not confirmed yet
         if (!s.email) return false;
         if (R.parseDate(d.reservation_date) !== today) return false;
         const t = R.parseTime(d.reservation_time);

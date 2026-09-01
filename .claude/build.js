@@ -727,14 +727,18 @@ pages.push(page({
               <select id="res-guests" name="party_size" required>${Array.from({ length: 6 }, (_, i) => `<option>${i + 1} guest${i ? 's' : ''}</option>`).join('')}</select>
               <p class="field__hint" style="margin-top:6px; font-size:0.85em; opacity:0.7;">More than 6 guests? Call us at <a href="tel:${NAP.phoneHref}">${NAP.phone}</a> — we love big tables.</p>
             </div>
+            <div class="field">
+              <label for="res-allergies">Allergies or dietary restrictions</label>
+              <input type="text" id="res-allergies" name="allergies" required placeholder='Gluten-free, nut allergy… — or type "None"'>
+            </div>
             <div class="form-row">
               <div class="field"><label for="res-name">Name</label><input type="text" id="res-name" name="name" required></div>
               <div class="field"><label for="res-phone">Phone</label><input type="tel" id="res-phone" name="phone" required></div>
             </div>
             <div class="field"><label for="res-email">Email</label><input type="email" id="res-email" name="email" required></div>
-            <div class="field"><label for="res-notes">Occasion or notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label><textarea id="res-notes" name="notes" placeholder="Birthday, anniversary, allergies, highchair…"></textarea></div>
+            <div class="field"><label for="res-notes">Occasion or notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label><textarea id="res-notes" name="notes" placeholder="Birthday, anniversary, highchair…"></textarea></div>
             <button type="submit" class="btn btn--green" style="width:100%;">Request My Table</button>
-            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! Your table is booked — a confirmation email is on its way to you now.</div>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! Your table request is in — check your email, a note from us is on its way right now.</div>
             <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at ${NAP.phone} or email ${NAP.email}.</div>
           </form>
         </div>

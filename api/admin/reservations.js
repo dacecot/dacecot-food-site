@@ -95,11 +95,16 @@ module.exports = async (req, res) => {
     const view = (/view=([a-z]+)/.exec(qs) || [])[1] || 'week';
     try {
       const all = await store.list({ type: 'reservation' });
-      const listForView = R.forView(all, ['today', 'week', 'upcoming', 'past', 'all'].indexOf(view) > -1 ? view : 'week');
+      const pending = all.filter((s) => s.details && s.details.approval_status === 'pending' && !s.details.cancelled);
+      // 'requests' view: only large parties awaiting Erika's approval.
+      const source = view === 'requests' ? pending : all;
+      const listForView = view === 'requests'
+        ? R.forView(source, 'all')
+        : R.forView(source, ['today', 'week', 'upcoming', 'past', 'all'].indexOf(view) > -1 ? view : 'week');
       return res.status(200).json({
         ok: true, view: view, today: R.todayISO(),
         days: R.groupByDay(listForView),
-        totals: { all: all.length, upcoming: R.forView(all, 'upcoming').length, past: R.forView(all, 'past').length },
+        totals: { all: all.length, upcoming: R.forView(all, 'upcoming').length, past: R.forView(all, 'past').length, requests: pending.length },
         tables: await tables.list()
       });
     } catch (e) { return res.status(502).json({ error: 'Could not load reservations: ' + (e && e.message || e) }); }
@@ -136,6 +141,29 @@ module.exports = async (req, res) => {
         if (tableId) details.table_id = tableId; else delete details.table_id;
         const updated = await store.update(id, { details });
         return res.status(200).json({ ok: true, order: updated });
+      }
+
+      if (action === 'approve' || action === 'decline') {
+        const mailer = require('../../lib/orders/mailer');
+        const id = String(body.id || '');
+        const sub = await store.get(id);
+        if (!sub) return res.status(404).json({ error: 'Request not found.' });
+        if (!(sub.details && sub.details.approval_status === 'pending')) return res.status(400).json({ error: 'This reservation isn’t awaiting approval.' });
+        const details = Object.assign({}, sub.details);
+        let emailed = null;
+        if (action === 'approve') {
+          details.approval_status = 'approved';
+          details.approved_at = new Date().toISOString();
+          const updated = await store.update(id, { details });
+          if (sub.email) { const r2 = await mailer.sendApproved(updated); emailed = r2 && r2.ok ? 'confirmation email sent' : 'confirmation email failed'; }
+          return res.status(200).json({ ok: true, order: updated, emailed });
+        }
+        details.approval_status = 'declined';
+        details.cancelled = true;
+        details.declined_at = new Date().toISOString();
+        const updated = await store.update(id, { details });
+        if (sub.email) { const r2 = await mailer.sendDeclined(updated); emailed = r2 && r2.ok ? 'decline email sent' : 'decline email failed'; }
+        return res.status(200).json({ ok: true, order: updated, emailed });
       }
 
       if (action === 'add') {

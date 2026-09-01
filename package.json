@@ -9,6 +9,7 @@
     "hash": "node lib/cms/hash-password.js"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
     "bcryptjs": "^2.4.3"
   }
 }

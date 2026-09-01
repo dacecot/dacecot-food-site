@@ -692,16 +692,9 @@ pages.push(page({
 }));
 
 /* ---------- RESERVATIONS ---------- */
-// Booking is handled by the client's Wix reservation page. When
-// RESERVATION_BOOKING_URL is set we render a live "Book a Table" button (opens
-// the Wix booking page in a new tab); while it's empty we show a clearly-marked
-// pending state so the page never points guests at a dead link.
-const reservationCta = RESERVATION_BOOKING_URL
-  ? `<a href="${RESERVATION_BOOKING_URL}" target="_blank" rel="noopener" class="btn btn--green" style="font-size:1.08rem; padding:16px 46px;">Book a Table &rarr;</a>
-        <p style="margin-top:10px; font-size:0.85rem; opacity:0.7;">Opens our secure online booking page in a new tab.</p>`
-  : `<span class="btn btn--green" role="link" aria-disabled="true" style="font-size:1.08rem; padding:16px 46px; opacity:0.5; cursor:not-allowed; pointer-events:none;">Book a Table &rarr;</span>
-        <p style="margin-top:12px; font-size:0.92rem; color:var(--terracotta); font-weight:600;">Online booking is launching shortly — for now, please call or email to reserve your table.</p>`;
-
+// In-house table reservations: an hours-aware form that emails the restaurant,
+// sends the guest a confirmation, and lands in the /admin Orders & Bookings tab.
+// Times offered come from the CMS hours (embedded as #service-hours JSON).
 pages.push(page({
   slug: 'reservations',
   active: 'reservations',
@@ -719,11 +712,35 @@ pages.push(page({
         <h1 id="res-h1">Reserve a Table</h1>
         <p class="lead" style="margin-top:18px;">Book your table at da Cecot for lunch, dinner, or Sunday family lunch. For pasta classes, private dinners, and special experiences, please visit our <a href="experiences.html" style="color:var(--terracotta); font-weight:600;">Experiences page</a>.</p>
       </div>
-      <div class="container narrow text-center reveal" style="padding-top:16px; padding-bottom:26px;">
-        ${reservationCta}
-        <p style="margin-top:26px; opacity:0.85;">Prefer to call? <a href="tel:${NAP.phoneHref}" style="color:var(--terracotta); font-weight:600;">${NAP.phone}</a> &nbsp;&middot;&nbsp; <a href="mailto:${NAP.email}" style="color:var(--terracotta); font-weight:600;">${NAP.email}</a></p>
+      <div class="container narrow reveal" style="padding-top:10px;">
+        <div class="booking">
+          <form data-formsubmit data-subject="Table Reservation — da Cecot" aria-label="Table reservation request">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+            <script id="service-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED, buffer: 60 })}</script>
+            <div class="form-row">
+              <div class="field"><label for="res-date">Date</label><input type="date" id="res-date" name="reservation_date" required></div>
+              <div class="field"><label for="res-time">Time</label><select id="res-time" name="reservation_time" data-res-time required disabled><option value="">Pick a date first</option></select></div>
+            </div>
+            <p class="field__hint" data-res-msg style="margin:-6px 0 14px; font-size:0.85em; color:var(--terracotta); font-weight:600;"></p>
+            <div class="field">
+              <label for="res-guests">Party size</label>
+              <select id="res-guests" name="party_size" required>${Array.from({ length: 6 }, (_, i) => `<option>${i + 1} guest${i ? 's' : ''}</option>`).join('')}</select>
+              <p class="field__hint" style="margin-top:6px; font-size:0.85em; opacity:0.7;">More than 6 guests? Call us at <a href="tel:${NAP.phoneHref}">${NAP.phone}</a> — we love big tables.</p>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="res-name">Name</label><input type="text" id="res-name" name="name" required></div>
+              <div class="field"><label for="res-phone">Phone</label><input type="tel" id="res-phone" name="phone" required></div>
+            </div>
+            <div class="field"><label for="res-email">Email</label><input type="email" id="res-email" name="email" required></div>
+            <div class="field"><label for="res-notes">Occasion or notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label><textarea id="res-notes" name="notes" placeholder="Birthday, anniversary, allergies, highchair…"></textarea></div>
+            <button type="submit" class="btn btn--green" style="width:100%;">Request My Table</button>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! Your reservation request is in — we'll confirm your table by email or phone shortly.</div>
+            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at ${NAP.phone} or email ${NAP.email}.</div>
+          </form>
+        </div>
+        <p class="text-center" style="margin-top:26px; opacity:0.85;">Prefer to call? <a href="tel:${NAP.phoneHref}" style="color:var(--terracotta); font-weight:600;">${NAP.phone}</a> &nbsp;&middot;&nbsp; <a href="mailto:${NAP.email}" style="color:var(--terracotta); font-weight:600;">${NAP.email}</a></p>
       </div>
-      <div class="container narrow text-center reveal" style="padding-bottom:60px;">
+      <div class="container narrow text-center reveal" style="padding-top:14px; padding-bottom:60px;">
         <p style="opacity:0.78; font-size:0.95em;"><em>For groups larger than 6 guests, private events, catering, or pasta classes, please <a href="visit-us.html" style="color:var(--terracotta);">contact us directly</a> or visit the <a href="experiences.html" style="color:var(--terracotta);">Experiences page</a>.</em></p>
       </div>
     </section>`

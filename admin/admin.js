@@ -297,7 +297,7 @@
     ]));
 
     var tabs = h('div', { class: 'filter-row' }, []);
-    [['all', 'All'], ['order', 'Pasta Shop'], ['class', 'Classes'], ['contact', 'Inquiries'], ['wholesale', 'Wholesale']].forEach(function (t) {
+    [['all', 'All'], ['reservation', 'Reservations'], ['order', 'Pasta Shop'], ['class', 'Classes'], ['contact', 'Inquiries'], ['wholesale', 'Wholesale']].forEach(function (t) {
       tabs.appendChild(h('button', { class: 'btn btn--sm ' + (ordersFilter === t[0] ? '' : 'btn--ghost'), onclick: function () { ordersFilter = t[0]; renderShell(); } }, [t[1]]));
     });
     main.appendChild(tabs);
@@ -320,6 +320,7 @@
         var bits = [];
         if (d.item) bits.push(d.item + (d.quantity ? ' × ' + d.quantity : ''));
         if (d.class_date) bits.push(d.class_date + (d.guests ? ' · ' + d.guests : ''));
+        if (d.reservation_date) bits.push('Table ' + d.reservation_date + (d.reservation_time ? ' at ' + d.reservation_time : '') + (d.party_size ? ' · ' + d.party_size : ''));
         if (d.pickup_day) bits.push('Pickup ' + d.pickup_day + (d.pickup_time ? ' at ' + d.pickup_time : ''));
         if (d.allergies && d.allergies.toLowerCase() !== 'none') bits.push('Allergies: ' + d.allergies);
         if (d.notes) bits.push(d.notes);
@@ -346,16 +347,17 @@
           actions.appendChild(act('send_reminder', 'Email payment reminder', 'btn--ghost', null,
             'Email ' + (o.name || 'the customer') + ' a payment reminder with their payment link?'));
         }
-        if (!cancelled && (o.type === 'order' || o.type === 'class') && (d.class_date || d.pickup_day)) {
+        var bookable = (o.type === 'order' || o.type === 'class' || o.type === 'reservation');
+        if (!cancelled && bookable && (d.class_date || d.reservation_date || d.pickup_day)) {
           actions.appendChild(act('reschedule', 'Reschedule', 'btn--ghost', function () {
-            var current = d.class_date || d.pickup_day;
+            var current = d.class_date || d.reservation_date || d.pickup_day;
             var nd = window.prompt('New date for this booking (the customer will be emailed):', current || '');
             if (nd == null || !nd.trim()) return { __abort: true };
             return { new_date: nd.trim() };
           }));
         }
         if (!cancelled && !(d.fulfilled) && (o.type === 'order' || o.type === 'class')) actions.appendChild(act('mark_fulfilled', 'Mark fulfilled', 'btn--ghost'));
-        if (!cancelled && (o.type === 'order' || o.type === 'class')) {
+        if (!cancelled && bookable) {
           actions.appendChild(act('cancel', 'Cancel booking', 'btn--danger', null,
             'Cancel this booking' + (o.email ? ' and email ' + (o.name || 'the customer') + '?' : '?')));
         }

@@ -128,14 +128,16 @@ module.exports = async (req, res) => {
   // Orders (pasta shop) get an order-style receipt; other forms get a generic
   // "we received your message" note. Never blocks the success response.
   let customerConfirmation = 'skipped';
-  // Classify: a pasta-shop order, a class/drop-in booking, or a general enquiry.
+  // Classify: a table reservation, a pasta-shop order, a class/drop-in booking,
+  // or a general enquiry.
+  const isReservation = /table reservation/i.test(subject) || data.reservation_date;
   const isClass = /class booking|drop-in|drop in/i.test(subject) || data.class_date || data.drop_in_date;
   const isOrder = /pasta shop order/i.test(subject) || data.item || data.pickup_day || data.quantity;
   if (customerEmail) {
     const firstName = customerName === 'the customer' ? 'there' : customerName.split(/\s+/)[0];
 
-    // Detail rows shown back to the customer — order fields AND booking fields.
-    const detailKeys = ['item', 'quantity', 'class_date', 'drop_in_date', 'guests', 'pickup_day', 'pickup_time', 'allergies', 'notes'];
+    // Detail rows shown back to the customer — order, booking AND reservation fields.
+    const detailKeys = ['item', 'quantity', 'class_date', 'drop_in_date', 'reservation_date', 'reservation_time', 'party_size', 'guests', 'pickup_day', 'pickup_time', 'allergies', 'notes'];
     const detailRows = detailKeys
       .filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
       .map((k) =>
@@ -153,7 +155,11 @@ module.exports = async (req, res) => {
     const payLine = payLink ? ('\nComplete your payment: ' + payLink + '\n') : '';
 
     let intro, closing, subjectLine;
-    if (isClass) {
+    if (isReservation) {
+      subjectLine = 'Your table request — da Cecot Food';
+      intro = 'Grazie, ' + esc(firstName) + '! We\'ve received your reservation request — the details are below. We\'ll confirm your table by email or phone shortly.';
+      closing = 'Need to change or cancel? Just reply to this email or call us at (825) 888-4218. A presto!';
+    } else if (isClass) {
       subjectLine = 'Your class booking — da Cecot Food';
       intro = 'Grazie, ' + esc(firstName) + '! We\'ve received your class booking — the details are below. We look forward to making pasta with you!';
       closing = (payLink ? 'Please complete your payment securely with the button above (Square) to confirm your spot. ' : 'We\'ll confirm your spot by phone or email shortly. ') + 'Questions? Just reply to this email or call us at (825) 888-4218.';

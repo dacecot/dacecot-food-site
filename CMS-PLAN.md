@@ -52,3 +52,10 @@ spend is approved. Forms-based CMS works fully without it.
 ## Verify
 Login works · an edit saves + renders on the site · `/admin` blocked when logged out ·
 build passes · chatbot scaffold present (inert w/o key). Then PAUSE for prod go-ahead.
+
+## Reservations OS (key feature — 2026-09-01)
+Views: Today / This Week / All upcoming / Past, grouped by day with covers count.
+Floor plan: SVG editor — add/drag tables (name, seats, shape), stored in DB.
+Seating: assign a reservation to a table; seat-count + double-book conflict warnings.
+Manual add (phone bookings) + Wix CSV import (migration) — imported rows never email guests.
+Data: reservations stay in `submissions`; tables in new `restaurant_tables`; assignment = details.table_id.

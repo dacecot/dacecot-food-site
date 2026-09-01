@@ -133,6 +133,48 @@ textarea { min-height: 96px; resize: vertical; }
 .btn--danger { background: transparent; color: var(--err); border: 1px solid rgba(178, 59, 46, 0.4); }
 .order-actions { flex-wrap: wrap; }
 
+/* ---------- Reservations ---------- */
+.res-totals { color: var(--muted); font-size: 0.85rem; margin: 0 0 14px; }
+.res-day { padding: 0; overflow: hidden; }
+.res-day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 13px 18px; background: var(--cream); border-bottom: 1px solid var(--line); }
+.res-day-head--today { background: rgba(173, 82, 23, 0.1); }
+.res-day-head strong { color: var(--brown); font-size: 1rem; }
+.res-day-head span { color: var(--muted); font-size: 0.82rem; }
+.res-row { display: flex; align-items: center; gap: 12px; padding: 11px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.res-row:last-child { border-bottom: 0; }
+.res-row--cancelled { opacity: 0.55; }
+.res-row--cancelled .res-name strong { text-decoration: line-through; }
+.res-time { font-weight: 600; color: var(--olive); min-width: 66px; font-variant-numeric: tabular-nums; }
+.res-name { flex: 1 1 160px; min-width: 0; }
+.res-notes { color: var(--muted); font-size: 0.85em; }
+.res-party { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+.res-contact a { text-decoration: none; }
+
+/* ---------- Modal ---------- */
+.modal-back { position: fixed; inset: 0; background: rgba(43, 30, 24, 0.45); display: grid; place-items: center; z-index: 60; padding: 18px; }
+.modal-box { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); width: 100%; max-width: 420px; padding: 20px 22px; max-height: 85dvh; overflow-y: auto; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.modal-head h3 { margin: 0; color: var(--brown); font-size: 1.15rem; }
+.modal-x { background: none; border: 0; font-size: 1.5rem; cursor: pointer; color: var(--muted); line-height: 1; }
+.seat-opt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left; font: inherit; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; cursor: pointer; }
+.seat-opt:hover { border-color: var(--gold); }
+.seat-opt--current { border-color: var(--olive); background: rgba(48, 99, 30, 0.07); }
+.seat-opt strong { color: var(--brown); }
+.seat-opt span { font-size: 0.82rem; color: var(--muted); }
+.card-title { margin: 0 0 12px; color: var(--brown); font-size: 1.1rem; }
+
+/* ---------- Floor plan ---------- */
+.floor-wrap { padding: 10px; }
+.floor { width: 100%; height: auto; display: block; background:
+  repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(74,30,24,0.05) 20px),
+  repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(74,30,24,0.05) 20px),
+  #fbf9f2; border-radius: 10px; touch-action: none; }
+.floor-table { cursor: grab; }
+.floor-table circle, .floor-table rect { fill: #fff; stroke: var(--terracotta); stroke-width: 0.7; }
+.floor-table:hover circle, .floor-table:hover rect { fill: rgba(173, 82, 23, 0.08); }
+.floor-name { font-size: 2.6px; font-weight: 700; fill: var(--brown); text-anchor: middle; pointer-events: none; font-family: Inter, sans-serif; }
+.floor-seats { font-size: 2px; fill: var(--muted); text-anchor: middle; pointer-events: none; font-family: Inter, sans-serif; }
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);

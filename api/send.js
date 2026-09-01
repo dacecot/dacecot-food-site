@@ -61,6 +61,38 @@ module.exports = async (req, res) => {
   // Honeypot — silently accept so bots think they succeeded and don't retry.
   if (data._honey) return res.status(200).json({ success: true });
 
+  // Table reservations require name, phone and email — enforce server-side too
+  // (the form marks them required, but the API must not trust the client).
+  if (/table reservation/i.test(String(data._subject || '')) || data.reservation_date) {
+    const missing = ['name', 'phone', 'email'].filter((k) => !String(data[k] == null ? '' : data[k]).trim());
+    if (missing.length) return res.status(400).json({ success: false, error: 'Please fill in your ' + missing.join(', ') + '.' });
+  }
+
+  // Sunday pasta classes have a hard capacity — reject bookings that would
+  // overfill the class (the page shows live availability, but never trust it).
+  if (/class booking/i.test(String(data._subject || '')) && data.class_date) {
+    try {
+      const ordersStore = require('../lib/orders/store');
+      await ordersStore.init();
+      let max = 12;
+      try { const content = require('../lib/cms/content'); const n = Number(content.get('classMax')); if (Number.isFinite(n) && n > 0) max = n; } catch (e) {}
+      const requested = parseInt(String(data.guests || '').replace(/[^\d]/g, ''), 10) || 1;
+      const existing = await ordersStore.list({ type: 'class' });
+      const booked = existing
+        .filter((s) => s.details && !s.details.cancelled && String(s.details.class_date || '').trim() === String(data.class_date).trim())
+        .reduce((sum, s) => sum + (parseInt(String(s.details.guests || '').replace(/[^\d]/g, ''), 10) || 1), 0);
+      const left = Math.max(0, max - booked);
+      if (requested > left) {
+        return res.status(409).json({
+          success: false,
+          error: left === 0
+            ? 'That class is now fully booked — please choose another Sunday.'
+            : 'Only ' + left + ' seat' + (left === 1 ? '' : 's') + ' left for that class — please lower your guest count or pick another Sunday.'
+        });
+      }
+    } catch (e) { console.error('class capacity check failed (allowing through)', e && e.message); }
+  }
+
   // Capture the submission to the orders store (best-effort, never blocks email).
   let submissionId = null;
   try {

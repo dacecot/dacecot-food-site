@@ -183,7 +183,7 @@ function footer() {
     <div class="footer__bottom">
       <div class="footer__bottom-inner">
         <p>© 2026 da Cecot Food Inc. · Made by hand on Whyte Avenue, Edmonton.</p>
-        <p class="footer__credit">Built by AltaPro AI, an <a href="https://www.unconventionalgroup.ca" target="_blank" rel="noopener">Unconventional Group</a> company</p>
+        <p class="footer__credit"><span style="white-space:nowrap;">Built by <a href="https://www.altaproai.ca" target="_blank" rel="noopener">AltaPro AI</a>,</span> an <a href="https://www.unconventionalgroup.ca" target="_blank" rel="noopener">Unconventional Group</a> company</p>
       </div>
     </div>
   </footer>

@@ -66,6 +66,43 @@ module.exports = async (req, res) => {
   if (/table reservation/i.test(String(data._subject || '')) || data.reservation_date) {
     const missing = ['name', 'phone', 'email'].filter((k) => !String(data[k] == null ? '' : data[k]).trim());
     if (missing.length) return res.status(400).json({ success: false, error: 'Please fill in your ' + missing.join(', ') + '.' });
+
+    // Capacity guard: the dining room can only hold what the floor plan holds.
+    // Sum the party sizes of active reservations within a 2-hour window of the
+    // requested time; refuse when adding this party would exceed total seats.
+    // Fails open if the floor plan is empty or the check errors (never blocks
+    // real guests because of an infra hiccup — Erika confirms every booking).
+    try {
+      const tablesLib = require('../lib/orders/tables');
+      const ordersStore = require('../lib/orders/store');
+      const R = require('../lib/orders/reservations');
+      const tbls = await tablesLib.list();
+      const capacity = tbls.reduce((sum, t) => sum + (Number(t.seats) || 0), 0);
+      if (capacity > 0) {
+        await ordersStore.init();
+        const reqDate = R.parseDate(data.reservation_date);
+        const reqTime = R.parseTime(data.reservation_time);
+        const party = parseInt(String(data.party_size || '').replace(/[^\d]/g, ''), 10) || 1;
+        if (reqDate) {
+          const all = await ordersStore.list({ type: 'reservation' });
+          const overlapping = all.filter((s) => {
+            const det = s.details || {};
+            if (det.cancelled) return false;
+            if (R.parseDate(det.reservation_date) !== reqDate) return false;
+            const t = R.parseTime(det.reservation_time);
+            if (reqTime == null || t == null) return true; // unknown times: count them (safe)
+            return Math.abs(t - reqTime) < 120;
+          });
+          const seated = overlapping.reduce((sum, s) => sum + (parseInt(String(s.details.party_size || '').replace(/[^\d]/g, ''), 10) || 1), 0);
+          if (seated + party > capacity) {
+            return res.status(409).json({
+              success: false,
+              error: 'We’re fully booked around that time — please try a different time or day, or call us at (825) 888-4218 and we’ll do our best to fit you in.'
+            });
+          }
+        }
+      }
+    } catch (e) { console.error('reservation capacity check failed (allowing through)', e && e.message); }
   }
 
   // Sunday pasta classes have a hard capacity — reject bookings that would

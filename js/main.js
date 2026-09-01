@@ -132,6 +132,8 @@
         // Pass the Square checkout link so the confirmation email can include a
         // "complete your payment" button (a fallback if they don't pay right away).
         if (form.dataset.payUrl) payload.pay_link = form.dataset.payUrl;
+        // Pass the unit price (order modal) so the order record knows the amount.
+        if (form.dataset.price) payload.price = form.dataset.price;
 
         fetch('/api/send', {
           method: 'POST',
@@ -227,6 +229,7 @@
         if (omPrice) omPrice.textContent = price ? price + ' each' : '';
         if (omProduct) omProduct.value = product;
         omForm.dataset.subject = 'Pasta Shop Order: ' + product;
+        if (price) omForm.dataset.price = price; else delete omForm.dataset.price;
         if (pay) { omForm.dataset.payUrl = pay; if (omNote) omNote.style.display = ''; if (omSubmit) omSubmit.textContent = 'Proceed to Payment'; }
         else { delete omForm.dataset.payUrl; if (omNote) omNote.style.display = 'none'; if (omSubmit) omSubmit.textContent = 'Send My Order'; }
         omForm.querySelectorAll('.form-success, .form-error').forEach(function (e) { e.classList.remove('show'); });

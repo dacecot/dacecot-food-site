@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var app = document.getElementById('app');
-  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, dirty: {} };
+  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, dirty: {}, mustChange: false, canChange: false };
 
   /* ---------- helpers ---------- */
   function h(tag, attrs, kids) {
@@ -39,7 +39,11 @@
   /* ---------- boot ---------- */
   function boot() {
     api('session').then(function (r) {
-      if (r.body && r.body.authed) { state.csrf = r.body.csrf; state.email = r.body.email; loadDashboard(); }
+      if (r.body && r.body.authed) {
+        state.csrf = r.body.csrf; state.email = r.body.email;
+        state.mustChange = !!r.body.mustChange; state.canChange = !!r.body.canChange;
+        loadDashboard();
+      }
       else renderLogin(r.body && r.body.configured === false);
     }).catch(function () { renderLogin(false); });
   }
@@ -64,7 +68,11 @@
       if (!password) { errBox.textContent = 'Please enter your password.'; errBox.classList.add('show'); return; }
       btn.disabled = true; btn.textContent = 'Signing in…';
       api('login', { method: 'POST', body: { email: email, password: password } }).then(function (r) {
-        if (r.status === 200 && r.body.ok) { state.csrf = r.body.csrf; loadDashboard(); }
+        if (r.status === 200 && r.body.ok) {
+          state.csrf = r.body.csrf;
+          state.mustChange = !!r.body.mustChange; state.canChange = !!r.body.canChange;
+          loadDashboard();
+        }
         else { errBox.textContent = r.body.error || 'Sign in failed.'; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign in'; }
       }).catch(function () { errBox.textContent = 'Network error. Please try again.'; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign in'; });
     } }, [emailField, pwField, btn, errBox]);
@@ -81,32 +89,80 @@
 
   /* ---------- dashboard ---------- */
   function loadDashboard() {
+    if (state.mustChange && state.canChange) { renderChangePassword(true); return; }
     api('content').then(function (r) {
       if (r.status !== 200) { renderLogin(false); return; }
       state.groups = r.body.groups; state.content = r.body.content || {}; state.base = JSON.parse(JSON.stringify(state.content));
-      state.store = r.body.store; state.active = state.groups[0].id; state.dirty = {};
+      state.store = r.body.store; state.active = '__orders'; state.dirty = {};
       renderShell();
     });
+  }
+
+  /* ---------- forced password change (first login on the starting password) ---------- */
+  function renderChangePassword(forced) {
+    var curField = h('div', { class: 'field' }, [
+      h('label', { for: 'pw-cur', text: 'Current password' }),
+      h('input', { id: 'pw-cur', type: 'password', autocomplete: 'current-password' })
+    ]);
+    var newField = h('div', { class: 'field' }, [
+      h('label', { for: 'pw-new', text: 'New password' }),
+      h('input', { id: 'pw-new', type: 'password', autocomplete: 'new-password', placeholder: 'At least 10 characters' })
+    ]);
+    var new2Field = h('div', { class: 'field' }, [
+      h('label', { for: 'pw-new2', text: 'Repeat new password' }),
+      h('input', { id: 'pw-new2', type: 'password', autocomplete: 'new-password' })
+    ]);
+    var errBox = h('div', { class: 'msg msg--err' });
+    var btn = h('button', { class: 'btn btn--full', type: 'submit', text: 'Set new password' });
+    var form = h('form', { onsubmit: function (e) {
+      e.preventDefault();
+      errBox.classList.remove('show');
+      var cur = document.getElementById('pw-cur').value;
+      var nw = document.getElementById('pw-new').value;
+      var nw2 = document.getElementById('pw-new2').value;
+      if (nw.length < 10) { errBox.textContent = 'Please choose a password of at least 10 characters.'; errBox.classList.add('show'); return; }
+      if (nw !== nw2) { errBox.textContent = 'The two passwords don’t match.'; errBox.classList.add('show'); return; }
+      btn.disabled = true; btn.textContent = 'Saving…';
+      api('password', { method: 'POST', csrf: true, body: { current: cur, next: nw } }).then(function (r) {
+        if (r.status === 200 && r.body.ok) { state.csrf = r.body.csrf; state.mustChange = false; toast('Password updated!', 'ok'); loadDashboard(); }
+        else { errBox.textContent = r.body.error || 'Could not change the password.'; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Set new password'; }
+      }).catch(function () { errBox.textContent = 'Network error — please try again.'; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Set new password'; });
+    } }, [curField, newField, new2Field, btn, errBox]);
+
+    var card = h('div', { class: 'login-card' }, [
+      h('div', { class: 'logo', text: 'da Cecot' }),
+      h('p', { class: 'sub', text: forced
+        ? 'Welcome! Before you start, please set your own password — the starting password is shared and needs to be replaced.'
+        : 'Change your password.' }),
+      form
+    ]);
+    app.innerHTML = ''; app.appendChild(h('div', { class: 'login-wrap' }, [card]));
   }
 
   function renderShell() {
     var nav = h('nav', { class: 'side' }, []);
     nav.appendChild(h('div', { class: 'logo', text: 'da Cecot' }));
+    // Orders first — it's the day-to-day view.
+    nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__orders' ? ' active' : ''), onclick: function () { state.active = '__orders'; renderShell(); } }, [
+      h('span', { class: 'ic', text: '🧾' }), h('span', { text: 'Orders & Bookings' })
+    ]));
     state.groups.forEach(function (g) {
       nav.appendChild(h('button', { class: 'navbtn' + (state.active === g.id ? ' active' : ''), onclick: function () { state.active = g.id; renderShell(); } }, [
         h('span', { class: 'ic', text: g.icon || '•' }), h('span', { text: g.title })
       ]));
     });
-    nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__assistant' ? ' active' : ''), onclick: function () { state.active = '__assistant'; renderShell(); } }, [
-      h('span', { class: 'ic', text: '💬' }), h('span', { text: 'Assistant' })
-    ]));
     nav.appendChild(h('div', { class: 'spacer' }));
     nav.appendChild(h('a', { class: 'navbtn', href: '/', target: '_blank' }, [h('span', { class: 'ic', text: '🔗' }), h('span', { text: 'View site' })]));
     if (state.email) nav.appendChild(h('div', { class: 'who', text: state.email }));
     nav.appendChild(h('button', { class: 'navbtn', onclick: logout }, [h('span', { class: 'ic', text: '↩' }), h('span', { text: 'Sign out' })]));
 
     var main = h('main', { class: 'main' }, []);
-    if (state.active === '__assistant') renderAssistant(main);
+    // Still on the shared starting password but the database isn't connected yet
+    // (a change can't be stored) — warn loudly instead of blocking her out.
+    if (state.mustChange && !state.canChange) {
+      main.appendChild(h('div', { class: 'notice', text: '⚠ You are using the shared starting password. As soon as the database is connected you will be asked to set your own.' }));
+    }
+    if (state.active === '__orders') renderOrders(main);
     else renderGroup(main, state.groups.filter(function (g) { return g.id === state.active; })[0]);
 
     app.innerHTML = ''; app.appendChild(h('div', { class: 'shell' }, [nav, main]));
@@ -217,51 +273,91 @@
       .finally(function () { btn.disabled = false; btn.textContent = 'Save changes'; });
   }
 
-  /* ---------- assistant ---------- */
-  function renderAssistant(main) {
+  /* ---------- orders & bookings ---------- */
+  var ordersFilter = 'all';
+  var TYPE_LABEL = { order: 'Pasta Shop', class: 'Class', reservation: 'Reservation', wholesale: 'Wholesale', contact: 'Inquiry' };
+  function money(cents) { return cents == null ? '' : '$' + (cents / 100).toFixed(2); }
+  function when(iso) {
+    try { var d = new Date(iso); return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }); }
+    catch (e) { return iso || ''; }
+  }
+  function statusChip(o) {
+    if (o.details && o.details.fulfilled) return h('span', { class: 'chip chip--ok', text: 'Fulfilled' });
+    if (o.payment_status === 'paid') return h('span', { class: 'chip chip--ok', text: 'Paid' });
+    if (o.payment_status === 'reminded') return h('span', { class: 'chip chip--warn', text: 'Reminded' });
+    if (o.payment_status === 'pending') return h('span', { class: 'chip chip--warn', text: 'Unpaid' });
+    return h('span', { class: 'chip', text: '—' });
+  }
+
+  function renderOrders(main) {
     main.appendChild(h('div', { class: 'page-head' }, [
-      h('h1', { text: 'Assistant' }),
-      h('p', { text: 'Ask me to make edits in plain English — e.g. "change the phone number to …" or "add a class date for December 6".' })
+      h('h1', { text: 'Orders & Bookings' }),
+      h('p', { text: 'Everything submitted through the website — pasta-shop orders, class bookings, and inquiries.' })
     ]));
-    var log = h('div', { class: 'chat-log' }, []);
-    var msgs = [];
-    function addBubble(role, text) { var b = h('div', { class: 'bubble ' + role, text: text }); log.appendChild(b); log.scrollTop = log.scrollHeight; return b; }
 
-    var ta = h('textarea', { placeholder: 'Type a request…', onkeydown: function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } } });
-    var sendBtn = h('button', { class: 'btn', text: 'Send', onclick: send });
-
-    function send() {
-      var text = ta.value.trim(); if (!text) return;
-      ta.value = ''; addBubble('me', text); msgs.push({ role: 'user', content: text });
-      sendBtn.disabled = true;
-      var thinking = addBubble('ai', '…');
-      api('chat', { method: 'POST', csrf: true, body: { messages: msgs } }).then(function (r) {
-        thinking.remove();
-        if (r.body && r.body.configured === false) { showNotice(main, log, r.body.message); return; }
-        if (r.status !== 200) { addBubble('ai', (r.body && r.body.error) || 'Sorry, something went wrong.'); return; }
-        (r.body.steps || []).forEach(function (s) { addBubble('tool', s); });
-        addBubble('ai', r.body.reply || '');
-        msgs.push({ role: 'assistant', content: r.body.reply || '' });
-        if (r.body.changed) { // refresh content so forms reflect edits
-          api('content').then(function (rr) { if (rr.status === 200) { state.content = rr.body.content; state.base = JSON.parse(JSON.stringify(state.content)); } });
-          if (r.body.rebuilding) toast('Change saved — site updating (about a minute).', 'ok');
-        }
-      }).catch(function () { thinking.remove(); addBubble('ai', 'Network error — please try again.'); })
-        .finally(function () { sendBtn.disabled = false; });
-    }
-
-    // Probe configuration first.
-    api('chat', { method: 'GET' }).then(function (r) {
-      if (r.body && r.body.configured === false) { showNotice(main, log, r.body.message); }
+    var tabs = h('div', { class: 'filter-row' }, []);
+    [['all', 'All'], ['order', 'Pasta Shop'], ['class', 'Classes'], ['contact', 'Inquiries'], ['wholesale', 'Wholesale']].forEach(function (t) {
+      tabs.appendChild(h('button', { class: 'btn btn--sm ' + (ordersFilter === t[0] ? '' : 'btn--ghost'), onclick: function () { ordersFilter = t[0]; renderShell(); } }, [t[1]]));
     });
+    main.appendChild(tabs);
 
-    main.appendChild(h('div', { class: 'assistant' }, [log, h('div', { class: 'chat-input' }, [ta, sendBtn])]));
+    var listWrap = h('div', {}, [h('div', { class: 'boot', text: 'Loading…' })]);
+    main.appendChild(listWrap);
+
+    var path = 'orders' + (ordersFilter !== 'all' ? '?type=' + ordersFilter : '');
+    api(path).then(function (r) {
+      listWrap.innerHTML = '';
+      if (r.status !== 200 || !r.body.ok) { listWrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load orders.' })); return; }
+      var orders = r.body.orders || [];
+      if (r.body.store === 'local') {
+        listWrap.appendChild(h('div', { class: 'notice', text: 'Heads up: orders are stored locally on this server. On the live site a database keeps them permanently.' }));
+      }
+      if (!orders.length) { listWrap.appendChild(h('div', { class: 'card', text: 'Nothing here yet — new orders and bookings will appear as customers submit them.' })); return; }
+
+      orders.forEach(function (o) {
+        var d = o.details || {};
+        var bits = [];
+        if (d.item) bits.push(d.item + (d.quantity ? ' × ' + d.quantity : ''));
+        if (d.class_date) bits.push(d.class_date + (d.guests ? ' · ' + d.guests : ''));
+        if (d.pickup_day) bits.push('Pickup ' + d.pickup_day + (d.pickup_time ? ' at ' + d.pickup_time : ''));
+        if (d.allergies && d.allergies.toLowerCase() !== 'none') bits.push('Allergies: ' + d.allergies);
+        if (d.notes) bits.push(d.notes);
+        if (d.message) bits.push(d.message);
+
+        var actions = h('div', { class: 'order-actions' }, []);
+        function act(action, label, btnCls) {
+          var b = h('button', { class: 'btn btn--sm ' + btnCls, text: label, onclick: function () {
+            b.disabled = true;
+            api('orders', { method: 'POST', csrf: true, body: { id: o.id, action: action } }).then(function (rr) {
+              if (rr.status === 200 && rr.body.ok) { toast('Updated.', 'ok'); renderShell(); }
+              else { toast((rr.body && rr.body.error) || 'Could not update.', 'err'); b.disabled = false; }
+            }).catch(function () { toast('Network error.', 'err'); b.disabled = false; });
+          } });
+          return b;
+        }
+        if ((o.payment_status === 'pending' || o.payment_status === 'reminded')) actions.appendChild(act('mark_paid', 'Mark paid', 'btn--green'));
+        if (!(d.fulfilled) && (o.type === 'order' || o.type === 'class')) actions.appendChild(act('mark_fulfilled', 'Mark fulfilled', 'btn--ghost'));
+
+        listWrap.appendChild(h('div', { class: 'card order-card' }, [
+          h('div', { class: 'order-top' }, [
+            h('span', { class: 'chip chip--type', text: TYPE_LABEL[o.type] || o.type }),
+            h('strong', { text: o.name || 'Unknown' }),
+            statusChip(o),
+            o.amount_cents != null ? h('span', { class: 'order-amt', text: money(o.amount_cents) }) : null,
+            h('span', { class: 'order-when', text: when(o.created_at) })
+          ]),
+          bits.length ? h('p', { class: 'order-bits', text: bits.join(' · ') }) : null,
+          h('p', { class: 'order-contact' }, [
+            o.email ? h('a', { href: 'mailto:' + o.email, text: o.email }) : null,
+            o.email && o.phone ? h('span', { text: ' · ' }) : null,
+            o.phone ? h('a', { href: 'tel:' + o.phone, text: o.phone }) : null
+          ]),
+          actions
+        ]));
+      });
+    }).catch(function () { listWrap.innerHTML = ''; listWrap.appendChild(h('div', { class: 'notice', text: 'Could not load orders.' })); });
   }
-  function showNotice(main, log, message) {
-    var wrap = main.querySelector('.assistant');
-    if (wrap) wrap.style.display = 'none';
-    main.appendChild(h('div', { class: 'notice', text: message || 'The AI assistant isn’t switched on yet. You can still make every edit using the tabs on the left.' }));
-  }
+
 
   boot();
 })();

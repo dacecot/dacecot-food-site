@@ -245,6 +245,55 @@
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !orderModal.hidden) closeOrder(); });
     }
 
+    /* ---- Sunday class live availability ticker ---- */
+    (function () {
+      var pills = document.querySelectorAll('input[name="class_date"]');
+      if (!pills.length) return;
+      var guestsSel = document.getElementById('spc-guests');
+      fetch('/api/class-availability', { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (a) {
+          if (!a || !a.max) return;
+          var avail = {};
+          pills.forEach(function (input) {
+            var info = (a.dates && a.dates[input.value]) || { booked: 0, left: a.max };
+            avail[input.value] = info.left;
+            var label = input.closest('.date-pill');
+            var span = label && label.querySelector('span');
+            if (!span) return;
+            var tag = document.createElement('em');
+            tag.style.cssText = 'display:block;font-style:normal;font-size:0.72em;opacity:0.8;margin-top:2px;';
+            if (info.left <= 0) {
+              tag.textContent = 'Fully booked';
+              input.disabled = true;
+              label.style.opacity = '0.45';
+              label.style.pointerEvents = 'none';
+            } else if (info.left <= 4) {
+              tag.textContent = 'Only ' + info.left + ' seat' + (info.left === 1 ? '' : 's') + ' left';
+              tag.style.color = '#ad5217';
+              tag.style.opacity = '1';
+              tag.style.fontWeight = '600';
+            } else {
+              tag.textContent = info.left + ' of ' + a.max + ' seats left';
+            }
+            span.appendChild(tag);
+          });
+          // Cap the guest count to what's left for the chosen date.
+          function capGuests() {
+            if (!guestsSel) return;
+            var chosen = document.querySelector('input[name="class_date"]:checked');
+            var left = chosen ? avail[chosen.value] : null;
+            [].forEach.call(guestsSel.options, function (opt, i) {
+              opt.disabled = left != null && (i + 1) > left;
+            });
+            if (left != null && guestsSel.selectedIndex + 1 > left) guestsSel.selectedIndex = Math.max(0, left - 1);
+          }
+          pills.forEach(function (p) { p.addEventListener('change', capGuests); });
+          capGuests();
+        })
+        .catch(function () { /* ticker is progressive enhancement — booking still works */ });
+    })();
+
     /* ---- Reservation hours-aware time picker ---- */
     (function () {
       var dateInput = document.getElementById('res-date');

@@ -166,6 +166,7 @@ textarea { min-height: 96px; resize: vertical; }
 .contact-links { font-size: 0.85rem; }
 .contact-links a { color: var(--terracotta); text-decoration: none; font-weight: 600; }
 .contact-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.contact-next { color: var(--olive); font-weight: 600; }
 
 /* ---------- Modal ---------- */
 .modal-back { position: fixed; inset: 0; background: rgba(43, 30, 24, 0.45); display: grid; place-items: center; z-index: 60; padding: 18px; }

@@ -650,9 +650,15 @@
       if (n > 1) w = w === 'class' ? 'classes' : w === 'inquiry' ? 'inquiries' : w + 's';
       return n + ' ' + w;
     }
-    function lastSeen(iso) {
-      try { var d = new Date(iso); return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }); }
+    function niceDate(iso) {
+      try { var p = String(iso).slice(0, 10).split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]); return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }); }
       catch (e) { return ''; }
+    }
+    // Prefer the actual visit: an upcoming booking, else the last time they came in.
+    function visitLabel(c) {
+      if (c.next_visit) return { text: 'next visit: ' + niceDate(c.next_visit), cls: ' contact-next' };
+      if (c.last_visit) return { text: 'last visit: ' + niceDate(c.last_visit), cls: '' };
+      return { text: 'last contact: ' + niceDate(c.last_seen), cls: '' };
     }
 
     var all = [];
@@ -678,7 +684,7 @@
             ])
           ]),
           h('div', { class: 'contact-meta' }, chips.concat([
-            h('span', { class: 'order-when', text: 'last: ' + lastSeen(c.last_seen) })
+            (function () { var v = visitLabel(c); return h('span', { class: 'order-when' + v.cls, text: v.text }); })()
           ]))
         ]));
       });

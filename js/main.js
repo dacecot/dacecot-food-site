@@ -251,7 +251,9 @@
       var timeSel = document.querySelector('[data-res-time]');
       var msg = document.querySelector('[data-res-msg]');
       if (!dateInput || !timeSel) return;
-      // Service windows by weekday (0=Sun … 6=Sat): [openMinutes, closeMinutes]
+      // Service windows by weekday (0=Sun … 6=Sat): [openMinutes, closeMinutes].
+      // Sourced from the CMS hours via the embedded #service-hours JSON; the
+      // hardcoded fallback only applies if that block is ever missing.
       var WIN = {
         0: [[720, 960]],              // Sun 12:00–4:00
         1: [[990, 1200]],             // Mon 4:30–8
@@ -262,6 +264,16 @@
         6: [[720, 1260]]              // Sat 12–9
       };
       var BUFFER = 60; // last reservation this many minutes before close
+      var resFirstSunClosed = true;
+      try {
+        var shRaw = document.getElementById('service-hours');
+        if (shRaw) {
+          var shCfg = JSON.parse(shRaw.textContent);
+          if (shCfg.hours) WIN = shCfg.hours;
+          if (typeof shCfg.buffer === 'number') BUFFER = shCfg.buffer;
+          resFirstSunClosed = !!shCfg.firstSundayClosed;
+        }
+      } catch (e) {}
       var STEP = 30;
       function fmt(m) {
         var h = Math.floor(m / 60), mm = m % 60, ap = h < 12 ? 'AM' : 'PM', hh = h % 12;
@@ -271,19 +283,20 @@
       function update() {
         var v = dateInput.value;
         if (msg) msg.textContent = '';
-        if (!v) { timeSel.innerHTML = '<option value="">Pick a date first</option>'; return; }
+        if (!v) { timeSel.innerHTML = '<option value="">Pick a date first</option>'; timeSel.disabled = true; return; }
         var p = v.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]);
         var dow = d.getDay();
-        var firstSun = (dow === 0 && d.getDate() <= 7);
+        var firstSun = resFirstSunClosed && (dow === 0 && d.getDate() <= 7);
         var wins = WIN[dow] || [];
-        if (dow === 3 || firstSun || !wins.length) {
+        if (firstSun || !wins.length) {
           timeSel.innerHTML = '<option value="">Closed — choose another day</option>';
-          if (msg) msg.textContent = dow === 3
-            ? "We're closed on Wednesdays — please choose another day."
-            : (firstSun ? "We're closed the first Sunday of every month — please choose another Sunday."
-                        : "We're closed that day — please choose another.");
+          timeSel.disabled = true;
+          if (msg) msg.textContent = firstSun
+            ? "We're closed the first Sunday of every month — please choose another Sunday."
+            : "We're closed that day — please choose another.";
           return;
         }
+        timeSel.disabled = false;
         var opts = '<option value="">Select a time</option>';
         wins.forEach(function (w) {
           for (var t = w[0]; t <= w[1] - BUFFER; t += STEP) opts += '<option value="' + fmt(t) + '">' + fmt(t) + '</option>';

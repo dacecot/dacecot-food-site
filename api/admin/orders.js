@@ -67,8 +67,10 @@ module.exports = async (req, res) => {
         // new_date: free-form date string shown to the customer (class_date or pickup_day).
         const newDate = String(body.new_date || '').replace(/[<>]/g, '').trim().slice(0, 60);
         if (!newDate) return res.status(400).json({ error: 'Please provide the new date.' });
-        const oldDate = (existing.details && (existing.details.class_date || existing.details.pickup_day)) || null;
-        const dateKey = (existing.details && existing.details.class_date != null) ? 'class_date' : 'pickup_day';
+        const oldDate = (existing.details && (existing.details.class_date || existing.details.reservation_date || existing.details.pickup_day)) || null;
+        const dateKey = (existing.details && existing.details.class_date != null) ? 'class_date'
+          : (existing.details && existing.details.reservation_date != null) ? 'reservation_date'
+          : 'pickup_day';
         const details = Object.assign({}, existing.details);
         details[dateKey] = newDate;
         details.rescheduled_from = oldDate;

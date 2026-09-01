@@ -341,11 +341,31 @@
         day.reservations.forEach(function (o) {
           var d = o.details || {};
           var table = d.table_id ? tablesById[d.table_id] : null;
+
+          // Expandable contact/details panel under the row.
+          function detailLine(label, node) {
+            return h('div', { class: 'res-detail-line' }, [h('span', { class: 'res-detail-label', text: label }), node]);
+          }
+          var panel = h('div', { class: 'res-detail', hidden: '' }, [
+            detailLine('Phone', o.phone ? h('a', { href: 'tel:' + o.phone, text: o.phone }) : h('span', { text: '—' })),
+            detailLine('Email', o.email ? h('a', { href: 'mailto:' + o.email, text: o.email }) : h('span', { text: '—' })),
+            detailLine('Party', h('span', { text: d.party_size || '—' })),
+            d.notes ? detailLine('Notes', h('span', { text: d.notes })) : null,
+            table ? detailLine('Table', h('span', { text: table.name + ' (' + table.seats + ' seats)' + (d.wix_table && d.wix_table.indexOf('+') > -1 ? ' · joined as ' + d.wix_table : '') })) : (d.wix_table ? detailLine('Wix table', h('span', { text: d.wix_table })) : null),
+            d.rescheduled_from ? detailLine('Moved from', h('span', { text: d.rescheduled_from })) : null,
+            detailLine('Source', h('span', { text: d.source === 'wix' ? 'Imported from Wix' : d.source === 'staff' ? 'Added by staff (phone)' : 'Website booking' })),
+            o.created_at ? detailLine('Booked', h('span', { text: when(o.created_at) })) : null
+          ]);
+          var caret = h('button', { class: 'btn btn--sm btn--ghost res-caret', text: '▾', title: 'Show contact details', onclick: function () {
+            var isHidden = panel.hasAttribute('hidden');
+            if (isHidden) { panel.removeAttribute('hidden'); caret.textContent = '▴'; }
+            else { panel.setAttribute('hidden', ''); caret.textContent = '▾'; }
+          } });
+
           var row = h('div', { class: 'res-row' + (d.cancelled ? ' res-row--cancelled' : '') }, [
             h('span', { class: 'res-time', text: d.reservation_time || '—' }),
             h('span', { class: 'res-name' }, [
               h('strong', { text: o.name || 'Unknown' }),
-              d.notes ? h('em', { class: 'res-notes', text: ' · ' + d.notes }) : null,
               d.source === 'wix' ? h('span', { class: 'chip', text: 'Wix', style: 'margin-left:8px' }) : null,
               d.source === 'staff' ? h('span', { class: 'chip', text: 'Phone', style: 'margin-left:8px' }) : null
             ]),
@@ -353,15 +373,13 @@
             d.cancelled
               ? h('span', { class: 'chip chip--err', text: 'Cancelled' })
               : h('button', { class: 'btn btn--sm ' + (table ? 'btn--ghost' : 'btn--green'), text: table ? '🪑 ' + table.name : 'Seat', onclick: function () { openSeatPicker(o, r.body.tables, tablesById, day); } }),
-            h('span', { class: 'res-contact' }, [
-              o.phone ? h('a', { href: 'tel:' + o.phone, text: '📞' , title: o.phone }) : null,
-              o.email ? h('a', { href: 'mailto:' + o.email, text: '✉️', title: o.email, style: 'margin-left:6px' }) : null
-            ]),
+            caret,
             d.cancelled ? null : h('span', { class: 'res-more' }, [
               h('button', { class: 'btn btn--sm btn--ghost', text: '⋯', onclick: function () { openResActions(o); } })
             ])
           ]);
           list.appendChild(row);
+          list.appendChild(panel);
         });
         wrap.appendChild(list);
       });

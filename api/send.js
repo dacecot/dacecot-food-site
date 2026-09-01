@@ -225,8 +225,8 @@ module.exports = async (req, res) => {
 
     let intro, closing, subjectLine;
     if (isReservation) {
-      subjectLine = 'Your table request — da Cecot Food';
-      intro = 'Grazie, ' + esc(firstName) + '! We\'ve received your reservation request — the details are below. We\'ll confirm your table by email or phone shortly.';
+      subjectLine = 'Your table is confirmed — da Cecot Food';
+      intro = 'Grazie, ' + esc(firstName) + '! Your table at da Cecot is confirmed — this email is your confirmation, and your details are below. We look forward to hosting you!';
       closing = 'Need to change or cancel? Just reply to this email or call us at (825) 888-4218. A presto!';
     } else if (isClass) {
       subjectLine = 'Your class booking — da Cecot Food';

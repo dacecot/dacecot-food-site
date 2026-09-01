@@ -734,7 +734,7 @@ pages.push(page({
             <div class="field"><label for="res-email">Email</label><input type="email" id="res-email" name="email" required></div>
             <div class="field"><label for="res-notes">Occasion or notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label><textarea id="res-notes" name="notes" placeholder="Birthday, anniversary, allergies, highchair…"></textarea></div>
             <button type="submit" class="btn btn--green" style="width:100%;">Request My Table</button>
-            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! Your reservation request is in — we'll confirm your table by email or phone shortly.</div>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! Your table is booked — a confirmation email is on its way to you now.</div>
             <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at ${NAP.phone} or email ${NAP.email}.</div>
           </form>
         </div>

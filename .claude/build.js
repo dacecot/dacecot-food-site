@@ -216,6 +216,11 @@ ${rows}
    Derived from the CMS hours — edit them in /admin, not here. Consumed
    client-side by the Pasta Shop order modal and the reservation time picker. */
 const PICKUP_HOURS = hours.windows(content);
+/* Dates the restaurant is shut outright (lib/cms/hours.js). Embedded in the
+   reservation and pickup pickers below so both refuse the day; api/send.js
+   re-checks on submit, because a page left open overnight still carries
+   yesterday's list. */
+const CLOSED_DATES = hours.closedDates(content);
 
 const POSTAL_ADDRESS = {
   '@type': 'PostalAddress',
@@ -478,18 +483,28 @@ pages.push(page({
 }));
 
 /* ---------- MENU (hub: buttons open PDFs — replace files in /menus to update) ---------- */
-const menuFaqs = [
-  { q: 'Where can I see the current da Cecot menus?', a: 'Right on our menu page — choose Dinner, Drink, Lunch, Liquor, Dessert, or Kids and the latest menu opens instantly. Menus change with the seasons and our handmade production.' },
-  { q: 'What is the Ravioli Atelier?', a: 'Each week we prepare a small selection of handmade ravioli inspired by regional Italian traditions, seasonal ingredients, and the creativity of our kitchen — available Friday and Saturday evenings in limited quantities. Reservations recommended.' },
-  { q: 'Can you accommodate dietary restrictions?', a: 'Yes — we offer a dedicated gluten-free menu and vegan pasta options. Call us ahead at (825) 888-4218 with any questions about ingredients, allergens, or to place a large order in advance.' }
-];
+/* The menu cards. `ready: false` renders "Coming soon" and links nothing.
+   Every menu is coming soon at the client's request (2026-09-15). The PDFs are
+   untouched in /menus — to bring one back: restore its `file`, flip
+   `ready: true`, re-run the build. The intro copy, the footnote and the FAQ
+   answer all follow MENUS_READY, so the page never promises a menu it cannot
+   open; test/build-output.test.js holds that pairing in place. */
 const menuCards = [
-  { name: 'Dinner Menu', file: 'menus/dinner-menu.pdf', d: 'Antipasti, handmade pasta, Ravioli Atelier, secondi, desserts, and evening specials.', ready: true },
-  { name: 'Lunch Menu', file: 'menus/lunch-menu.pdf', d: 'Build-your-own pasta &amp; sauce, signature ravioli, focaccia panini, pizza al taglio, and kids’ plates.', ready: true },
-  { name: 'Drink Menu', file: 'menus/drink-menu.pdf', d: 'Espresso, moka coffee, Italian drinks, and more.', ready: true },
-  { name: 'Dessert Menu', file: 'menus/dessert-menu.pdf', d: 'Panna cotta, tiramisù, gelato coppe, sorbetto — plus our hot &amp; cold drinks.', ready: true },
+  { name: 'Dinner Menu', d: 'Antipasti, handmade pasta, Ravioli Atelier, secondi, desserts, and evening specials.', ready: false },
+  { name: 'Lunch Menu', d: 'Build-your-own pasta &amp; sauce, signature ravioli, focaccia panini, pizza al taglio, and kids’ plates.', ready: false },
+  { name: 'Drink Menu', d: 'Espresso, moka coffee, Italian drinks, and more.', ready: false },
+  { name: 'Dessert Menu', d: 'Panna cotta, tiramisù, gelato coppe, sorbetto — plus our hot &amp; cold drinks.', ready: false },
   { name: 'Liquor Menu', d: 'Wine, beer, spirits, and Italian aperitivi.', ready: false },
   { name: 'Kids Menu', d: 'Simple, comforting pasta options made for younger guests.', ready: false }
+];
+const MENUS_READY = menuCards.some((m) => m.ready);
+
+const menuFaqs = [
+  { q: 'Where can I see the current da Cecot menus?', a: MENUS_READY
+    ? 'Right on our menu page — choose Dinner, Drink, Lunch, Liquor, Dessert, or Kids and the latest menu opens instantly. Menus change with the seasons and our handmade production.'
+    : 'Our menus are being updated — every menu on the menu page is marked “coming soon” and each one goes live there the moment it is ready. In the meantime, call us at (825) 888-4218 and we will tell you exactly what is on today. Menus change with the seasons and our handmade production.' },
+  { q: 'What is the Ravioli Atelier?', a: 'Each week we prepare a small selection of handmade ravioli inspired by regional Italian traditions, seasonal ingredients, and the creativity of our kitchen — available Friday and Saturday evenings in limited quantities. Reservations recommended.' },
+  { q: 'Can you accommodate dietary restrictions?', a: 'Yes — we offer a dedicated gluten-free menu and vegan pasta options. Call us ahead at (825) 888-4218 with any questions about ingredients, allergens, or to place a large order in advance.' }
 ];
 pages.push(page({
   slug: 'menu',
@@ -516,7 +531,7 @@ pages.push(page({
         <div class="text-center narrow reveal" style="margin-bottom:16px;">
           <span class="label" style="color:var(--terracotta);">Choose a Menu</span>
           <h2 id="choose-menu-h">Choose a menu.</h2>
-          <p>Our menus change with the seasons, our handmade production, and the ingredients available in our kitchen. View the latest menu below.</p>
+          <p>Our menus change with the seasons, our handmade production, and the ingredients available in our kitchen. ${MENUS_READY ? 'View the latest menu below.' : 'Our menus are being updated right now — they are on their way back to this page shortly.'}</p>
         </div>
         <div class="menu-promo__track menu-promo__track--lg reveal" aria-hidden="true" style="margin-bottom:38px;">
           <img class="menu-promo__bike" src="images/general/bike-logo.png" alt="" loading="lazy" decoding="async">
@@ -530,7 +545,9 @@ ${menuCards.map(m => `          <div style="display:flex; flex-direction:column;
               : `<span class="btn btn--outline" style="margin-top:6px; pointer-events:none; opacity:0.85;">Coming soon</span>`}
           </div>`).join('\n')}
         </div>
-        <p class="text-center reveal" style="margin-top:30px; opacity:0.7; font-size:0.9rem;">Menus open in a new tab — pinch or zoom to read comfortably on mobile.</p>
+        <p class="text-center reveal" style="margin-top:30px; opacity:0.7; font-size:0.9rem;">${MENUS_READY
+          ? 'Menus open in a new tab — pinch or zoom to read comfortably on mobile.'
+          : `Want to know what is on today? Call us at <a href="tel:${NAP.phoneHref}" style="color:var(--terracotta); font-weight:600;">${NAP.phone}</a> — we are happy to talk you through the kitchen.`}</p>
       </div>
     </section>
 
@@ -720,7 +737,7 @@ pages.push(page({
         <div class="booking">
           <form data-formsubmit data-subject="Table Reservation — da Cecot" aria-label="Table reservation request">
             <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
-            <script id="service-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED, buffer: 60 })}</script>
+            <script id="service-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED, buffer: 60, closed: CLOSED_DATES })}</script>
             <div class="form-row">
               <div class="field"><label for="res-date">Date</label><input type="date" id="res-date" name="reservation_date" required></div>
               <div class="field"><label for="res-time">Time</label><select id="res-time" name="reservation_time" data-res-time required disabled><option value="">Pick a date first</option></select></div>
@@ -1104,7 +1121,7 @@ pages.push(page({
             <select id="om-time" name="pickup_time" required disabled><option value="">Choose a pickup day first…</option></select>
             <p class="field__hint" data-pickup-note>Pickup times follow our opening hours.</p>
           </div>
-          <script id="pickup-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED })}</script>
+          <script id="pickup-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED, closed: CLOSED_DATES })}</script>
           <div class="field"><label for="om-allergies">Any allergies?</label><input type="text" id="om-allergies" name="allergies" placeholder="Gluten, nuts, none…"></div>
           <div class="field"><label for="om-notes">Pasta shape &amp; preferences <span style="font-weight:400;opacity:0.7;">(optional)</span></label><textarea id="om-notes" name="notes" placeholder="Note your pasta shape, sauce choice, or any preferences (e.g. tagliatelle, Salsa Plasé)."></textarea></div>
           <div class="form-row">

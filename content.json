@@ -16,5 +16,11 @@
   "announcementUrl": "https://www.ubereats.com/ca/store/da-cecot-8137-104-street-northwest/fbCdjyclUuaIaVOs455ffQ",
   "classMin": 4,
   "classWeeksShown": 9,
-  "classBlackoutDates": []
+  "classBlackoutDates": [],
+  "classFullDates": [
+    "Sunday, September 20, 2026"
+  ],
+  "closedDates": [
+    "2026-09-15"
+  ]
 }

@@ -175,11 +175,12 @@
       var omDay = orderModal.querySelector('[name="pickup_day"]');
       var omTime = orderModal.querySelector('[name="pickup_time"]');
       var omPickNote = orderModal.querySelector('[data-pickup-note]');
-      var PICK_HOURS = {}, pickFirstSunClosed = false;
+      var PICK_HOURS = {}, pickFirstSunClosed = false, pickClosed = [];
       try {
         var phRaw = document.getElementById('pickup-hours');
         var phCfg = phRaw ? JSON.parse(phRaw.textContent) : {};
         PICK_HOURS = phCfg.hours || {}; pickFirstSunClosed = !!phCfg.firstSundayClosed;
+        if (Array.isArray(phCfg.closed)) pickClosed = phCfg.closed;
       } catch (e) {}
       var PICK_STEP = 30;
       function pickFmt(m) {
@@ -194,6 +195,14 @@
           omTime.innerHTML = '<option value="">Choose a pickup day first…</option>';
           omTime.disabled = true;
           if (omPickNote) omPickNote.textContent = 'Pickup times follow our opening hours.';
+          return;
+        }
+        // A one-off closure beats the weekly hours: the doors are shut that day,
+        // so there is nothing to pick up whatever the opening hours say.
+        if (pickClosed.indexOf(v) > -1) {
+          omTime.innerHTML = '<option value="">Closed — choose another day</option>';
+          omTime.disabled = true;
+          if (omPickNote) omPickNote.textContent = "We're closed that day — please choose another for pickup.";
           return;
         }
         var p = v.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]), dow = d.getDay();
@@ -295,6 +304,11 @@
           // a backup that is already full.
           firstPills.concat(secondPills).forEach(function (input) {
             var info = (a.dates && a.dates[input.value]) || { booked: 0, left: a.max };
+            // Built sold out (Erika marked the Sunday full in the CMS). The pill
+            // already carries its own "Fully booked" tag and is disabled —
+            // re-labelling it here would stack a second tag on top, and reading
+            // the live count would quietly re-open a date she closed.
+            if (input.dataset.soldOut === '1') { avail[input.value] = 0; return; }
             avail[input.value] = info.left;
             var label = input.closest('.date-pill');
             var span = label && label.querySelector('span');
@@ -354,6 +368,7 @@
       };
       var BUFFER = 60; // last reservation this many minutes before close
       var resFirstSunClosed = true;
+      var resClosed = []; // one-off closures: ['YYYY-MM-DD', …]
       try {
         var shRaw = document.getElementById('service-hours');
         if (shRaw) {
@@ -361,8 +376,20 @@
           if (shCfg.hours) WIN = shCfg.hours;
           if (typeof shCfg.buffer === 'number') BUFFER = shCfg.buffer;
           resFirstSunClosed = !!shCfg.firstSundayClosed;
+          if (Array.isArray(shCfg.closed)) resClosed = shCfg.closed;
         }
       } catch (e) {}
+      var WD_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      var MO_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      function longDate(iso) {
+        var q = String(iso).split('-'); var dd = new Date(+q[0], +q[1] - 1, +q[2]);
+        return WD_LONG[dd.getDay()] + ', ' + MO_LONG[dd.getMonth()] + ' ' + dd.getDate();
+      }
+      // The guest's own today — the closure list is written in restaurant dates.
+      function todayISO() {
+        var n = new Date();
+        return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+      }
       var STEP = 30;
       function fmt(m) {
         var h = Math.floor(m / 60), mm = m % 60, ap = h < 12 ? 'AM' : 'PM', hh = h % 12;
@@ -372,7 +399,22 @@
       function update() {
         var v = dateInput.value;
         if (msg) msg.textContent = '';
-        if (!v) { timeSel.innerHTML = '<option value="">Pick a date first</option>'; timeSel.disabled = true; return; }
+        if (!v) {
+          timeSel.innerHTML = '<option value="">Pick a date first</option>';
+          timeSel.disabled = true;
+          // Closed today? Say it on arrival rather than letting a guest fill the
+          // whole form, pick today, and bounce off it at the last step.
+          var t = todayISO();
+          if (msg && resClosed.indexOf(t) > -1) msg.textContent = "We're closed today (" + longDate(t) + ") — you can still book any other day.";
+          return;
+        }
+        // A one-off closure beats the weekly hours — shut is shut.
+        if (resClosed.indexOf(v) > -1) {
+          timeSel.innerHTML = '<option value="">Closed — choose another day</option>';
+          timeSel.disabled = true;
+          if (msg) msg.textContent = "We're closed on " + longDate(v) + " — please choose another day, or give us a call and we'll help.";
+          return;
+        }
         var p = v.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]);
         var dow = d.getDay();
         var firstSun = resFirstSunClosed && (dow === 0 && d.getDate() <= 7);

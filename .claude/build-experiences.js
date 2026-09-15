@@ -43,6 +43,16 @@ const WD_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
    Cecot is closed, plus any Sundays Erika blacks out in the CMS), so a past
    date can never be left on the form. Cap and how many Sundays to show are
    both CMS-editable. */
+/* Prices are read from the module that actually charges them
+   (lib/orders/submission.js), never retyped into the copy. A page that says
+   $45 while the store records $95 is the kind of mistake nobody spots until a
+   guest queries their bill. test/build-output.test.js checks the rendered page
+   against these same constants. */
+const PRICES = require('../lib/orders/submission');
+const money = (cents) => '$' + (cents / 100).toFixed(2).replace(/.00$/, '');
+const CLASS_PRICE = money(PRICES.CLASS_PRICE_CENTS);      // La Domenica, Sunday
+const DROP_IN_PRICE = money(PRICES.DROP_IN_PRICE_CENTS);  // Pasta With Erika, Thursday
+
 const CLASS_MAX = content.num('classMax');
 const CLASS_MIN = content.num('classMin');
 const schedule = require('../lib/classes/schedule');
@@ -175,7 +185,7 @@ const hubFaqs = [
 ];
 const hubCards = [
   { slug: 'sunday-pasta-classes', t: 'Pasta Classes', img: 'images/general/erica/erika-class.jpg', d: 'Sunday classes (La Domenica) and Thursday drop-ins (Pasta With Erika) — learn traditional pasta making and the joy of creating something by hand.' },
-  { slug: 'sunday-pasta-classes', href: 'sunday-pasta-classes.html#drop-in', t: 'Public Pasta Drop-In', img: IMG.greenpasta, d: 'A relaxed Thursday pasta lab — drop in any Thursday between 5–8 PM and make, cook, and eat your own pasta at your own pace. No fee, no experience needed.' },
+  { slug: 'sunday-pasta-classes', href: 'sunday-pasta-classes.html#drop-in', t: 'Public Pasta Drop-In', img: IMG.greenpasta, d: `A relaxed Thursday pasta lab — drop in any Thursday between 5–8 PM and make, cook, and eat your own pasta at your own pace. ${DROP_IN_PRICE} per person, no experience needed.` },
   { slug: 'private-events', t: 'Private Events &amp; Pop-Up Restaurants', img: IMG.dining, d: 'Celebrate your special occasion at da Cecot or bring the da Cecot experience to your venue.' }
 ];
 pages.push(page({
@@ -247,18 +257,18 @@ const classFaqs = [
   { q: 'Do I need any cooking experience?', a: 'Not at all. Our Sunday pasta classes are beginner-friendly and fully guided. Whether you have never touched a rolling pin or you cook every night, our team walks you through every step from dough to plate.' },
   { q: 'What is included in a pasta class?', a: 'Your spot includes hands-on instruction, all ingredients and equipment, an apron to use, the pasta you make to enjoy together at the end, and the recipes to take home so you can recreate them.' },
   { q: 'How long is a class and how many people can attend?', a: 'Classes run about 2.5 to 3 hours and are capped at 12 guests so everyone gets personal attention. They run every Sunday evening — except the first Sunday of each month, when we are closed. See the booking form for upcoming dates.' },
-  { q: 'Can I come on my own or book for a couple?', a: 'Both work beautifully. Classes are $95 per guest and solo guests are always welcome — most leave with new friends.' },
+  { q: 'Can I come on my own or book for a couple?', a: `Both work beautifully. Sunday classes are ${CLASS_PRICE} per guest, the Thursday drop-in is ${DROP_IN_PRICE} per person, and solo guests are always welcome — most leave with new friends.` },
   { q: 'Can I buy a pasta class as a gift?', a: 'Yes — a pasta class makes a memorable gift. Reach out at (825) 888-4218 or info@dacecotfood.com and we will help you arrange it.' }
 ];
 pages.push(page({
   slug: 'sunday-pasta-classes',
   active: 'sunday-pasta-classes',
   title: 'Pasta Classes | da Cecot, Edmonton — Sunday Classes & Thursday Drop-In',
-  description: 'Pasta classes at da Cecot on Whyte Avenue: La Domenica Sunday classes ($95/guest, 5–8:30 PM) and Pasta With Erika Thursday drop-in (5–8 PM). Reserve online.',
+  description: `Pasta classes at da Cecot on Whyte Avenue: La Domenica Sunday classes (${CLASS_PRICE}/guest, 5–8:30 PM) and Pasta With Erika Thursday drop-in (${DROP_IN_PRICE}/guest, 5–8 PM). Reserve online.`,
   ogImage: IMG.pastawine,
   schema: [
     breadcrumbSchema(trail('Pasta Classes').map((t, i) => i === 2 ? { slug: 'sunday-pasta-classes', label: t.label } : t)),
-    eventSchema({ slug: 'sunday-pasta-classes', name: 'Sunday Pasta Class', desc: 'Hands-on Italian pasta-making class in Edmonton, from dough to plate, ending with a shared meal.', image: IMG.pastawine, byDay: 'https://schema.org/Sunday', startTime: '12:00', price: '95' }),
+    eventSchema({ slug: 'sunday-pasta-classes', name: 'Sunday Pasta Class', desc: 'Hands-on Italian pasta-making class in Edmonton, from dough to plate, ending with a shared meal.', image: IMG.pastawine, byDay: 'https://schema.org/Sunday', startTime: '12:00', price: String(PRICES.CLASS_PRICE_CENTS / 100) }),
     faqSchema(classFaqs)
   ],
   body: `${breadcrumb(trail('Pasta Classes').map((t, i) => i === 2 ? { slug: 'sunday-pasta-classes', label: t.label } : t))}
@@ -279,7 +289,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
       <div class="container">
         <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="spc-incl-h">Booking information</h2></div>
         <div class="info-grid reveal">
-          <div><h3>$95 per guest</h3><p>Adults only (18+).</p></div>
+          <div><h3>${CLASS_PRICE} per guest</h3><p>Adults only (18+).</p></div>
           <div><h3>5:00 – 8:30 PM</h3><p>Every Sunday, year-round.</p></div>
           <div><h3>Up to ${CLASS_MAX} guests</h3><p>Small classes — ${CLASS_MAX} seats max per Sunday.</p></div>
           <div><h3>Please note</h3><p>Closed the first Sunday of each month.</p></div>
@@ -291,7 +301,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
       <div class="container narrow reveal">
         <div class="text-center">
           <h2 id="spc-book-h">Book your class spot</h2>
-          <p>Classes are $95 per guest, run every Sunday from 5–8:30 PM, and are capped at ${CLASS_MAX} guests. Pick the Sunday you'd like below — and a backup Sunday too, so we can move you rather than cancel you if a class can't run. Prefer to talk to us? Call <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+          <p>Classes are ${CLASS_PRICE} per guest, run every Sunday from 5–8:30 PM, and are capped at ${CLASS_MAX} guests. Pick the Sunday you'd like below — and a backup Sunday too, so we can move you rather than cancel you if a class can't run. Prefer to talk to us? Call <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
         <div class="booking" style="margin-top:32px;">
           <form data-formsubmit data-pay-url="https://square.link/u/mTkWSnl5" data-subject="Sunday Pasta Class Booking — da Cecot" aria-label="Sunday pasta class booking request">
@@ -331,8 +341,8 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
               <textarea id="spc-notes" name="notes" placeholder="Allergies, dietary restrictions, celebrating something special…"></textarea>
             </div>
             <button type="submit" class="btn btn--green" style="width:100%;">Proceed to Payment</button>
-            <p class="cal__pay-note">You'll be taken to our secure Square checkout to pay $95 per guest.</p>
-            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! Your class request is in — a secure Square checkout has opened in a new tab to confirm your spot ($95 per guest). If it didn't open, we'll follow up by phone or email.</div>
+            <p class="cal__pay-note">You'll be taken to our secure Square checkout to pay ${CLASS_PRICE} per guest.</p>
+            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! Your class request is in — a secure Square checkout has opened in a new tab to confirm your spot (${CLASS_PRICE} per guest). If it didn't open, we'll follow up by phone or email.</div>
             <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
           </form>
         </div>
@@ -344,7 +354,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
         <div class="text-center">
           <span class="label">Also on Thursdays</span>
           <h2 id="drop-how-h">Pasta With Erika — Thursday Drop-In</h2>
-          <p>A relaxed, hands-on pasta lab with Erika. Drop in any Thursday between 5–8 PM and make, cook, and eat your own traditional Italian pasta at your own pace — no experience needed, no booking fee. Pick a Thursday so we can have a station ready, or call <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+          <p>A relaxed, hands-on pasta lab with Erika. Drop in any Thursday between 5–8 PM and make, cook, and eat your own traditional Italian pasta at your own pace — ${DROP_IN_PRICE} per person, no experience needed. Pick a Thursday so we can have a station ready, or call <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
         <div class="booking" style="margin-top:32px;">
           <form data-formsubmit data-subject="Pasta Drop-In Reservation — da Cecot" aria-label="Thursday pasta drop-in reservation request">
@@ -369,7 +379,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
               <textarea id="drop-notes" name="notes" placeholder="Roughly what time you'll arrive, dietary needs, anything else…"></textarea>
             </div>
             <button type="submit" class="btn btn--green" style="width:100%;">Reserve My Spot</button>
-            <p class="cal__pay-note">No payment needed — just drop in. Pay in person when you arrive.</p>
+            <p class="cal__pay-note">${DROP_IN_PRICE} per person, paid in person when you arrive — nothing to pay now to hold your Thursday.</p>
             <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! We've saved your Thursday drop-in request — see you in the pasta lab. We'll reach out if anything changes.</div>
             <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at (825) 888-4218 or email info@dacecotfood.com.</div>
           </form>

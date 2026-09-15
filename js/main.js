@@ -348,6 +348,30 @@
         .catch(function () { /* ticker is progressive enhancement — booking still works */ });
     })();
 
+    /* ---- Reservations paused (set from the site manager, mid-service) ----
+       The page is static and was built long before Erika pressed pause, so the
+       state has to come from the server at load. If this fetch fails we leave
+       the form exactly as it is: api/send.js is the one that actually refuses a
+       booking, and showing a guest a "paused" screen because their wifi
+       hiccuped would cost a table for no reason. */
+    (function () {
+      var pausedBox = document.querySelector('[data-res-paused]');
+      var formBox = document.querySelector('[data-res-form]');
+      if (!pausedBox || !formBox) return;
+
+      fetch('/api/status', { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (s) {
+          var p = s && s.reservations;
+          if (!p || !p.paused) return;
+          var when = pausedBox.querySelector('[data-res-paused-until]');
+          if (when && p.untilLabel) when.textContent = ' — we will be back online around ' + p.untilLabel;
+          formBox.hidden = true;
+          pausedBox.hidden = false;
+        })
+        .catch(function () { /* leave the form up; the server still decides */ });
+    })();
+
     /* ---- Reservation hours-aware time picker ---- */
     (function () {
       var dateInput = document.getElementById('res-date');

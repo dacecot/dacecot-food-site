@@ -42,6 +42,20 @@ const pastaShop = read('pasta-shop.html');
 
 const count = (hay, needle) => hay.split(needle).length - 1;
 
+// Literals the pause assertions below compare against. Declared as plain
+// strings so no regex escaping stands between the test and the bytes served.
+const PAUSED_OPEN_TAG = "<div class=\"booking\" data-res-paused";
+const FORM_OPEN_TAG = "<div class=\"booking\" data-res-form";
+const HIDDEN_ATTR = " hidden";
+const TEL_HREF = "href=\"tel:";
+const MAILTO_HREF = "href=\"mailto:";
+const GT = ">";
+const PAUSED_MISSING = "the paused notice is not where main.js looks for it";
+const PAUSED_VISIBLE = "the paused notice ships visible - every guest would see \"booking is paused\": ";
+const NO_PHONE = "no phone number on the paused notice - the guest is told no, with nowhere to go";
+const NO_EMAIL = "no email on the paused notice";
+
+
 // The JSON the pickers read, pulled back out of the page.
 function embedded(html, id) {
   const m = new RegExp('<script id="' + id + '" type="application/json">([\\s\\S]*?)</script>').exec(html);
@@ -90,6 +104,43 @@ test('the FAQ answer Google reads is updated too', () => {
    sunday-pasta-classes.html — a full Sunday is visibly sold out
    --------------------------------------------------------------- */
 
+/* ---------------------------------------------------------------
+   sunday-pasta-classes.html — the page quotes the price the till charges
+
+   Prices live in lib/orders/submission.js and the generator interpolates them.
+   These assertions are what stop someone "fixing" a price by retyping it into
+   the copy, leaving the page and the recorded amount disagreeing.
+   --------------------------------------------------------------- */
+
+const PRICES = require('../lib/orders/submission');
+const asMoney = (cents) => '$' + (cents / 100).toFixed(2).replace(/.00$/, '');
+
+test('the page quotes the same prices the store records', () => {
+  const sunday = asMoney(PRICES.CLASS_PRICE_CENTS);
+  const drop = asMoney(PRICES.DROP_IN_PRICE_CENTS);
+  assert.ok(classes.indexOf(sunday + ' per guest') > -1, 'the Sunday price (' + sunday + ') is not on the page');
+  assert.ok(classes.indexOf(drop + ' per person') > -1, 'the drop-in price (' + drop + ') is not on the page');
+  assert.notStrictEqual(sunday, drop, 'the two classes must not quote the same price');
+});
+
+test('the drop-in is never described as free', () => {
+  // It was, for as long as it had no price. Those three phrases are the ones
+  // that were on the page and in the experiences hub card.
+  ['No payment needed', 'no booking fee', 'No fee, no experience'].forEach((claim) => {
+    assert.strictEqual(count(classes, claim), 0, 'the classes page still says "' + claim + '"');
+    assert.strictEqual(count(read('experiences.html'), claim), 0, 'the experiences page still says "' + claim + '"');
+  });
+});
+
+test('the price Google is shown matches the price charged', () => {
+  // The Event JSON-LD carries an offer price; a stale one is served as a
+  // search result long after the page itself is right.
+  const m = /"offers":{[^}]*"price":"([0-9.]+)"/.exec(classes);
+  assert.ok(m, 'no offer price in the class Event schema');
+  assert.strictEqual(m[1], String(PRICES.CLASS_PRICE_CENTS / 100),
+    'the structured-data price disagrees with what the store charges');
+});
+
 const scheduled = schedule.fromContent(content);
 const fullOnPage = scheduled.filter((d) => d.full && classes.indexOf(d.label) > -1);
 
@@ -131,6 +182,45 @@ test('the "pick a date" requirement sits on a pill that can be picked', () => {
   const required = first.filter((p) => p.indexOf(' required') > -1);
   assert.strictEqual(required.length, 1, 'expected exactly one required 1st-choice pill, found ' + required.length);
   assert.strictEqual(required[0].indexOf(' disabled'), -1, 'the required pill is disabled');
+});
+
+/* ---------------------------------------------------------------
+   reservations.html — the hooks the mid-service pause needs
+
+   The pause is set and lifted without a rebuild, so the page cannot know about
+   it at build time — it can only carry the scaffolding for main.js to reveal.
+   If that scaffolding goes missing the page keeps taking bookings that
+   api/send.js then refuses, and nobody notices until a guest complains.
+   --------------------------------------------------------------- */
+
+test('the reserve page carries both halves of the pause swap', () => {
+  assert.ok(reservations.indexOf('data-res-form') > -1, 'no [data-res-form] — main.js has no form to hide');
+  assert.ok(reservations.indexOf('data-res-paused') > -1, 'no [data-res-paused] — there is nothing to show instead');
+  assert.ok(reservations.indexOf('data-res-paused-until') > -1, 'no slot for the reopening time');
+});
+
+test('the paused notice is hidden until the server says otherwise', () => {
+  const at = reservations.indexOf(PAUSED_OPEN_TAG);
+  assert.ok(at > -1, PAUSED_MISSING);
+  const tag = reservations.slice(at, reservations.indexOf(GT, at) + 1);
+  assert.ok(tag.indexOf(HIDDEN_ATTR) > -1,
+    PAUSED_VISIBLE + tag);
+});
+
+test('a paused guest is given a way to reach the restaurant', () => {
+  const at = reservations.indexOf(PAUSED_OPEN_TAG);
+  assert.ok(at > -1, PAUSED_MISSING);
+  // The notice runs to the end of the booking card; the next booking card is
+  // the form, so stopping there keeps this to the paused block only.
+  const end = reservations.indexOf(FORM_OPEN_TAG, at);
+  const notice = reservations.slice(at, end > -1 ? end : at + 2000);
+  assert.ok(notice.indexOf(TEL_HREF) > -1, NO_PHONE);
+  assert.ok(notice.indexOf(MAILTO_HREF) > -1, NO_EMAIL);
+});
+
+test('main.js actually asks the server whether bookings are paused', () => {
+  const js = read('js/main.js');
+  assert.ok(js.indexOf("fetch('/api/status'") > -1, 'nothing fetches /api/status, so the page can never learn about a pause');
 });
 
 /* ---------------------------------------------------------------

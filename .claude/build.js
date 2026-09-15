@@ -734,7 +734,20 @@ pages.push(page({
         <p class="lead" style="margin-top:18px;">Book your table at da Cecot for lunch, dinner, or Sunday family lunch. For pasta classes, private dinners, and special experiences, please visit our <a href="experiences.html" style="color:var(--terracotta); font-weight:600;">Experiences page</a>.</p>
       </div>
       <div class="container narrow reveal" style="padding-top:10px;">
-        <div class="booking">
+        <!-- Shown instead of the form when Erika has paused online reservations
+             from the site manager. Hidden by default and revealed by main.js
+             from /api/status: the pause starts and ends without a rebuild, so
+             this page cannot know at build time. With JS off the form stays
+             visible and api/send.js turns the booking away with the same
+             message — the server is the one that decides. -->
+        <div class="booking" data-res-paused hidden style="text-align:center;">
+          <h2 style="margin-top:0;">Online booking is paused right now</h2>
+          <p>Our kitchen is catching up, so we have stopped taking new online table requests for a moment<span data-res-paused-until></span>.</p>
+          <p>Give us a call and we will do our best to fit you in.</p>
+          <p style="margin-top:22px;"><a class="btn btn--terra" href="tel:${NAP.phoneHref}">Call ${NAP.phone}</a></p>
+          <p style="opacity:0.85; margin-top:14px;">or email <a href="mailto:${NAP.email}" style="color:var(--terracotta); font-weight:600;">${NAP.email}</a></p>
+        </div>
+        <div class="booking" data-res-form>
           <form data-formsubmit data-subject="Table Reservation — da Cecot" aria-label="Table reservation request">
             <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
             <script id="service-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED, buffer: 60, closed: CLOSED_DATES })}</script>

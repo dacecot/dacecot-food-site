@@ -306,11 +306,102 @@
     return { close: close };
   }
 
+  /* ---------- pause online reservations ----------
+     For the nights when the kitchen is buried. Stops NEW table requests on the
+     Reserve page for a set time, then lifts itself — nothing to remember to
+     switch back on. Bookings already taken are untouched, and pasta-shop
+     pickups and classes keep running. */
+
+  // The restaurant's clock, not the laptop's.
+  function edmClock(iso) {
+    try {
+      return new Intl.DateTimeFormat('en-US', { timeZone: 'America/Edmonton', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(iso));
+    } catch (e) { return ''; }
+  }
+
+  var pauseOptions = [];
+
+  function renderPauseCard(main) {
+    var card = h('div', { class: 'card' }, [h('p', { class: 'help', text: 'Checking…' })]);
+    main.appendChild(card);
+    api('reservations?pause=1').then(function (r) {
+      if (r.status !== 200 || !r.body || !r.body.ok) { card.remove(); return; }
+      if (r.body.options && r.body.options.length) pauseOptions = r.body.options;
+      drawPause(card, r.body.pause || { paused: false }, pauseOptions);
+    }).catch(function () {
+      // The pause control is a convenience; it must never take the page with it.
+      card.remove();
+    });
+  }
+
+  function drawPause(card, st, options) {
+    card.innerHTML = '';
+    var row = h('div', { class: 'filter-row' }, []);
+    row.setAttribute('style', 'margin-top:14px; margin-bottom:0;');
+
+    if (st.paused) {
+      card.appendChild(h('h3', { class: 'card-title', text: '⏸  Online reservations are paused' }));
+      card.appendChild(h('p', {
+        class: 'help',
+        text: 'The Reserve page is not taking new table requests. It reopens on its own at ' + edmClock(st.until) +
+          ' — about ' + st.minutesLeft + ' more minute' + (st.minutesLeft === 1 ? '' : 's') +
+          '. Bookings already in your book are not affected, and pasta classes and pasta-shop pickups are still running.'
+      }));
+      row.appendChild(h('button', { class: 'btn btn--sm', text: 'Resume now', onclick: function () { sendPause(card, { action: 'resume' }, 'Online reservations are open again.', st); } }));
+      card.appendChild(row);
+      var more = h('div', { class: 'filter-row' }, []);
+      more.setAttribute('style', 'margin-top:10px; margin-bottom:0;');
+      more.appendChild(h('span', { class: 'help', text: 'Or reset the timer:' }));
+      options.forEach(function (o) {
+        more.appendChild(h('button', {
+          class: 'btn btn--sm btn--ghost', text: o.label,
+          onclick: function () { sendPause(card, { action: 'pause', minutes: o.minutes }, 'Paused for ' + o.label + '.', st); }
+        }));
+      });
+      card.appendChild(more);
+      return;
+    }
+
+    card.appendChild(h('h3', { class: 'card-title', text: 'Online reservations are open' }));
+    card.appendChild(h('p', {
+      class: 'help',
+      text: 'Pause the Reserve page when the kitchen needs a breather. Guests see a note asking them to call instead, and it starts taking bookings again by itself — you do not have to remember to switch it back on.'
+    }));
+    options.forEach(function (o) {
+      row.appendChild(h('button', {
+        class: 'btn btn--sm btn--ghost', text: 'Pause ' + o.label,
+        onclick: function () { sendPause(card, { action: 'pause', minutes: o.minutes }, 'Online reservations paused for ' + o.label + '.', st); }
+      }));
+    });
+    card.appendChild(row);
+  }
+
+  function sendPause(card, body, okMsg, before) {
+    before = before || { paused: false };
+    card.innerHTML = '';
+    card.appendChild(h('p', { class: 'help', text: 'Saving…' }));
+    api('reservations', { method: 'POST', csrf: true, body: body }).then(function (r) {
+      if (r.body && r.body.options && r.body.options.length) pauseOptions = r.body.options;
+      if (r.status === 200 && r.body.ok) {
+        toast(okMsg, 'ok');
+        drawPause(card, r.body.pause || { paused: false }, pauseOptions);
+      } else {
+        toast((r.body && r.body.error) || 'Could not change the pause.', 'err');
+        drawPause(card, before, pauseOptions);   // put the card back as it was
+      }
+    }).catch(function () {
+      toast('Network error.', 'err');
+      drawPause(card, before, pauseOptions);
+    });
+  }
+
   function renderReservations(main) {
     main.appendChild(h('div', { class: 'page-head' }, [
       h('h1', { text: 'Reservations' }),
       h('p', { text: 'Your reservation book — today, the week ahead, the floor plan, and your history.' })
     ]));
+
+    renderPauseCard(main);
 
     var tabs = h('div', { class: 'filter-row' }, []);
     var requestsBtn;

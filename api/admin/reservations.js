@@ -1,13 +1,17 @@
 // /api/admin/reservations — the reservation book (auth required; mutations CSRF).
 //   GET  ?view=today|week|upcoming|past|all
 //        → { days:[{date,count,covers,reservations}], tables, view, today }
+//   GET  ?pause=1                                            → { ok, pause } only (cheap, for the pause card)
 //   POST { action:'assign',   id, table_id|null, force? }   seat / unseat with conflict checks
+//        { action:'pause',    minutes }                     pause online reservations (30/60/120/180/240)
+//        { action:'resume'    }                             lift the pause now
 //        { action:'add',      reservation:{name,phone,email,date,time,party,notes} }  manual (phone) booking — no email sent
 //        { action:'import',   csv:'…' }                     Wix CSV migration — no emails sent
 const auth = require('../../lib/cms/auth');
 const store = require('../../lib/orders/store');
 const tables = require('../../lib/orders/tables');
 const R = require('../../lib/orders/reservations');
+const pause = require('../../lib/orders/pause');
 
 function clean(s, max) { return String(s == null ? '' : s).replace(/[<>]/g, '').trim().slice(0, max || 120); }
 
@@ -92,6 +96,9 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     if (!auth.requireAuth(req, res, false)) return;
     const qs = (req.url || '').split('?')[1] || '';
+    if (/(?:^|[?&])pause=1(?:&|$)/.test(qs)) {
+      return res.status(200).json({ ok: true, pause: await pause.status(), options: pause.OPTIONS });
+    }
     const view = (/view=([a-z]+)/.exec(qs) || [])[1] || 'week';
     try {
       const all = await store.list({ type: 'reservation' });
@@ -102,7 +109,7 @@ module.exports = async (req, res) => {
         ? R.forView(source, 'all')
         : R.forView(source, ['today', 'week', 'upcoming', 'past', 'all'].indexOf(view) > -1 ? view : 'week');
       return res.status(200).json({
-        ok: true, view: view, today: R.todayISO(),
+        ok: true, view: view, today: R.todayISO(), pause: await pause.status(),
         days: R.groupByDay(listForView),
         totals: { all: all.length, upcoming: R.forView(all, 'upcoming').length, past: R.forView(all, 'past').length, requests: pending.length },
         tables: await tables.list()
@@ -164,6 +171,19 @@ module.exports = async (req, res) => {
         const updated = await store.update(id, { details });
         if (sub.email) { const r2 = await mailer.sendDeclined(updated); emailed = r2 && r2.ok ? 'decline email sent' : 'decline email failed'; }
         return res.status(200).json({ ok: true, order: updated, emailed });
+      }
+
+      /* Pausing is not a booking change — it stops NEW online requests for a
+         set time and lifts itself. Anything already in the book stands. */
+      if (action === 'pause') {
+        try {
+          const st = await pause.pause(body.minutes);
+          return res.status(200).json({ ok: true, pause: st, options: pause.OPTIONS });
+        } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
+      }
+
+      if (action === 'resume') {
+        return res.status(200).json({ ok: true, pause: await pause.resume(), options: pause.OPTIONS });
       }
 
       if (action === 'add') {

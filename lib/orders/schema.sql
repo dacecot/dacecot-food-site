@@ -22,5 +22,15 @@ CREATE TABLE IF NOT EXISTS submissions (
   subject           text
 );
 
+-- Small key/value bag for operational switches the restaurant flips during
+-- service — currently just the reservation pause. Deliberately NOT in
+-- content.json: that store commits to GitHub and rebuilds the site, which is
+-- far too slow for a 30-minute pause and could not expire on its own.
+CREATE TABLE IF NOT EXISTS site_settings (
+  key        text        PRIMARY KEY,
+  value      text        NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_submissions_payment_status ON submissions (payment_status);
 CREATE INDEX IF NOT EXISTS idx_submissions_created_at     ON submissions (created_at DESC);

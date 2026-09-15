@@ -131,6 +131,27 @@ module.exports = async (req, res) => {
     } catch (e) { console.error('reservation capacity check failed (allowing through)', e && e.message); }
   }
 
+  /* Reservations paused. Erika flips this in the site manager when the kitchen
+     is buried; it clears itself when the timer runs out. Only TABLE bookings —
+     pickups and pasta classes are a different queue and keep running. Checked
+     server-side because the page learns about a pause from /api/status at load,
+     so a tab opened before she pressed pause knows nothing about it. */
+  if (/table reservation/i.test(String(data._subject || '')) || data.reservation_date) {
+    try {
+      const pause = require('../lib/orders/pause');
+      const st = await pause.status();
+      if (st.paused) {
+        const content = require('../lib/cms/content');
+        const phone = String(content.get('phone') || '').trim();
+        return res.status(409).json({
+          success: false,
+          error: 'We have paused online reservations for a moment while the kitchen catches up' +
+            (phone ? ' — please call us at ' + phone + ' and we will do our best to fit you in.' : '. Please try again shortly.')
+        });
+      }
+    } catch (e) { console.error('reservation pause check failed (allowing through)', e && e.message); }
+  }
+
   // Sunday pasta classes: the dates are generated weekly, so a booking must name
   // a Sunday that is actually on the schedule right now. A stale page left open
   // overnight (or a hand-crafted POST) must not book a class that has passed or

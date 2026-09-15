@@ -3,6 +3,9 @@ Thumbs.db
 node_modules/
 *.log
 
+# local submissions store (contains real customer bookings) — never commit
+.data/
+
 .vercel
 
 # agent worktrees (isolated, never commit)

@@ -711,7 +711,22 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
   line-height: 1.5;
   color: rgba(74,30,24,0.8);
 }
-.field__hint a { color: var(--terracotta); font-weight: 600; }
+/* --terracotta (#B8612D) is 4.39:1 on white — just under AA for body text.
+   The darker brand terracotta clears it at 5.26:1. */
+.field__hint a, .date-picker__note a { color: #ad5217; font-weight: 600; }
+
+/* The 2nd-choice picker sits under the 1st — a quieter, clearly secondary block. */
+.date-picker--alt { border-top: 1px solid rgba(74,30,24,0.14); padding-top: 18px; }
+.section--olive .date-picker--alt, .section--brown .date-picker--alt { border-top-color: rgba(249,247,239,0.22); }
+.date-picker__clear {
+  display: inline-block; margin-left: 6px; padding: 0;
+  background: none; border: 0; font: inherit; font-size: 0.88rem; font-weight: 600;
+  /* --terracotta (#B8612D) is only 4.39:1 on white; the darker brand terracotta
+     clears 4.5:1 for body-size text. */
+  color: #ad5217; text-decoration: underline; cursor: pointer;
+}
+.date-picker__clear:hover { color: var(--brown); }
+.section--olive .date-picker__clear, .section--brown .date-picker__clear { color: var(--gold); }
 .section--olive .field__hint, .section--brown .field__hint,
 .section--olive .date-picker__note, .section--brown .date-picker__note {
   color: rgba(249,247,239,0.9);
@@ -727,6 +742,33 @@ h1 + p, h2 + p, h3 + p { margin-top: 20px; }
 }
 .field textarea { min-height: 130px; resize: vertical; }
 .section--olive .field label { color: var(--cream); }
+
+/* ---- White booking card inside a dark section ----
+   .booking is always white, even when it sits in an olive or brown section.
+   The section-level rules above lighten form text for dark backgrounds, and
+   inside the card that produced cream-on-white labels at 1.14:1 — invisible.
+   Re-assert the dark-on-light palette wherever a field lives inside .booking.
+   Anything added to the rules above needs a counterpart here. */
+.section--olive .booking .field label,
+.section--brown .booking .field label { color: var(--brown); }
+.section--olive .booking .field label span,
+.section--brown .booking .field label span { color: inherit; }
+.section--olive .booking .field__hint,
+.section--brown .booking .field__hint,
+.section--olive .booking .date-picker__note,
+.section--brown .booking .date-picker__note { color: rgba(74,30,24,0.8); }
+.section--olive .booking .field__hint a,
+.section--brown .booking .field__hint a,
+.section--olive .booking .date-picker__note a,
+.section--brown .booking .date-picker__note a { color: #ad5217; }
+.section--olive .booking .date-picker--alt,
+.section--brown .booking .date-picker--alt { border-top-color: rgba(74,30,24,0.14); }
+.section--olive .booking .date-picker__clear,
+.section--brown .booking .date-picker__clear { color: #ad5217; }
+.section--olive .booking .form-success,
+.section--brown .booking .form-success,
+.section--olive .booking .form-error,
+.section--brown .booking .form-error { color: var(--brown); }
 
 .form-success {
   display: none;

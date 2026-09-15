@@ -30,6 +30,20 @@ module.exports = async (req, res) => {
       dates[date].booked += guests;
       dates[date].left = Math.max(0, max - dates[date].booked);
     }
+    // A Sunday marked fully booked in the CMS reports zero seats whatever the
+    // bookings say. Without this the page would fetch the live count and
+    // quietly re-open a date Erika had closed — the build-time pill says sold
+    // out, the fetch would say "8 seats left", and the fetch lands last.
+    try {
+      const content = require('../lib/cms/content');
+      const schedule = require('../lib/classes/schedule');
+      schedule.fromContent(content).forEach((d) => {
+        if (!d.full) return;
+        const cur = dates[d.label] || { booked: 0, left: max };
+        dates[d.label] = { booked: cur.booked, left: 0, full: true };
+      });
+    } catch (e) { console.error('class full-date overlay failed', e && e.message); }
+
     // Small cache so a burst of visitors doesn't hammer the DB; still near-live.
     res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
     return res.status(200).json({ max: max, dates: dates });

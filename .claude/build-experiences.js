@@ -51,10 +51,22 @@ const CLASS_DATES = CLASS_SCHEDULE.map((d) => d.label);
 
 /* Turn schedule entries into radio "pills". Short label: "Sun · Sep 20".
    `name` is the field; the stored value stays the long label so existing
-   bookings, emails and the availability API keep matching. */
+   bookings, emails and the availability API keep matching.
+
+   A Sunday marked fully booked in the CMS renders sold out HERE, at build time
+   — not only from the live availability fetch — so it still reads "Fully
+   booked" with JavaScript blocked or the availability API down. main.js sees
+   the data-sold-out flag and leaves these pills alone rather than re-labelling
+   them from the live counts.
+
+   `required` rides on the first BOOKABLE pill. A disabled radio carrying it
+   cannot satisfy the group, which would leave "pick a date" unenforceable. */
 function schedulePills(name, list, required) {
+  const firstBookable = list.findIndex((d) => !d.full);
   return list.map((d, i) => (
-    `<label class="date-pill"><input type="radio" name="${name}" value="${d.label}"${i === 0 && required ? ' required' : ''}><span>${d.short}</span></label>`
+    d.full
+      ? `<label class="date-pill date-pill--full" style="opacity:0.45; pointer-events:none;"><input type="radio" name="${name}" value="${d.label}" disabled data-sold-out="1"><span>${d.short}<em style="display:block;font-style:normal;font-size:0.72em;opacity:0.8;margin-top:2px;">Fully booked</em></span></label>`
+      : `<label class="date-pill"><input type="radio" name="${name}" value="${d.label}"${i === firstBookable && required ? ' required' : ''}><span>${d.short}</span></label>`
   )).join('\n                ');
 }
 

@@ -99,6 +99,56 @@ test('isBookable accepts any format naming a scheduled day, rejects others', () 
   assert.ok(!schedule.isBookable('not a date', list));
 });
 
+/* ---- Sundays marked FULL ----------------------------------------------
+   A blackout REMOVES a Sunday; "full" KEEPS it and bars booking. Getting the
+   two confused either hides a class that is still running or sells seats that
+   do not exist, so the difference is pinned down here. */
+
+test('a full Sunday stays on the list, flagged, while a blacked-out one leaves', () => {
+  const list = schedule.upcoming({
+    from: FROM, count: 5,
+    fullDates: ['Sunday, September 20, 2026'],
+    blackout: ['Sunday, September 27, 2026']
+  });
+  const isos = list.map((d) => d.iso);
+  assert.ok(isos.indexOf('2026-09-20') > -1, 'a full Sunday must still be shown to the guest');
+  assert.strictEqual(isos.indexOf('2026-09-27'), -1, 'a blacked-out Sunday must be gone');
+  assert.strictEqual(list.find((d) => d.iso === '2026-09-20').full, true);
+  assert.strictEqual(list.find((d) => d.iso === '2026-10-11').full, false, 'untouched Sundays are not full');
+});
+
+test('a full Sunday is not bookable, and isFull says why', () => {
+  const list = schedule.upcoming({ from: FROM, count: 5, fullDates: ['2026-09-20'] });
+  assert.ok(!schedule.isBookable('Sunday, September 20, 2026', list), 'the server must refuse a sold-out Sunday');
+  assert.ok(!schedule.isBookable('2026-09-20', list), 'and in ISO form too');
+  assert.ok(schedule.isFull('2026-09-20', list), 'isFull separates "sold out" from "not on the schedule"');
+  assert.ok(!schedule.isFull('2026-10-04', list), 'a closed first Sunday is absent, not full');
+  assert.ok(!schedule.isFull('2026-09-27', list), 'a normal Sunday is not full');
+  assert.ok(schedule.isBookable('2026-09-27', list), 'and is still bookable');
+});
+
+test('marking every Sunday full leaves nothing bookable', () => {
+  const all = schedule.upcoming({ from: FROM, count: 4 }).map((d) => d.iso);
+  const list = schedule.upcoming({ from: FROM, count: 4, fullDates: all });
+  assert.strictEqual(list.length, 4, 'the dates are still shown');
+  assert.ok(list.every((d) => d.full));
+  assert.ok(all.every((iso) => !schedule.isBookable(iso, list)));
+});
+
+test('the CMS wiring reads classFullDates', () => {
+  // fromContent is what the generator, the API and the validator all call. A
+  // typo in the key name would fail open — every date bookable, silently.
+  const content = require('../lib/cms/content');
+  const stored = content.list('classFullDates');
+  const list = schedule.fromContent(content, { from: FROM, count: 9 });
+  stored.forEach((d) => {
+    const hit = list.find((x) => schedule.sameDay(x.label, d));
+    if (!hit) return; // outside the shown window — nothing to assert
+    assert.strictEqual(hit.full, true, d + ' is in classFullDates but did not come back flagged');
+    assert.ok(!schedule.isBookable(d, list), d + ' is marked full but is still bookable');
+  });
+});
+
 test('sameDay matches across formats', () => {
   assert.ok(schedule.sameDay('Sunday, September 20, 2026', '2026-09-20'));
   assert.ok(!schedule.sameDay('Sunday, September 20, 2026', '2026-09-27'));
@@ -305,8 +355,12 @@ async function emailTests() {
     _subject: 'Sunday Pasta Class Booking — da Cecot',
     guests: '2 guests', name: 'Anna Rossi', phone: '780-555-0100', email: 'anna@example.invalid'
   };
-  // Use real scheduled dates so the submit-time validator lets these through.
-  const days = schedule.upcoming({ count: 3 });
+  /* Use dates the SERVER will actually accept. fromContent honours the CMS
+     blackouts and the fully-booked Sundays; plain upcoming() does not, so it
+     can hand back a date api/send.js then refuses — failing these tests for a
+     reason that has nothing to do with the confirmation emails they check. */
+  const days = schedule.fromContent(require('../lib/cms/content'), { count: 6 }).filter((d) => !d.full);
+  assert.ok(days.length >= 2, 'need two bookable Sundays to test 1st/2nd choice — is every shown Sunday blacked out or full?');
 
   await (async () => {
     try {
@@ -353,7 +407,52 @@ async function emailTests() {
   restoreStore();
 }
 
-emailTests().then(finish).catch((e) => {
+/* ---------------------------------------------------------------
+   api/class-availability.js — the number the page trusts LAST
+
+   The booking pill is built sold out, but main.js then fetches live seat
+   counts and rewrites the pills from them. If this endpoint answered "8 seats
+   left" for a Sunday Erika closed, that answer would land after the page had
+   already rendered and quietly re-open the date. So the closure has to win
+   here too, whatever the bookings say.
+   --------------------------------------------------------------- */
+
+async function availabilityTests() {
+  const content = require('../lib/cms/content');
+  const realList = content.list;
+  const day = schedule.upcoming({ count: 2 })[0];   // a real, currently-shown Sunday
+  content.list = (key) => (key === 'classFullDates' ? [day.label] : realList(key));
+  delete process.env.DATABASE_URL;
+
+  const handler = require('../api/class-availability.js');
+  const r = { _s: 0, _j: null };
+  r.status = (c) => { r._s = c; return r; };
+  r.json = (j) => { r._j = j; return r; };
+  r.setHeader = () => {};
+
+  try {
+    await handler({ method: 'GET', headers: {} }, r);
+    assert.strictEqual(r._s, 200);
+    const info = r._j.dates[day.label];
+    assert.ok(info, day.label + ' is marked full but the API does not mention it at all');
+    assert.strictEqual(info.left, 0, 'a full Sunday must report zero seats, not a live count');
+    assert.strictEqual(info.full, true, 'and say why');
+    passed++;
+  } catch (e) { failures.push({ name: 'a full Sunday reports zero seats from the live API', message: e.message }); }
+
+  try {
+    const other = schedule.upcoming({ count: 2 })[1];
+    const info = r._j.dates[other.label];
+    // The control: an untouched Sunday is either absent (no bookings) or has
+    // seats. If it came back at zero, the overlay is closing everything.
+    assert.ok(!info || info.left > 0, 'an open Sunday was reported sold out: ' + JSON.stringify(info));
+    passed++;
+  } catch (e) { failures.push({ name: 'an open Sunday is not reported sold out', message: e.message }); }
+
+  content.list = realList;
+}
+
+emailTests().then(availabilityTests).then(finish).catch((e) => {
   failures.push({ name: 'email test harness', message: e && e.message });
   finish();
 });

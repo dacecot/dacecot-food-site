@@ -68,6 +68,25 @@ module.exports = async (req, res) => {
   // Honeypot — silently accept so bots think they succeeded and don't retry.
   if (data._honey) return res.status(200).json({ success: true });
 
+  // One-off closures (CMS "Days we are closed"). The doors are shut, so neither
+  // a table nor a pasta-shop pickup can happen that day. Re-checked here because
+  // the pages embed the closure list at BUILD time — a tab left open overnight,
+  // or a hand-made POST, still carries the old list.
+  try {
+    const content = require('../lib/cms/content');
+    const hours = require('../lib/cms/hours');
+    const R = require('../lib/orders/reservations');
+    const when = data.reservation_date || data.pickup_day;
+    if (when && hours.isClosedOn(content, when)) {
+      const phone = String(content.get('phone') || '').trim();
+      return res.status(409).json({
+        success: false,
+        error: 'We’re closed on ' + hours.closureLabel(R.parseDate(when)) + ' — please choose another day' +
+          (phone ? ', or call us at ' + phone + ' and we’ll help you find a time.' : '.')
+      });
+    }
+  } catch (e) { console.error('closure check failed (allowing through)', e && e.message); }
+
   // Table reservations require name, phone and email — enforce server-side too
   // (the form marks them required, but the API must not trust the client).
   if (/table reservation/i.test(String(data._subject || '')) || data.reservation_date) {
@@ -125,14 +144,18 @@ module.exports = async (req, res) => {
       if (!schedule.isBookable(data.class_date, list)) {
         return res.status(409).json({
           success: false,
-          error: 'That class date is no longer available — please refresh the page and pick one of the upcoming Sundays.'
+          error: schedule.isFull(data.class_date, list)
+            ? 'That class is fully booked — please choose another Sunday.'
+            : 'That class date is no longer available — please refresh the page and pick one of the upcoming Sundays.'
         });
       }
       if (String(data.class_date_2 || '').trim()) {
         if (!schedule.isBookable(data.class_date_2, list)) {
           return res.status(409).json({
             success: false,
-            error: 'Your 2nd-choice date is no longer available — please refresh the page and pick another Sunday (or leave it blank).'
+            error: schedule.isFull(data.class_date_2, list)
+              ? 'Your 2nd-choice Sunday is fully booked — please pick another one (or leave it blank).'
+              : 'Your 2nd-choice date is no longer available — please refresh the page and pick another Sunday (or leave it blank).'
           });
         }
         if (schedule.sameDay(data.class_date, data.class_date_2)) {

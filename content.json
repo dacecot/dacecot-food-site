@@ -8,20 +8,13 @@
   "reservationUrl": "https://dacecotfood.wixsite.com/my-site",
   "heroHeading": "Fresh Handmade Pasta on Whyte Ave",
   "heroTag": "Handmade pasta, Italian hospitality, and a table where everyone belongs. Crafted daily on Whyte Avenue by the Cecot family — inspired by the traditions of sharing food, stories, and meaningful moments around the table.",
-  "announcementEnabled": false,
-  "announcementText": "",
+  "announcementEnabled": true,
+  "announcementText": "🛵 Da Cecot is now on Uber Eats — order delivery tonight!",
   "classMax": 12,
-  "classDates": [
-    "Sunday, September 20, 2026",
-    "Sunday, September 27, 2026",
-    "Sunday, October 11, 2026",
-    "Sunday, October 18, 2026",
-    "Sunday, October 25, 2026",
-    "Sunday, November 8, 2026",
-    "Sunday, November 15, 2026",
-    "Sunday, November 22, 2026",
-    "Sunday, November 29, 2026"
-  ],
   "heroImage": "images/food/homepage-hero.jpg",
-  "aboutImage": "images/general/cecot-family.jpg"
+  "aboutImage": "images/general/cecot-family.jpg",
+  "announcementUrl": "https://www.ubereats.com/ca/store/da-cecot-8137-104-street-northwest/fbCdjyclUuaIaVOs455ffQ",
+  "classMin": 4,
+  "classWeeksShown": 9,
+  "classBlackoutDates": []
 }

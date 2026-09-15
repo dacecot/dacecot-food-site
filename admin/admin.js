@@ -149,6 +149,9 @@
     nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__orders' ? ' active' : ''), onclick: function () { state.active = '__orders'; renderShell(); } }, [
       h('span', { class: 'ic', text: '🧾' }), h('span', { text: 'Orders & Bookings' })
     ]));
+    nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__classes' ? ' active' : ''), onclick: function () { state.active = '__classes'; renderShell(); } }, [
+      h('span', { class: 'ic', text: '🍝' }), h('span', { text: 'Pasta Classes' })
+    ]));
     nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__contacts' ? ' active' : ''), onclick: function () { state.active = '__contacts'; renderShell(); } }, [
       h('span', { class: 'ic', text: '👥' }), h('span', { text: 'Contacts' })
     ]));
@@ -170,6 +173,7 @@
     }
     if (state.active === '__orders') renderOrders(main);
     else if (state.active === '__reservations') renderReservations(main);
+    else if (state.active === '__classes') renderClasses(main);
     else if (state.active === '__contacts') renderContacts(main);
     else renderGroup(main, state.groups.filter(function (g) { return g.id === state.active; })[0]);
 
@@ -730,6 +734,39 @@
     try { var d = new Date(iso); return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }); }
     catch (e) { return iso || ''; }
   }
+
+  var WD3 = { Sunday: 'Sun', Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat' };
+  var MO3 = { January: 'Jan', February: 'Feb', March: 'Mar', April: 'Apr', May: 'May', June: 'Jun', July: 'Jul', August: 'Aug', September: 'Sep', October: 'Oct', November: 'Nov', December: 'Dec' };
+  // 'Sunday, September 20, 2026' -> 'Sun, Sep 20'. Unrecognised formats pass
+  // through untouched rather than being silently mangled into a wrong date.
+  function shortDate(s) {
+    var v = String(s == null ? '' : s).trim();
+    if (!v) return '';
+    var m = v.match(/^(\w+), (\w+) (\d+), (\d+)$/);
+    if (m && WD3[m[1]] && MO3[m[2]]) return WD3[m[1]] + ', ' + MO3[m[2]] + ' ' + m[3];
+    var iso = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) {
+      try {
+        var d = new Date(+iso[1], +iso[2] - 1, +iso[3]);
+        return d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+      } catch (e) { return v; }
+    }
+    return v;
+  }
+
+  /* The date this submission is FOR — the class, table or pickup the guest is
+     coming in on — NOT when they filled in the form. Erika runs her week off
+     these cards, so the booking date is the one that belongs in the header;
+     the submission timestamp is secondary. Returns null for inquiries, which
+     genuinely have no date but the one they were sent. */
+  function bookingDate(o) {
+    var d = o.details || {};
+    if (d.class_date) return 'Class: ' + shortDate(d.class_date);
+    if (d.drop_in_date) return 'Drop-in: ' + shortDate(d.drop_in_date);
+    if (d.reservation_date) return 'Table: ' + shortDate(d.reservation_date) + (d.reservation_time ? ', ' + d.reservation_time : '');
+    if (d.pickup_day) return 'Pickup: ' + shortDate(d.pickup_day) + (d.pickup_time ? ', ' + d.pickup_time : '');
+    return null;
+  }
   function statusChip(o) {
     if (o.details && o.details.cancelled) return h('span', { class: 'chip chip--err', text: 'Cancelled' });
     if (o.details && o.details.fulfilled) return h('span', { class: 'chip chip--ok', text: 'Fulfilled' });
@@ -737,6 +774,106 @@
     if (o.payment_status === 'reminded') return h('span', { class: 'chip chip--warn', text: 'Reminded' });
     if (o.payment_status === 'pending') return h('span', { class: 'chip chip--warn', text: 'Unpaid' });
     return h('span', { class: 'chip', text: '—' });
+  }
+
+  /* ---------- pasta classes ---------- */
+  /* One card per Sunday, so Erika can see at a glance which classes are short.
+     A class below the minimum gets a "Move to 2nd choices" button: every guest
+     goes to the backup date THEY picked, and anyone without a usable backup is
+     emailed and asked to pick a new Sunday. Nothing is deleted, and the button
+     always says exactly what it is about to do before she confirms. */
+  function renderClasses(main) {
+    main.appendChild(h('div', { class: 'page-head' }, [
+      h('h1', { text: 'Pasta Classes' }),
+      h('p', { text: 'Every Sunday class with bookings, and how full it is. Classes below the minimum can be moved to each guest’s 2nd-choice date.' })
+    ]));
+
+    var wrap = h('div', {}, [h('div', { class: 'boot', text: 'Loading…' })]);
+    main.appendChild(wrap);
+
+    api('orders?sub=classes').then(function (r) {
+      wrap.innerHTML = '';
+      if (r.status !== 200 || !r.body.ok) {
+        wrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load classes.' }));
+        return;
+      }
+      var min = r.body.min, max = r.body.max;
+      var classes = r.body.classes || [];
+      if (!classes.length) {
+        wrap.appendChild(h('div', { class: 'card', text: 'No class bookings yet — they’ll appear here as guests book.' }));
+        return;
+      }
+      wrap.appendChild(h('p', { class: 'res-totals', text: 'Minimum ' + min + ' guests to run · maximum ' + max + ' per class' }));
+
+      classes.forEach(function (c) {
+        var head = h('div', { class: 'order-top' }, [
+          h('strong', { text: shortDate(c.label) }),
+          h('span', { class: 'chip ' + (c.underMin ? 'chip--warn' : 'chip--ok'), text: c.booked + ' of ' + max + ' guests' }),
+          c.underMin ? h('span', { class: 'chip chip--err', text: 'Under minimum — needs ' + (min - c.booked) + ' more' }) : null
+        ]);
+
+        var card = h('div', { class: 'card order-card' }, [head]);
+
+        // Who's booked, and what backup each of them gave.
+        var roster = h('div', { class: 'class-roster' }, []);
+        (c.bookings || []).forEach(function (b) {
+          var d = b.details || {};
+          var second = d.class_date_2 ? '2nd choice: ' + shortDate(d.class_date_2) : 'no 2nd choice';
+          roster.appendChild(h('div', { class: 'contact-row' }, [
+            h('div', { class: 'contact-main' }, [
+              h('strong', { text: (b.name || 'Unknown') + (d.guests ? ' · ' + d.guests : '') }),
+              h('span', { class: 'contact-links' }, [
+                b.email ? h('a', { href: 'mailto:' + b.email, text: b.email }) : null,
+                b.email && b.phone ? h('span', { text: ' · ' }) : null,
+                b.phone ? h('a', { href: 'tel:' + b.phone, text: b.phone }) : null
+              ])
+            ]),
+            h('div', { class: 'contact-meta' }, [
+              h('span', { class: 'order-when' + (d.class_date_2 ? '' : ' order-when--none'), text: second }),
+              b.payment_status === 'paid' ? h('span', { class: 'chip chip--ok', text: 'Paid' }) : null
+            ])
+          ]));
+        });
+        card.appendChild(roster);
+
+        if (c.underMin) {
+          var p = c.preview || {};
+          var targets = Object.keys(p.targets || {});
+          var summary = [];
+          if (p.moving) {
+            summary.push(p.moving + ' booking' + (p.moving === 1 ? '' : 's') + ' (' + p.movingGuests + ' guest' + (p.movingGuests === 1 ? '' : 's') + ') move to ' +
+              (targets.length === 1 ? shortDate(targets[0]) : targets.length + ' different dates'));
+          }
+          if (p.rebooking) {
+            summary.push(p.rebooking + ' booking' + (p.rebooking === 1 ? '' : 's') + ' (' + p.rebookingGuests + ' guest' + (p.rebookingGuests === 1 ? '' : 's') + ') have no usable 2nd choice and will be emailed to rebook');
+          }
+          card.appendChild(h('p', { class: 'order-bits', text: 'If you move this class: ' + (summary.join(' · ') || 'nothing to move') }));
+
+          if (targets.length > 1) {
+            card.appendChild(h('p', { class: 'field__hint', text: 'Guests go to ' + targets.map(function (t) { return shortDate(t) + ' (' + p.targets[t] + ')'; }).join(', ') + ' — each to the date they chose.' }));
+          }
+
+          var btn = h('button', { class: 'btn btn--sm btn--danger', text: 'Move to 2nd choices', onclick: function () {
+            var msg = 'Move the class on ' + shortDate(c.label) + '?\n\n';
+            if (p.moving) msg += '• ' + p.moving + ' booking(s) move to their own 2nd-choice date and get an email.\n';
+            if (p.rebooking) msg += '• ' + p.rebooking + ' booking(s) have no usable 2nd choice — they get an email asking them to pick a new Sunday.\n';
+            msg += '\nThis sends real emails to guests. Continue?';
+            if (!window.confirm(msg)) return;
+            btn.disabled = true;
+            api('orders', { method: 'POST', csrf: true, body: { action: 'push_class', date: c.label } }).then(function (rr) {
+              if (rr.status === 200 && rr.body.ok) { toast(rr.body.emailed || 'Class moved.', rr.body.emailsFailed ? 'err' : 'ok'); renderShell(); }
+              else { toast((rr.body && rr.body.error) || 'Could not move the class.', 'err'); btn.disabled = false; }
+            }).catch(function () { toast('Network error.', 'err'); btn.disabled = false; });
+          } });
+          card.appendChild(h('div', { class: 'order-actions' }, [btn]));
+        }
+
+        wrap.appendChild(card);
+      });
+    }).catch(function () {
+      wrap.innerHTML = '';
+      wrap.appendChild(h('div', { class: 'notice', text: 'Could not load classes.' }));
+    });
   }
 
   function renderOrders(main) {
@@ -770,9 +907,15 @@
         var d = o.details || {};
         var bits = [];
         if (d.item) bits.push(d.item + (d.quantity ? ' × ' + d.quantity : ''));
-        if (d.class_date) bits.push(d.class_date + (d.guests ? ' · ' + d.guests : ''));
-        if (d.reservation_date) bits.push('Table ' + d.reservation_date + (d.reservation_time ? ' at ' + d.reservation_time : '') + (d.party_size ? ' · ' + d.party_size : ''));
-        if (d.pickup_day) bits.push('Pickup ' + d.pickup_day + (d.pickup_time ? ' at ' + d.pickup_time : ''));
+        // The class/table/pickup date now leads the card header, so the detail
+        // line carries what the header can't: guests, the backup date, and any
+        // move that has already happened.
+        if (d.class_date && d.guests) bits.push(d.guests);
+        if (d.class_date_2) bits.push('2nd choice: ' + shortDate(d.class_date_2));
+        else if (d.class_date && !d.moved_from) bits.push('no 2nd choice');
+        if (d.moved_from) bits.push('moved from ' + shortDate(d.moved_from));
+        if (d.reservation_date && d.party_size) bits.push(d.party_size);
+        if (d.pickup_day && d.pickup_time) bits.push('Pickup at ' + d.pickup_time);
         if (d.allergies && d.allergies.toLowerCase() !== 'none') bits.push('Allergies: ' + d.allergies);
         if (d.notes) bits.push(d.notes);
         if (d.message) bits.push(d.message);
@@ -819,8 +962,15 @@
             h('strong', { text: o.name || 'Unknown' }),
             statusChip(o),
             o.amount_cents != null ? h('span', { class: 'order-amt', text: money(o.amount_cents) }) : null,
-            h('span', { class: 'order-when', text: when(o.created_at) })
+            (d.rebook_requested_at && !d.moved_from) ? h('span', { class: 'chip chip--warn', text: 'Asked to rebook' }) : null,
+            (function () {
+              var bd = bookingDate(o);
+              return bd
+                ? h('span', { class: 'order-when order-when--for', text: bd })
+                : h('span', { class: 'order-when', text: when(o.created_at) });
+            })()
           ]),
+          bookingDate(o) ? h('p', { class: 'order-booked-at', text: 'booked ' + when(o.created_at) }) : null,
           bits.length ? h('p', { class: 'order-bits', text: bits.join(' · ') }) : null,
           h('p', { class: 'order-contact' }, [
             o.email ? h('a', { href: 'mailto:' + o.email, text: o.email }) : null,

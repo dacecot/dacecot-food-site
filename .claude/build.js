@@ -95,8 +95,12 @@ function header(active) {
     `<li><a href="${p.slug}.html"${active === p.slug ? ' class="active" aria-current="page"' : ''}>${p.label}</a></li>`
   ).join('\n          ');
   const expActive = EXPERIENCE_PAGES.some(p => p.slug === active);
+  const announceUrl = content.url('announcementUrl');
+  const announceInner = announceUrl
+    ? `<a href="${announceUrl}" target="_blank" rel="noopener" style="color:#f9f7ef;text-decoration:underline;text-underline-offset:3px;">${content.text('announcementText')}</a>`
+    : content.text('announcementText');
   const announce = (content.bool('announcementEnabled') && String(content.get('announcementText') || '').trim())
-    ? `  <div class="site-banner" role="region" aria-label="Announcement" style="background:#4a1e18;color:#f9f7ef;text-align:center;padding:9px 16px;font-size:0.9rem;line-height:1.4;font-weight:500;">${content.text('announcementText')}</div>\n`
+    ? `  <div class="site-banner" role="region" aria-label="Announcement" style="background:#4a1e18;color:#f9f7ef;text-align:center;padding:9px 16px;font-size:0.9rem;line-height:1.4;font-weight:500;">${announceInner}</div>\n`
     : '';
   return `${announce}  <header class="header">
     <nav class="nav" aria-label="Primary">
@@ -725,7 +729,7 @@ pages.push(page({
             <div class="field">
               <label for="res-guests">Party size</label>
               <select id="res-guests" name="party_size" required>${Array.from({ length: 6 }, (_, i) => `<option>${i + 1} guest${i ? 's' : ''}</option>`).join('')}</select>
-              <p class="field__hint" style="margin-top:6px; font-size:0.85em; opacity:0.7;">More than 6 guests? Call us at <a href="tel:${NAP.phoneHref}">${NAP.phone}</a> — we love big tables.</p>
+              <p class="field__hint">More than 6 guests? Call us at <a href="tel:${NAP.phoneHref}">${NAP.phone}</a> — we love big tables.</p>
             </div>
             <div class="field">
               <label for="res-allergies">Allergies or dietary restrictions</label>
@@ -1098,7 +1102,7 @@ pages.push(page({
           <div class="field">
             <label for="om-time">Pickup time</label>
             <select id="om-time" name="pickup_time" required disabled><option value="">Choose a pickup day first…</option></select>
-            <p class="field__hint" data-pickup-note style="margin-top:6px; font-size:0.85em; opacity:0.75;">Pickup times follow our opening hours.</p>
+            <p class="field__hint" data-pickup-note>Pickup times follow our opening hours.</p>
           </div>
           <script id="pickup-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED })}</script>
           <div class="field"><label for="om-allergies">Any allergies?</label><input type="text" id="om-allergies" name="allergies" placeholder="Gluten, nuts, none…"></div>

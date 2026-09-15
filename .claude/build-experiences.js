@@ -37,14 +37,28 @@ function weeklyDateOptions(startISO, count) {
 const guestOptions = (max) => Array.from({ length: max }, (_, i) => `<option>${i + 1} guest${i ? 's' : ''}</option>`).join('');
 const WD_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-/* ---- Pasta class schedule + cap (editable; CMS-driven once content.json is wired) ----
-   Sunday classes run every Sunday Sep 20 – Nov 30, 2026, EXCEPT the first Sunday
-   of each month — da Cecot is closed the first Sunday of every month (Oct 4 &
-   Nov 1 are therefore skipped). Cap: 12 guests per class. */
+/* ---- Pasta class schedule + cap ----
+   Classes run WEEKLY on Sundays. The dates are generated at build time by
+   lib/classes/schedule.js (skipping the first Sunday of each month, when da
+   Cecot is closed, plus any Sundays Erika blacks out in the CMS), so a past
+   date can never be left on the form. Cap and how many Sundays to show are
+   both CMS-editable. */
 const CLASS_MAX = content.num('classMax');
-const CLASS_DATES = content.list('classDates');
+const CLASS_MIN = content.num('classMin');
+const schedule = require('../lib/classes/schedule');
+const CLASS_SCHEDULE = schedule.fromContent(content);
+const CLASS_DATES = CLASS_SCHEDULE.map((d) => d.label);
 
-// Turn full date strings into radio "pills". Short label: "Sun · Sep 20".
+/* Turn schedule entries into radio "pills". Short label: "Sun · Sep 20".
+   `name` is the field; the stored value stays the long label so existing
+   bookings, emails and the availability API keep matching. */
+function schedulePills(name, list, required) {
+  return list.map((d, i) => (
+    `<label class="date-pill"><input type="radio" name="${name}" value="${d.label}"${i === 0 && required ? ' required' : ''}><span>${d.short}</span></label>`
+  )).join('\n                ');
+}
+
+// Same, for plain date strings (the Thursday drop-in still uses these).
 function datePills(name, dates, required) {
   const WD3 = { Sunday: 'Sun', Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat' };
   const MO3 = { January: 'Jan', February: 'Feb', March: 'Mar', April: 'Apr', May: 'May', June: 'Jun', July: 'Jul', August: 'Aug', September: 'Sep', October: 'Oct', November: 'Nov', December: 'Dec' };
@@ -254,7 +268,7 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
         <div class="text-center reveal" style="margin-bottom:14px;"><h2 id="spc-incl-h">Booking information</h2></div>
         <div class="info-grid reveal">
           <div><h3>$95 per guest</h3><p>Adults only (18+).</p></div>
-          <div><h3>5:00 – 8:30 PM</h3><p>Every Sunday · Sep 20 – Nov 30.</p></div>
+          <div><h3>5:00 – 8:30 PM</h3><p>Every Sunday, year-round.</p></div>
           <div><h3>Up to ${CLASS_MAX} guests</h3><p>Small classes — ${CLASS_MAX} seats max per Sunday.</p></div>
           <div><h3>Please note</h3><p>Closed the first Sunday of each month.</p></div>
         </div>
@@ -265,22 +279,35 @@ ${expHero('spc-h1', 'La Domenica Da Cecot', 'Pasta · Amore · Condivisione — 
       <div class="container narrow reveal">
         <div class="text-center">
           <h2 id="spc-book-h">Book your class spot</h2>
-          <p>Classes are $95 per guest, run from 5–8:30 PM, and are capped at ${CLASS_MAX} guests. Choose one of our upcoming class dates below — or call us at <a href="tel:+18258884218">(825) 888-4218</a>.</p>
+          <p>Classes are $95 per guest, run every Sunday from 5–8:30 PM, and are capped at ${CLASS_MAX} guests. Pick the Sunday you'd like below — and a backup Sunday too, so we can move you rather than cancel you if a class can't run. Prefer to talk to us? Call <a href="tel:+18258884218">(825) 888-4218</a>.</p>
         </div>
         <div class="booking" style="margin-top:32px;">
           <form data-formsubmit data-pay-url="https://square.link/u/mTkWSnl5" data-subject="Sunday Pasta Class Booking — da Cecot" aria-label="Sunday pasta class booking request">
             <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
             <fieldset class="date-picker">
-              <legend class="date-picker__legend">Choose your class date</legend>
+              <legend class="date-picker__legend">1st choice — the class you want</legend>
               <div class="date-picker__grid">
-                ${datePills('class_date', CLASS_DATES, true)}
+                ${schedulePills('class_date', CLASS_SCHEDULE, true)}
               </div>
-              <p class="date-picker__note" style="margin-top:12px; font-size:0.9em; opacity:0.75;">Closed the first Sunday of each month.</p>
+              <p class="date-picker__note">Closed the first Sunday of each month.</p>
+            </fieldset>
+            <fieldset class="date-picker date-picker--alt" style="margin-top:20px;">
+              <legend class="date-picker__legend">2nd choice — your backup <span style="font-weight:400;opacity:0.7;">(optional, but recommended)</span></legend>
+              <div class="date-picker__grid" data-second-choice>
+                ${schedulePills('class_date_2', CLASS_SCHEDULE, false)}
+              </div>
+              <p class="date-picker__note">
+                You'll be booked into your <strong>1st choice</strong>. Our classes are small, so
+                on the rare occasion one can't run, we'll move you to your 2nd choice and email you
+                straight away — no need to do anything. Leave it blank and we'll automatically
+                email you a rebook link instead.
+                <button type="button" class="date-picker__clear" data-clear-second hidden>Clear my 2nd choice</button>
+              </p>
             </fieldset>
             <div class="field" style="margin-top:22px;">
               <label for="spc-guests">Number of guests <span style="font-weight:400;opacity:0.7;">(max ${CLASS_MAX})</span></label>
               <select id="spc-guests" name="guests">${guestOptions(CLASS_MAX)}</select>
-              <p class="field__hint" style="margin-top:6px; font-size:0.85em; opacity:0.7;">Classes are limited to ${CLASS_MAX} guests total.</p>
+              <p class="field__hint">Classes are limited to ${CLASS_MAX} guests total.</p>
             </div>
             <div class="form-row">
               <div class="field"><label for="spc-name">Name</label><input type="text" id="spc-name" name="name" required></div>

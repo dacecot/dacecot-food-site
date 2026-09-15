@@ -245,9 +245,17 @@ module.exports = async (req, res) => {
   if (customerEmail) {
     const firstName = customerName === 'the customer' ? 'there' : customerName.split(/\s+/)[0];
 
+    /* A Sunday class booking carries TWO dates, and the difference matters: one
+       is the class they're in, the other only applies if that class can't run.
+       Those get their own panel below, so keep them out of the generic rows. */
+    const classFirst = String(data.class_date == null ? '' : data.class_date).trim();
+    const classSecond = String(data.class_date_2 == null ? '' : data.class_date_2).trim();
+    const showClassDates = isClass && !!classFirst && !data.drop_in_date;
+
     // Detail rows shown back to the customer — order, booking AND reservation fields.
     const detailKeys = ['item', 'quantity', 'class_date', 'class_date_2', 'drop_in_date', 'reservation_date', 'reservation_time', 'party_size', 'guests', 'pickup_day', 'pickup_time', 'allergies', 'notes'];
     const detailRows = detailKeys
+      .filter((k) => !(showClassDates && (k === 'class_date' || k === 'class_date_2')))
       .filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
       .map((k) =>
         '<tr>' +
@@ -263,14 +271,47 @@ module.exports = async (req, res) => {
       : '';
     const payLine = payLink ? ('\nComplete your payment: ' + payLink + '\n') : '';
 
+    // The class dates panel itself (fields computed above, before detailRows).
+    let classPanel = '', classText = '';
+    if (showClassDates) {
+      const backupHtml = classSecond
+        ? '<p style="margin:14px 0 0;font-size:12px;font-weight:700;color:#3F512E;text-transform:uppercase;letter-spacing:1px">Backup date — your 2nd choice</p>' +
+          '<p style="margin:3px 0 0;font-size:16px;color:#2b2b2b">' + esc(classSecond) + '</p>' +
+          '<p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#555">Our classes are small. If the class on your 1st choice can\'t run, we\'ll move you to this date and email you — nothing for you to do.</p>'
+        : '<p style="margin:14px 0 0;font-size:12px;font-weight:700;color:#3F512E;text-transform:uppercase;letter-spacing:1px">Backup date</p>' +
+          '<p style="margin:3px 0 0;font-size:15px;color:#555">You didn\'t pick a 2nd choice.</p>' +
+          '<p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#555">If the class on your date can\'t run, we\'ll email you a link to pick another Sunday.</p>';
+      classPanel =
+        '<table role="presentation" width="100%" style="border-collapse:collapse;margin:0 0 16px">' +
+          '<tr><td style="background:#f9f7ef;border:1px solid #e7e0cf;border-left:4px solid #ad5217;border-radius:8px;padding:16px 18px">' +
+            '<p style="margin:0;font-size:12px;font-weight:700;color:#3F512E;text-transform:uppercase;letter-spacing:1px">You\'re booked in for</p>' +
+            '<p style="margin:3px 0 0;font-size:18px;font-weight:700;color:#4a1e18">' + esc(classFirst) + '</p>' +
+            '<p style="margin:3px 0 0;font-size:13px;color:#555">5:00 – 8:30 PM</p>' +
+            backupHtml +
+          '</td></tr>' +
+        '</table>';
+      classText =
+        '\nYou\'re booked in for: ' + classFirst + ' (5:00-8:30 PM)\n' +
+        (classSecond
+          ? 'Backup date (your 2nd choice): ' + classSecond +
+            '\nIf the class on your 1st choice cannot run, we will move you to this date and email you.\n'
+          : 'Backup date: none chosen. If the class on your date cannot run, we will email you a link to pick another Sunday.\n');
+    }
+
     let intro, closing, subjectLine;
     if (isReservation) {
       subjectLine = 'Your table is confirmed — da Cecot Food';
       intro = 'Grazie, ' + esc(firstName) + '! Your table at da Cecot is confirmed — this email is your confirmation, and your details are below. We look forward to hosting you!';
       closing = 'Need to change or cancel? Just reply to this email or call us at (825) 888-4218. A presto!';
     } else if (isClass) {
-      subjectLine = 'Your class booking — da Cecot Food';
-      intro = 'Grazie, ' + esc(firstName) + '! We\'ve received your class booking — the details are below. We look forward to making pasta with you!';
+      subjectLine = showClassDates
+        ? 'Your pasta class — ' + classFirst + ' | da Cecot Food'
+        : 'Your class booking — da Cecot Food';
+      intro = 'Grazie, ' + esc(firstName) + '! We\'ve got your pasta class booking' +
+        (showClassDates
+          ? (classSecond ? ' — here are both the dates you chose.' : ' — your class date is below.')
+          : ' — the details are below.') +
+        ' We look forward to making pasta with you!';
       closing = (payLink ? 'Please complete your payment securely with the button above (Square) to confirm your spot. ' : 'We\'ll confirm your spot by phone or email shortly. ') + 'Questions? Just reply to this email or call us at (825) 888-4218.';
     } else if (isOrder) {
       subjectLine = 'We\'ve received your order — da Cecot Food';
@@ -330,17 +371,23 @@ module.exports = async (req, res) => {
         '\n\nGuest details:\nName: ' + (data.name || '') + '\nPhone: ' + (data.phone || '') + '\nEmail: ' + (data.email || '') +
         '\n\nNeed to change or cancel? Reply to this email or call (825) 888-4218. A presto!';
     } else {
+      /* Explicit cream ground + white card, matching lib/orders/mailer.js. The
+         body used to set only a text colour, so a dark-mode mail client left
+         dark text on its own dark background — nearly unreadable. */
       custHtml =
-        '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;max-width:560px;margin:0 auto">' +
+        '<div style="background:#f9f7ef;padding:24px 0;font-family:Arial,Helvetica,sans-serif">' +
+        '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e7e0cf;border-radius:12px;padding:26px 28px">' +
           '<h2 style="font-family:Georgia,\'Times New Roman\',serif;color:#4a1e18;font-size:22px;margin:0 0 12px">da Cecot Food</h2>' +
           '<p style="font-size:15px;line-height:1.6;margin:0 0 14px">' + intro + '</p>' +
+          classPanel +
           (detailRows ? '<table style="font-size:14px;line-height:1.5;border-collapse:collapse;margin:0 0 16px;background:#f9f7ef;border-radius:8px;padding:4px">' + detailRows + '</table>' : '') +
           payButton +
           '<p style="font-size:14px;line-height:1.6;color:#555;margin:0 0 18px">' + closing + '</p>' +
           '<p style="font-size:12px;color:#999;margin:0">da Cecot Food Inc · Whyte Avenue, Edmonton · dacecotfood.com</p>' +
-        '</div>';
-      custText = intro.replace(/&#39;/g, "'") + '\n\n' +
-        detailKeys.filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
+        '</div></div>';
+      custText = intro.replace(/&#39;/g, "'") + '\n' + classText + '\n' +
+        detailKeys.filter((k) => !(showClassDates && (k === 'class_date' || k === 'class_date_2')))
+          .filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
           .map((k) => humanize(k) + ': ' + String(data[k]).replace(/\n/g, ' ')).join('\n') +
         payLine +
         '\n\n' + closing.replace(/&#39;/g, "'") + '\n\nda Cecot Food Inc · Whyte Avenue, Edmonton';

@@ -33,6 +33,39 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true, count: contacts.length, contacts });
       } catch (e) { return res.status(502).json({ error: 'Could not load contacts: ' + (e && e.message || e) }); }
     }
+    // ?sub=classes → Sunday class rosters: who is booked on which date, how far
+    // each class is from its minimum, and what a push would do to it.
+    if (q.sub === 'classes') {
+      try {
+        const pushLib = require('../../lib/classes/push');
+        const content = require('../../lib/cms/content');
+        const max = content.num('classMax');
+        const min = content.num('classMin');
+        const all = await store.list({ type: 'class' });
+        const list = pushLib.rosters(all, { max, min }).map((g) => {
+          const plan = pushLib.planPush(all, g.label, { max });
+          return {
+            iso: g.iso,
+            label: g.label,
+            booked: g.booked,
+            left: g.left,
+            underMin: g.underMin,
+            bookings: g.bookings,
+            // What "Move to 2nd choices" would do, so Erika sees it before she clicks.
+            preview: {
+              moving: plan.moves.length,
+              movingGuests: plan.movedGuests,
+              rebooking: plan.rebooks.length,
+              rebookingGuests: plan.rebookGuests,
+              targets: plan.moves.reduce((acc, m) => {
+                acc[m.to] = (acc[m.to] || 0) + m.guests; return acc;
+              }, {})
+            }
+          };
+        });
+        return res.status(200).json({ ok: true, min, max, classes: list });
+      } catch (e) { return res.status(502).json({ error: 'Could not load classes: ' + (e && e.message || e) }); }
+    }
     const opts = {};
     if (q.type) opts.type = String(q.type);
     if (q.status) opts.status = String(q.status);
@@ -55,6 +88,78 @@ module.exports = async (req, res) => {
 
     const id = String(body.id || '').trim();
     const action = String(body.action || '').trim();
+
+    /* push_class — an under-filled Sunday can't run, so move its guests to the
+       2nd choice each of them picked. Acts on a whole class date, not one id.
+       Bookings with no usable 2nd choice are NOT moved; they're emailed and
+       asked to pick a new Sunday, and left on the original date so Erika can
+       still see and chase them. Nothing is deleted either way. */
+    if (action === 'push_class') {
+      const date = String(body.date || '').trim();
+      if (!date) return res.status(400).json({ error: 'Missing class date.' });
+      try {
+        const pushLib = require('../../lib/classes/push');
+        const content = require('../../lib/cms/content');
+        const max = content.num('classMax');
+        const all = await store.list({ type: 'class' });
+        const plan = pushLib.planPush(all, date, { max });
+        if (!plan.moves.length && !plan.rebooks.length) {
+          return res.status(400).json({ error: 'No active bookings on that date.' });
+        }
+
+        const now = new Date().toISOString();
+        let moved = 0, movedFailed = 0, asked = 0, askedFailed = 0;
+
+        for (const m of plan.moves) {
+          const existing = await store.get(m.id);
+          if (!existing) continue;
+          const details = Object.assign({}, existing.details, {
+            class_date: m.to,
+            moved_from: m.from,
+            moved_to_second_at: now,
+            moved_reason: 'under_minimum'
+          });
+          // The backup has been used up — clear it so it can't be spent twice.
+          delete details.class_date_2;
+          const updated = await store.update(m.id, { details });
+          moved++;
+          if (existing.email) {
+            const r2 = await mailer.sendMovedToSecond(updated, m.from);
+            if (!(r2 && r2.ok)) movedFailed++;
+          }
+        }
+
+        for (const rb of plan.rebooks) {
+          const existing = await store.get(rb.id);
+          if (!existing) continue;
+          const details = Object.assign({}, existing.details, {
+            rebook_requested_at: now,
+            rebook_reason: rb.reason,
+            class_not_running: rb.from
+          });
+          await store.update(rb.id, { details });
+          asked++;
+          if (existing.email) {
+            const r2 = await mailer.sendRebookRequest(existing, rb.from, rb.reason);
+            if (!(r2 && r2.ok)) askedFailed++;
+          }
+        }
+
+        const parts = [];
+        if (moved) parts.push(moved + ' booking' + (moved === 1 ? '' : 's') + ' moved to their 2nd choice');
+        if (asked) parts.push(asked + ' asked to rebook');
+        const failed = movedFailed + askedFailed;
+        if (failed) parts.push(failed + ' email' + (failed === 1 ? '' : 's') + ' failed to send');
+        return res.status(200).json({
+          ok: true,
+          moved, asked, emailsFailed: failed,
+          emailed: parts.join(' · ') || 'Nothing to move.'
+        });
+      } catch (e) {
+        return res.status(502).json({ error: 'Could not move the class: ' + (e && e.message || e) });
+      }
+    }
+
     if (!id) return res.status(400).json({ error: 'Missing order id.' });
 
     try {
@@ -92,7 +197,7 @@ module.exports = async (req, res) => {
         updated = await store.markReminded(id);
         emailed = 'payment reminder sent';
       } else {
-        return res.status(400).json({ error: "Unknown action. Use 'mark_paid', 'mark_fulfilled', 'cancel', 'reschedule' or 'send_reminder'." });
+        return res.status(400).json({ error: "Unknown action. Use 'mark_paid', 'mark_fulfilled', 'cancel', 'reschedule', 'send_reminder' or 'push_class'." });
       }
       return res.status(200).json({ ok: true, order: updated, emailed });
     } catch (e) {

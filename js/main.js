@@ -245,17 +245,55 @@
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !orderModal.hidden) closeOrder(); });
     }
 
-    /* ---- Sunday class live availability ticker ---- */
+    /* ---- Sunday class: live availability ticker + 1st/2nd choice ---- */
     (function () {
-      var pills = document.querySelectorAll('input[name="class_date"]');
-      if (!pills.length) return;
+      var firstPills = [].slice.call(document.querySelectorAll('input[name="class_date"]'));
+      if (!firstPills.length) return;
+      var secondPills = [].slice.call(document.querySelectorAll('input[name="class_date_2"]'));
       var guestsSel = document.getElementById('spc-guests');
+      var clearBtn = document.querySelector('[data-clear-second]');
+
+      // The 2nd choice is a backup, so it must be a DIFFERENT Sunday. Whichever
+      // date is picked as 1st gets disabled in the 2nd group (and cleared if it
+      // was already selected there).
+      function syncSecondChoice() {
+        var chosen = document.querySelector('input[name="class_date"]:checked');
+        var chosenVal = chosen ? chosen.value : null;
+        secondPills.forEach(function (p) {
+          var label = p.closest('.date-pill');
+          var isSame = chosenVal != null && p.value === chosenVal;
+          if (isSame && p.checked) p.checked = false;
+          // Never re-enable a pill that is disabled because the class is full.
+          if (p.dataset.soldOut === '1') return;
+          p.disabled = isSame;
+          if (label) {
+            label.style.opacity = isSame ? '0.3' : '';
+            label.style.pointerEvents = isSame ? 'none' : '';
+          }
+        });
+        if (clearBtn) {
+          clearBtn.hidden = !document.querySelector('input[name="class_date_2"]:checked');
+        }
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+          secondPills.forEach(function (p) { p.checked = false; });
+          syncSecondChoice();
+        });
+      }
+      firstPills.forEach(function (p) { p.addEventListener('change', syncSecondChoice); });
+      secondPills.forEach(function (p) { p.addEventListener('change', syncSecondChoice); });
+      syncSecondChoice();
+
       fetch('/api/class-availability', { headers: { Accept: 'application/json' } })
         .then(function (r) { return r.json(); })
         .then(function (a) {
           if (!a || !a.max) return;
           var avail = {};
-          pills.forEach(function (input) {
+          // Both groups show the same live seat counts — a guest should not pick
+          // a backup that is already full.
+          firstPills.concat(secondPills).forEach(function (input) {
             var info = (a.dates && a.dates[input.value]) || { booked: 0, left: a.max };
             avail[input.value] = info.left;
             var label = input.closest('.date-pill');
@@ -266,6 +304,7 @@
             if (info.left <= 0) {
               tag.textContent = 'Fully booked';
               input.disabled = true;
+              input.dataset.soldOut = '1';
               label.style.opacity = '0.45';
               label.style.pointerEvents = 'none';
             } else if (info.left <= 4) {
@@ -278,7 +317,7 @@
             }
             span.appendChild(tag);
           });
-          // Cap the guest count to what's left for the chosen date.
+          // Cap the guest count to what's left for the chosen 1st-choice date.
           function capGuests() {
             if (!guestsSel) return;
             var chosen = document.querySelector('input[name="class_date"]:checked');
@@ -288,8 +327,9 @@
             });
             if (left != null && guestsSel.selectedIndex + 1 > left) guestsSel.selectedIndex = Math.max(0, left - 1);
           }
-          pills.forEach(function (p) { p.addEventListener('change', capGuests); });
+          firstPills.forEach(function (p) { p.addEventListener('change', capGuests); });
           capGuests();
+          syncSecondChoice();
         })
         .catch(function () { /* ticker is progressive enhancement — booking still works */ });
     })();

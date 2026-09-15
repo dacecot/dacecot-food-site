@@ -11,18 +11,10 @@
   "announcementEnabled": true,
   "announcementText": "🛵 Da Cecot is now on Uber Eats — order delivery tonight!",
   "classMax": 12,
-  "classDates": [
-    "Sunday, September 20, 2026",
-    "Sunday, September 27, 2026",
-    "Sunday, October 11, 2026",
-    "Sunday, October 18, 2026",
-    "Sunday, October 25, 2026",
-    "Sunday, November 8, 2026",
-    "Sunday, November 15, 2026",
-    "Sunday, November 22, 2026",
-    "Sunday, November 29, 2026"
-  ],
   "heroImage": "images/food/homepage-hero.jpg",
   "aboutImage": "images/general/cecot-family.jpg",
-  "announcementUrl": "https://www.ubereats.com/ca/store/da-cecot-8137-104-street-northwest/fbCdjyclUuaIaVOs455ffQ"
+  "announcementUrl": "https://www.ubereats.com/ca/store/da-cecot-8137-104-street-northwest/fbCdjyclUuaIaVOs455ffQ",
+  "classMin": 4,
+  "classWeeksShown": 5,
+  "classBlackoutDates": []
 }

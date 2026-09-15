@@ -120,8 +120,16 @@ textarea { min-height: 96px; resize: vertical; }
 .order-card { padding: 16px 18px; }
 .order-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .order-when { margin-left: auto; color: var(--muted); font-size: 0.82rem; }
+/* The date the booking is FOR — the one Erika runs her week off, so it reads
+   as real information, not a timestamp. */
+.order-when--for { color: var(--ink); font-weight: 600; font-size: 0.86rem; }
+.order-when--none { font-style: italic; opacity: 0.75; }
+.order-booked-at { margin: 6px 0 0; font-size: 0.76rem; color: var(--muted); }
 .order-amt { font-weight: 600; color: var(--olive); }
 .order-bits { margin: 8px 0 0; font-size: 0.9rem; color: var(--ink); }
+.class-roster { margin-top: 12px; border-top: 1px solid var(--line); }
+.class-roster .contact-row:first-child { border-top: 0; }
+.order-actions { flex-wrap: wrap; }
 .order-contact { margin: 6px 0 0; font-size: 0.85rem; }
 .order-actions { display: flex; gap: 8px; margin-top: 10px; }
 .order-actions:empty { display: none; }

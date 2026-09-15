@@ -20,7 +20,14 @@ const TO = process.env.RESEND_TO || 'info@dacecotfood.com';
 const FROM = process.env.RESEND_FROM || 'da Cecot Website <onboarding@resend.dev>';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-const humanize = (k) => k.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase());
+// Field labels that shouldn't read like database columns in a customer's inbox.
+const FIELD_LABELS = {
+  class_date: 'Class date',
+  class_date_2: '2nd choice (backup)',
+  drop_in_date: 'Drop-in date'
+};
+const humanize = (k) => FIELD_LABELS[k] ||
+  k.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase());
 
 // Fire a single email through Resend. Returns { ok, status, detail }.
 async function sendEmail(key, { to, subject, html, text, replyTo }) {
@@ -103,6 +110,39 @@ module.exports = async (req, res) => {
         }
       }
     } catch (e) { console.error('reservation capacity check failed (allowing through)', e && e.message); }
+  }
+
+  // Sunday pasta classes: the dates are generated weekly, so a booking must name
+  // a Sunday that is actually on the schedule right now. A stale page left open
+  // overnight (or a hand-crafted POST) must not book a class that has passed or
+  // been blacked out. The 2nd choice is optional but held to the same rule, and
+  // must be a DIFFERENT Sunday — a backup equal to the 1st choice is no backup.
+  if (/class booking/i.test(String(data._subject || '')) && data.class_date) {
+    try {
+      const content = require('../lib/cms/content');
+      const schedule = require('../lib/classes/schedule');
+      const list = schedule.fromContent(content);
+      if (!schedule.isBookable(data.class_date, list)) {
+        return res.status(409).json({
+          success: false,
+          error: 'That class date is no longer available — please refresh the page and pick one of the upcoming Sundays.'
+        });
+      }
+      if (String(data.class_date_2 || '').trim()) {
+        if (!schedule.isBookable(data.class_date_2, list)) {
+          return res.status(409).json({
+            success: false,
+            error: 'Your 2nd-choice date is no longer available — please refresh the page and pick another Sunday (or leave it blank).'
+          });
+        }
+        if (schedule.sameDay(data.class_date, data.class_date_2)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Please pick a different Sunday for your 2nd choice — it is your backup if the first class can’t run.'
+          });
+        }
+      }
+    } catch (e) { console.error('class schedule check failed (allowing through)', e && e.message); }
   }
 
   // Sunday pasta classes have a hard capacity — reject bookings that would
@@ -206,7 +246,7 @@ module.exports = async (req, res) => {
     const firstName = customerName === 'the customer' ? 'there' : customerName.split(/\s+/)[0];
 
     // Detail rows shown back to the customer — order, booking AND reservation fields.
-    const detailKeys = ['item', 'quantity', 'class_date', 'drop_in_date', 'reservation_date', 'reservation_time', 'party_size', 'guests', 'pickup_day', 'pickup_time', 'allergies', 'notes'];
+    const detailKeys = ['item', 'quantity', 'class_date', 'class_date_2', 'drop_in_date', 'reservation_date', 'reservation_time', 'party_size', 'guests', 'pickup_day', 'pickup_time', 'allergies', 'notes'];
     const detailRows = detailKeys
       .filter((k) => String(data[k] == null ? '' : data[k]).trim() !== '')
       .map((k) =>

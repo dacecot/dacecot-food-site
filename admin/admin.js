@@ -967,6 +967,70 @@
     });
   }
 
+  /* ---------- inquiry follow-up tracker ----------
+     Inquiries were the one thing arriving through the website that nothing
+     tracked: a question came in and the screen never said whether anyone had
+     written back. These controls are Erika's own bookkeeping — marking one
+     "replied" emails nobody, and the reminder is a date she sets herself. */
+  var followupFilter = 'all';   // all | open | responded | due
+
+  function fuChip(text, cls) { return h('span', { class: 'chip ' + (cls || ''), text: text }); }
+
+  // 'Reminder today' / 'Reminder 3 days overdue' / 'Reminder in 5 days'.
+  function reminderWord(r) {
+    if (!r) return null;
+    if (r.daysAway === 0) return 'Reminder today';
+    if (r.daysAway === -1) return 'Reminder 1 day overdue';
+    if (r.daysAway < 0) return 'Reminder ' + Math.abs(r.daysAway) + ' days overdue';
+    if (r.daysAway === 1) return 'Reminder tomorrow';
+    return 'Reminder in ' + r.daysAway + ' days';
+  }
+
+  function renderTracker(main, summary) {
+    var card = h('div', { class: 'card' }, []);
+    card.appendChild(h('h3', { class: 'card-title', text: 'Follow-ups' }));
+    card.appendChild(h('p', {
+      class: 'help',
+      text: summary.total === 0
+        ? 'Inquiries and wholesale enquiries appear here, so you can see at a glance who is still waiting on a reply.'
+        : summary.open + ' waiting for a reply · ' + summary.responded + ' answered' +
+          (summary.overdue ? ' · ' + summary.overdue + ' reminder' + (summary.overdue === 1 ? '' : 's') + ' overdue' : '') +
+          (summary.dueNow ? ' · ' + summary.dueNow + ' due today' : '')
+    }));
+
+    var row = h('div', { class: 'filter-row' }, []);
+    row.setAttribute('style', 'margin-top:14px; margin-bottom:0;');
+    [['all', 'All'],
+     ['open', 'Waiting for a reply (' + summary.open + ')'],
+     ['responded', 'Answered (' + summary.responded + ')'],
+     ['due', 'Reminders due (' + (summary.dueNow + summary.overdue) + ')']].forEach(function (t) {
+      row.appendChild(h('button', {
+        class: 'btn btn--sm ' + (followupFilter === t[0] ? '' : 'btn--ghost'), text: t[1],
+        onclick: function () { followupFilter = t[0]; renderShell(); }
+      }));
+    });
+    card.appendChild(row);
+    main.appendChild(card);
+  }
+
+  /* Reminder date: a typed date, or a plain number meaning "that many days
+     from today" — quicker than counting dates in your head mid-service. */
+  function askReminderDate(current) {
+    var raw = window.prompt(
+      'Remind you about this on which day?\n\nType a date like 2026-09-20, or just a number of days from today (e.g. 3).',
+      current || ''
+    );
+    if (raw == null) return null;
+    raw = String(raw).trim();
+    if (!raw) return null;
+    if (/^[0-9]{1,3}$/.test(raw)) {
+      var d = new Date();
+      d.setDate(d.getDate() + parseInt(raw, 10));
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    return raw;
+  }
+
   function renderOrders(main) {
     main.appendChild(h('div', { class: 'page-head' }, [
       h('h1', { text: 'Orders & Bookings' }),
@@ -980,6 +1044,9 @@
     });
     main.appendChild(tabs);
 
+    var trackerWrap = h('div', {}, []);
+    main.appendChild(trackerWrap);
+
     var listWrap = h('div', {}, [h('div', { class: 'boot', text: 'Loading…' })]);
     main.appendChild(listWrap);
 
@@ -987,8 +1054,22 @@
     api(path).then(function (r) {
       listWrap.innerHTML = '';
       if (r.status !== 200 || !r.body.ok) { listWrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load orders.' })); return; }
+      renderTracker(trackerWrap, r.body.followupSummary || { open: 0, responded: 0, dueNow: 0, overdue: 0, total: 0 });
+
       // Reservations are handled in the Reservations tab, never here.
       var orders = (r.body.orders || []).filter(function (o) { return o.type !== 'reservation'; });
+
+      /* The follow-up filter narrows to tracked submissions only — picking
+         "waiting for a reply" must not leave pasta orders on screen. */
+      if (followupFilter !== 'all') {
+        orders = orders.filter(function (o) {
+          var f = o.followup;
+          if (!f || !f.tracked || f.status === 'closed') return false;
+          if (followupFilter === 'open') return f.status === 'open';
+          if (followupFilter === 'responded') return f.status === 'responded';
+          return !!(f.reminder && f.reminder.due);
+        });
+      }
       if (r.body.store === 'local') {
         listWrap.appendChild(h('div', { class: 'notice', text: 'Heads up: orders are stored locally on this server. On the live site a database keeps them permanently.' }));
       }
@@ -1047,6 +1128,28 @@
             'Cancel this booking' + (o.email ? ' and email ' + (o.name || 'the customer') + '?' : '?')));
         }
 
+        /* Inquiry / wholesale follow-up. No confirmation prompts: none of these
+           reach the customer, so none of them need guarding. */
+        var fu = o.followup;
+        if (!cancelled && fu && fu.tracked) {
+          if (fu.status === 'open') {
+            actions.appendChild(act('mark_responded', 'Mark replied', 'btn--green', function () {
+              var note = window.prompt('Anything to remember about your reply? (optional)', '');
+              return note == null ? {} : { note: note };
+            }));
+          } else {
+            actions.appendChild(act('reopen', 'Still open', 'btn--ghost'));
+          }
+
+          actions.appendChild(act('set_reminder', fu.reminder ? 'Change reminder' : 'Set reminder', 'btn--ghost', function () {
+            var date = askReminderDate(fu.reminder ? fu.reminder.date : '');
+            if (!date) return { __abort: true };
+            var note = window.prompt('What is the reminder for? (optional)', (fu.reminder && fu.reminder.note) || '');
+            return { date: date, note: note == null ? '' : note };
+          }));
+          if (fu.reminder) actions.appendChild(act('clear_reminder', 'Clear reminder', 'btn--ghost'));
+        }
+
         listWrap.appendChild(h('div', { class: 'card order-card' }, [
           h('div', { class: 'order-top' }, [
             h('span', { class: 'chip chip--type', text: TYPE_LABEL[o.type] || o.type }),
@@ -1054,6 +1157,9 @@
             statusChip(o),
             o.amount_cents != null ? h('span', { class: 'order-amt', text: money(o.amount_cents) }) : null,
             (d.rebook_requested_at && !d.moved_from) ? h('span', { class: 'chip chip--warn', text: 'Asked to rebook' }) : null,
+            (fu && fu.tracked && fu.status === 'open') ? fuChip('Waiting for a reply', 'chip--warn') : null,
+            (fu && fu.tracked && fu.status === 'responded') ? fuChip('Replied', 'chip--ok') : null,
+            (fu && fu.reminder) ? fuChip(reminderWord(fu.reminder), fu.reminder.overdue ? 'chip--warn' : '') : null,
             (function () {
               var bd = bookingDate(o);
               return bd
@@ -1063,6 +1169,8 @@
           ]),
           bookingDate(o) ? h('p', { class: 'order-booked-at', text: 'booked ' + when(o.created_at) }) : null,
           bits.length ? h('p', { class: 'order-bits', text: bits.join(' · ') }) : null,
+          (fu && fu.respondedNote) ? h('p', { class: 'order-bits', text: 'Your note: ' + fu.respondedNote }) : null,
+          (fu && fu.reminder && fu.reminder.note) ? h('p', { class: 'order-bits', text: 'Reminder: ' + fu.reminder.note }) : null,
           h('p', { class: 'order-contact' }, [
             o.email ? h('a', { href: 'mailto:' + o.email, text: o.email }) : null,
             o.email && o.phone ? h('span', { text: ' · ' }) : null,

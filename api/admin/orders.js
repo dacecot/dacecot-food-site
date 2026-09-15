@@ -2,6 +2,11 @@
 //   GET  → list captured submissions (auth required). Optional ?type= and ?status=.
 //   POST → manual update { id, action:'mark_paid'|'mark_fulfilled' } (auth + CSRF).
 // Reuses the CMS session/CSRF auth. JSON only.
+//   POST { action:'mark_responded', id, note? }   inquiry tracker: Erika replied
+//        { action:'reopen',         id }          undo that
+//        { action:'set_reminder',   id, date, note? }  park a follow-up date
+//        { action:'clear_reminder', id }          drop it
+//   (These four never email anyone — see lib/orders/followup.js.)
 const auth = require('../../lib/cms/auth');
 const store = require('../../lib/orders/store');
 const mailer = require('../../lib/orders/mailer');
@@ -72,7 +77,20 @@ module.exports = async (req, res) => {
     if (q.limit) opts.limit = q.limit;
     try {
       const orders = await store.list(opts);
-      return res.status(200).json({ ok: true, store: store.backend(), count: orders.length, orders });
+      /* Attach follow-up state rather than letting the browser recompute it.
+         The admin would otherwise need its own copy of the date maths, and the
+         two would drift the first time either changed. */
+      const followup = require('../../lib/orders/followup');
+      const R2 = require('../../lib/orders/reservations');
+      const today = R2.todayISO();
+      const withFollowup = orders.map((o) => Object.assign({}, o, { followup: followup.describe(o, today) }));
+      return res.status(200).json({
+        ok: true, store: store.backend(), count: orders.length, orders: withFollowup,
+        today: today,
+        // Counts across EVERY tracked submission, not just the filtered page,
+        // so the strip does not change meaning when she switches tabs.
+        followupSummary: followup.summarise(await store.list({}), today)
+      });
     } catch (e) {
       return res.status(502).json({ error: 'Could not load orders: ' + (e && e.message || e) });
     }
@@ -190,6 +208,23 @@ module.exports = async (req, res) => {
         details.rescheduled_at = new Date().toISOString();
         updated = await store.update(id, { details });
         if (existing.email) { const r2 = await mailer.sendRescheduled(updated, oldDate); emailed = r2 && r2.ok ? 'reschedule email sent' : 'reschedule email failed'; }
+      } else if (action === 'mark_responded' || action === 'reopen' || action === 'set_reminder' || action === 'clear_reminder') {
+        /* Erika's own tracker. None of these touch the customer — no email is
+           sent and none can be: "responded" means she already replied from her
+           inbox, and the reminder is a note to herself. */
+        const followup = require('../../lib/orders/followup');
+        if (!followup.isTracked(existing)) {
+          return res.status(400).json({ error: 'Follow-ups are for inquiries and wholesale enquiries. This is a ' + existing.type + '.' });
+        }
+        let details;
+        try {
+          if (action === 'mark_responded') details = followup.markResponded(existing.details, { note: body.note });
+          else if (action === 'reopen') details = followup.reopen(existing.details);
+          else if (action === 'set_reminder') details = followup.setReminder(existing.details, body.date, body.note);
+          else details = followup.clearReminder(existing.details);
+        } catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
+        updated = await store.update(id, { details });
+
       } else if (action === 'send_reminder') {
         if (!existing.email) return res.status(400).json({ error: 'This submission has no email address.' });
         const r2 = await mailer.sendReminder(existing);
@@ -197,7 +232,7 @@ module.exports = async (req, res) => {
         updated = await store.markReminded(id);
         emailed = 'payment reminder sent';
       } else {
-        return res.status(400).json({ error: "Unknown action. Use 'mark_paid', 'mark_fulfilled', 'cancel', 'reschedule', 'send_reminder' or 'push_class'." });
+        return res.status(400).json({ error: "Unknown action. Use 'mark_paid', 'mark_fulfilled', 'cancel', 'reschedule', 'send_reminder', 'push_class', 'mark_responded', 'reopen', 'set_reminder' or 'clear_reminder'." });
       }
       return res.status(200).json({ ok: true, order: updated, emailed });
     } catch (e) {

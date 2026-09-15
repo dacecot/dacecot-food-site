@@ -7,7 +7,7 @@
     "build": "node .claude/build.js",
     "dev": "node .claude/static-server.js",
     "hash": "node lib/cms/hash-password.js",
-    "test": "node test/classes.test.js && node test/closures.test.js && node test/pause.test.js && node test/pricing.test.js && node test/build-output.test.js",
+    "test": "node test/classes.test.js && node test/closures.test.js && node test/pause.test.js && node test/pricing.test.js && node test/followup.test.js && node test/build-output.test.js",
     "gate": "npm test && npm run build"
   },
   "dependencies": {

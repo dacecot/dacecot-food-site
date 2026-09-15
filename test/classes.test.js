@@ -247,11 +247,122 @@ test('rosters sum guests per class rather than counting bookings', () => {
   assert.strictEqual(rs[0].underMin, false);
 });
 
-/* --------------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   api/send.js — the confirmation email a guest actually receives
 
+   This is a client-visible record: if the backup date silently stops
+   appearing, nobody finds out until a guest is moved to a Sunday they
+   don't remember agreeing to. global.fetch is replaced before the handler
+   loads, so nothing is ever sent.
+   --------------------------------------------------------------- */
+
+async function emailTests() {
+  /* The handler records every booking to the local store, and the capacity
+     guard then counts them — so without isolation each run fills the class a
+     little more until bookings start getting rejected and the suite fails for
+     reasons that have nothing to do with the code. Snapshot the store, run
+     against an empty one, put it back. Any real local dev data survives. */
+  const fs = require('fs');
+  const STORE = require('path').join(__dirname, '../.data/submissions.json');
+  let snapshot = null;
+  try { snapshot = fs.readFileSync(STORE, 'utf8'); } catch (e) { /* no store yet */ }
+  const restoreStore = () => {
+    try {
+      if (snapshot === null) fs.rmSync(STORE, { force: true });
+      else fs.writeFileSync(STORE, snapshot);
+    } catch (e) { /* best effort */ }
+  };
+  try { fs.mkdirSync(require('path').dirname(STORE), { recursive: true }); fs.writeFileSync(STORE, '[]'); } catch (e) {}
+
+  process.env.RESEND_API_KEY = 're_TEST_NEVER_SENT';
+  process.env.RESEND_FROM = 'da Cecot <test@local.invalid>';
+  process.env.RESEND_TO = 'store@local.invalid';
+  delete process.env.DATABASE_URL;
+
+  const realFetch = global.fetch;
+  const captured = [];
+  global.fetch = async (url, opts) => {
+    captured.push(JSON.parse(opts.body));
+    return { ok: true, status: 200, text: async () => '', json: async () => ({ id: 'test' }) };
+  };
+
+  const handler = require('../api/send.js');
+  const reply = () => {
+    const r = { _s: 0, _j: null };
+    r.status = (c) => { r._s = c; return r; };
+    r.json = (j) => { r._j = j; return r; };
+    r.setHeader = () => {};
+    return r;
+  };
+  async function book(payload) {
+    captured.length = 0;
+    const r = reply();
+    await handler({ method: 'POST', headers: {}, body: payload }, r);
+    return { res: r, customer: captured.find((c) => c.to && c.to[0] === payload.email) };
+  }
+
+  const base = {
+    _subject: 'Sunday Pasta Class Booking — da Cecot',
+    guests: '2 guests', name: 'Anna Rossi', phone: '780-555-0100', email: 'anna@example.invalid'
+  };
+  // Use real scheduled dates so the submit-time validator lets these through.
+  const days = schedule.upcoming({ count: 3 });
+
+  await (async () => {
+    try {
+      const { res: r, customer } = await book(Object.assign({}, base, {
+        class_date: days[0].label, class_date_2: days[1].label
+      }));
+      assert.strictEqual(r._s, 200, 'booking should be accepted');
+      assert.ok(customer, 'a customer confirmation must be produced');
+      // Both dates, in BOTH the HTML and the plain-text part.
+      ['html', 'text'].forEach((part) => {
+        assert.ok(customer[part].includes(days[0].label), '1st choice missing from ' + part);
+        assert.ok(customer[part].includes(days[1].label), '2nd choice missing from ' + part);
+      });
+      assert.ok(/2nd choice/i.test(customer.html), 'the backup must be labelled, not just listed');
+      assert.ok(customer.subject.includes(days[0].label), 'subject should name the class date');
+      passed++;
+    } catch (e) { failures.push({ name: 'confirmation shows BOTH chosen dates', message: e.message }); }
+  })();
+
+  await (async () => {
+    try {
+      const { customer } = await book(Object.assign({}, base, { class_date: days[0].label }));
+      assert.ok(customer, 'a customer confirmation must be produced');
+      assert.ok(customer.html.includes(days[0].label), 'class date missing');
+      assert.ok(/didn't pick a 2nd choice|did not pick a 2nd choice/i.test(customer.html),
+        'a guest with no backup must be told what happens instead');
+      assert.ok(!/both the dates/i.test(customer.html),
+        'must not claim two dates when only one was chosen');
+      passed++;
+    } catch (e) { failures.push({ name: 'confirmation handles a missing 2nd choice', message: e.message }); }
+  })();
+
+  await (async () => {
+    try {
+      const { res: r } = await book(Object.assign({}, base, {
+        class_date: days[0].label, class_date_2: days[0].label
+      }));
+      assert.strictEqual(r._s, 400, 'a backup equal to the 1st choice must be rejected');
+      passed++;
+    } catch (e) { failures.push({ name: 'rejects a 2nd choice identical to the 1st', message: e.message }); }
+  })();
+
+  global.fetch = realFetch;
+  restoreStore();
+}
+
+emailTests().then(finish).catch((e) => {
+  failures.push({ name: 'email test harness', message: e && e.message });
+  finish();
+});
+
+function finish() {
 if (failures.length) {
   console.error('\n' + failures.length + ' FAILED, ' + passed + ' passed\n');
   failures.forEach((f) => console.error('  ✗ ' + f.name + '\n      ' + f.message));
   process.exit(1);
 }
 console.log('✓ ' + passed + ' tests passed');
+}

@@ -99,10 +99,13 @@ function header(active) {
   const announceInner = announceUrl
     ? `<a href="${announceUrl}" target="_blank" rel="noopener" style="color:#f9f7ef;text-decoration:underline;text-underline-offset:3px;">${content.text('announcementText')}</a>`
     : content.text('announcementText');
+  // On a day the doors are shut, the standing announcement (usually "order
+  // delivery tonight") is wrong, so the closure notice takes its place.
+  const closedToday = CLOSED_DATES.indexOf(BUILD_TODAY) > -1;
   const announce = (content.bool('announcementEnabled') && String(content.get('announcementText') || '').trim())
-    ? `  <div class="site-banner" role="region" aria-label="Announcement" style="background:#4a1e18;color:#f9f7ef;text-align:center;padding:9px 16px;font-size:0.9rem;line-height:1.4;font-weight:500;">${announceInner}</div>\n`
+    ? `  <div class="site-banner" id="site-announcement" role="region" aria-label="Announcement"${closedToday ? ' hidden' : ''} style="background:#4a1e18;color:#f9f7ef;text-align:center;padding:9px 16px;font-size:0.9rem;line-height:1.4;font-weight:500;">${announceInner}</div>\n`
     : '';
-  return `${announce}  <header class="header">
+  return `${closureBanner(closedToday)}${announce}  <header class="header">
     <nav class="nav" aria-label="Primary">
       <a href="index.html" class="logo" aria-label="da Cecot Food — home">da Cecot</a>
       <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav"><span></span><span></span><span></span></button>
@@ -221,6 +224,39 @@ const PICKUP_HOURS = hours.windows(content);
    re-checks on submit, because a page left open overnight still carries
    yesterday's list. */
 const CLOSED_DATES = hours.closedDates(content);
+
+/* "Today", on the restaurant's clock, at the moment this build ran. Edmonton
+   and not the build machine: a build that happens to run from a UTC box after
+   6 PM must not close the doors a day early. */
+const BUILD_TODAY = (() => {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Edmonton', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date());
+  } catch (e) { return ''; }
+})();
+
+/* ---- "Closed today" notice -----------------------------------------------
+   A closure already stops reservations and pickups, but only inside the two
+   pickers: a guest reading the menu or the Visit Us hours sees an open
+   restaurant and drives over. This is the one line on every page that says
+   the doors are shut today.
+
+   It is baked in when the build itself runs on a closed day, so it holds with
+   JS off. main.js then re-checks the SAME list against Edmonton's today on
+   load, which is what takes it down the next morning without a rebuild —
+   nobody has to remember to remove it, and a stale "we're closed" on an open
+   day costs more than the banner ever earns. */
+function closureText(iso) {
+  return 'We’re closed today (' + hours.closureLabel(iso) + '). Online reservations and pasta-shop pickups are paused for the day — back at our regular hours.';
+}
+
+function closureBanner(closedToday) {
+  const text = closedToday ? closureText(BUILD_TODAY) : '';
+  return `  <div class="site-banner site-banner--closed" id="site-closure" role="region" aria-label="Closure notice"${closedToday ? '' : ' hidden'} style="background:#ad5217;color:#f9f7ef;text-align:center;padding:10px 16px;font-size:0.92rem;line-height:1.45;font-weight:600;"><span class="site-closure-text">${text}</span></div>
+  <script id="site-closures" type="application/json">${JSON.stringify({ closed: CLOSED_DATES })}</script>
+`;
+}
 
 const POSTAL_ADDRESS = {
   '@type': 'PostalAddress',

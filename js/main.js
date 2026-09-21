@@ -50,6 +50,67 @@
       });
     });
 
+    /* ---- "Closed today" banner -------------------------------------
+       The closure list (CMS "Days we are closed") ships on every page as
+       #site-closures, and the banner itself is baked in by the build when
+       the build ran on a closed day — so with JS off the notice is still
+       there. This re-checks the list against the RESTAURANT's today, which
+       is what makes the banner appear on the morning of a closure and clear
+       itself the next morning, with no rebuild in between.
+
+       Edmonton's date, not the visitor's: a guest reading this from Toronto
+       at 12:30 AM is not looking at tomorrow's restaurant. */
+    (function closureBanner() {
+      var bar = document.getElementById('site-closure');
+      var raw = document.getElementById('site-closures');
+      if (!bar) return;
+
+      var closed = [];
+      if (raw) {
+        try {
+          var cfg = JSON.parse(raw.textContent || '{}');
+          if (Array.isArray(cfg.closed)) closed = cfg.closed;
+        } catch (e) { /* unreadable list: fall through to whatever was baked in */ }
+      }
+
+      var today = edmontonToday();
+      // No usable date (ancient browser, no Intl) — leave the baked-in state
+      // alone rather than guessing with the visitor's clock.
+      if (!today) return;
+
+      var announcement = document.getElementById('site-announcement');
+      var shut = closed.indexOf(today) > -1;
+      if (shut) {
+        var text = bar.querySelector('.site-closure-text');
+        if (text && !text.textContent.trim()) text.textContent = closureText(today);
+        bar.removeAttribute('hidden');
+        // A "closed today" line above an "order delivery tonight" line reads
+        // as two restaurants. The closure wins.
+        if (announcement) announcement.setAttribute('hidden', '');
+      } else {
+        bar.setAttribute('hidden', '');
+        if (announcement) announcement.removeAttribute('hidden');
+      }
+
+      function edmontonToday() {
+        try {
+          return new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Edmonton', year: 'numeric', month: '2-digit', day: '2-digit'
+          }).format(new Date());
+        } catch (e) { return ''; }
+      }
+
+      // Same sentence the generator writes, for the day it did not build for.
+      function closureText(iso) {
+        var WD = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        var MO = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        var q = String(iso).split('-');
+        var d = new Date(Date.UTC(+q[0], +q[1] - 1, +q[2]));
+        var label = WD[d.getUTCDay()] + ', ' + MO[d.getUTCMonth()] + ' ' + d.getUTCDate();
+        return 'We\u2019re closed today (' + label + '). Online reservations and pasta-shop pickups are paused for the day \u2014 back at our regular hours.';
+      }
+    })();
+
     /* ---- FAQ accordion ---- */
     document.querySelectorAll('.faq-q').forEach(function (q) {
       q.addEventListener('click', function () {

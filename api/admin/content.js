@@ -10,7 +10,12 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     if (!auth.requireAuth(req, res, false)) return;
     const current = Object.assign({}, defaults, store.readContent());
-    return res.status(200).json({ groups, content: current, store: store.backend() });
+    // Whether a save would land, asked BEFORE she types the edit. A token that
+    // can read but not commit fails only at the last step, which is how a
+    // closure notice gets written twice and published never.
+    let saving = { ok: null };
+    try { saving = await store.writeAccess(); } catch (e) { saving = { ok: null }; }
+    return res.status(200).json({ groups, content: current, store: store.backend(), saving });
   }
 
   if (req.method === 'POST') {
@@ -28,7 +33,13 @@ module.exports = async (req, res) => {
     const merged = Object.assign({}, store.readContent(), patch);
     let result;
     try { result = await store.writeContent(merged, { message: 'CMS: update ' + Object.keys(patch).join(', ') }); }
-    catch (e) { return res.status(502).json({ error: 'Could not save your changes: ' + (e && e.message || e) }); }
+    catch (e) {
+      // A GitHub failure already carries a sentence Erika can act on; anything
+      // else is ours, so it is logged rather than printed at her.
+      if (!(e && e.github)) console.error('content save failed', e && e.stack || e);
+      const detail = (e && e.github) ? e.message : 'the site could not reach its content store. Please try again in a minute.';
+      return res.status(502).json({ error: 'Could not save your changes: ' + detail });
+    }
 
     return res.status(200).json({ ok: true, content: merged, result });
   }

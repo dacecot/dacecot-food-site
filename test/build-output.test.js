@@ -241,6 +241,63 @@ test('the pasta-shop pickup picker was built with the same list', () => {
     'pickups can still be booked on a day the doors are shut');
 });
 
+/* ---------------------------------------------------------------
+   The "closed today" banner — the half of a closure a guest can SEE
+
+   A closure blocks the two pickers, which a guest who never opens one never
+   meets. The banner is the only line that says the doors are shut, so these
+   assertions are about the bytes on the page, on every page, and about it
+   saying so ONLY on the day it should.
+   --------------------------------------------------------------- */
+
+// "Today" on the restaurant's clock — the same question the generator asked.
+const todayEdmonton = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Edmonton', year: 'numeric', month: '2-digit', day: '2-digit'
+}).format(new Date());
+const shutToday = closed.indexOf(todayEdmonton) > -1;
+
+const EVERY_PAGE = ['index.html', 'menu.html', 'visit-us.html', 'reservations.html', 'pasta-shop.html', 'sunday-pasta-classes.html', 'our-story.html'];
+
+test('every page carries the closure list and the banner element', () => {
+  EVERY_PAGE.forEach((f) => {
+    const html = read(f);
+    assert.deepStrictEqual(embedded(html, 'site-closures').closed, closed,
+      f + ' ships a different closure list than the CMS holds');
+    assert.ok(html.indexOf('id="site-closure"') > -1,
+      f + ' has no banner element, so main.js has nothing to reveal tomorrow');
+  });
+});
+
+test('the banner is visible exactly on a closed day, and hidden otherwise', () => {
+  EVERY_PAGE.forEach((f) => {
+    const html = read(f);
+    const m = /<div class="site-banner site-banner--closed" id="site-closure"([\s\S]*?)>/.exec(html);
+    assert.ok(m, f + ' is missing the closure banner');
+    const hidden = m[1].indexOf(' hidden') > -1;
+    assert.strictEqual(hidden, !shutToday,
+      shutToday
+        ? f + ' hides the closure notice on a day the restaurant is closed'
+        : f + ' ships a visible "we are closed" banner on an open day');
+  });
+});
+
+test('on a closed day the banner names the day, and the announcement stands down', () => {
+  if (!shutToday) {
+    // Open day: the notice must carry no leftover sentence to flash on load.
+    assert.ok(read('index.html').indexOf('<span class="site-closure-text"></span>') > -1,
+      'the hidden banner was built with text in it — it would flash before main.js hides it');
+    return;
+  }
+  const html = read('index.html');
+  assert.ok(html.indexOf('We’re closed today (' + hours.closureLabel(todayEdmonton) + ')') > -1,
+    'the banner does not name today — a guest cannot tell which day is meant');
+  const ann = /<div class="site-banner" id="site-announcement"([\s\S]*?)>/.exec(html);
+  if (ann) {
+    assert.ok(ann[1].indexOf(' hidden') > -1,
+      'the standing announcement is still showing under a "we are closed" notice');
+  }
+});
+
 test('each configured closure is literally present in both pages', () => {
   // deepStrictEqual above compares what we parsed back; this compares the bytes
   // actually served, so an empty list can never quietly satisfy both.

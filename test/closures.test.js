@@ -105,6 +105,82 @@ test('a weekly closed day is NOT a one-off closure', () => {
 });
 
 /* ---------------------------------------------------------------
+   js/main.js — the clock the banner comes down by
+
+   The banner must clear at midnight in EDMONTON, on a page that has been open
+   since the day before. Both halves of that are easy to get wrong and
+   impossible to notice: a UTC "today" takes the notice down six hours early,
+   and a helper that quietly went missing would leave a page open overnight
+   still saying "closed today" over breakfast.
+
+   There is no DOM here, so the two pure functions are lifted out of the
+   shipped file and run as themselves. Reading the real js/main.js is the
+   point: a test against a copy of this logic would pass forever after someone
+   deleted the original.
+   --------------------------------------------------------------- */
+
+const MAIN = fs.readFileSync(path.join(__dirname, '../js/main.js'), 'utf8');
+
+function lift(name) {
+  const re = new RegExp('function ' + name + '\\(\\) \\{[\\s\\S]*?\\n      \\}');
+  const src = re.exec(MAIN);
+  assert.ok(src, name + '() is gone from js/main.js — the banner has no clock');
+  return new Function('return (' + src[0] + ')')();
+}
+
+// Stand the clock at a chosen instant, in UTC, and run fn.
+function at(utcIso, fn) {
+  const Real = Date;
+  const fixed = Real.parse(utcIso);
+  function Fake(...args) {
+    return args.length ? new Real(...args) : new Real(fixed);
+  }
+  Fake.prototype = Real.prototype;
+  Fake.now = () => fixed;
+  Fake.parse = Real.parse;
+  Fake.UTC = Real.UTC;
+  global.Date = Fake;
+  try { return fn(); } finally { global.Date = Real; }
+}
+
+test('"today" is the restaurant\'s day, not UTC\'s', () => {
+  const edmontonToday = lift('edmontonToday');
+  // 11:30 PM Monday in Edmonton is already Tuesday in UTC. The banner has to
+  // still be up: the doors are shut for another half hour.
+  assert.strictEqual(at('2026-09-22T05:30:00Z', edmontonToday), '2026-09-21',
+    'a UTC today would have taken the notice down six hours early');
+  // One minute past midnight, Edmonton: a new day, banner gone.
+  assert.strictEqual(at('2026-09-22T06:01:00Z', edmontonToday), '2026-09-22');
+});
+
+test('the re-check lands on midnight in Edmonton, not a minute after', () => {
+  const msToMidnight = lift('msToEdmontonMidnight');
+  const mins = (ms) => Math.round(ms / 60000);
+
+  // 11:59 PM Monday (MDT, UTC-6) — one minute of closure left.
+  assert.strictEqual(mins(at('2026-09-22T05:59:00Z', msToMidnight)), 1);
+  // Midnight itself — a full day ahead.
+  assert.strictEqual(mins(at('2026-09-22T06:00:00Z', msToMidnight)), 24 * 60);
+  // Mid-afternoon: the tick caps at a minute anyway, but the number it works
+  // from has to be right or the final approach never converges.
+  assert.strictEqual(mins(at('2026-09-21T21:00:00Z', msToMidnight)), 9 * 60);
+
+  // Standard time (UTC-7 in January) — read off the wall clock, so no case.
+  assert.strictEqual(mins(at('2026-01-13T06:59:00Z', msToMidnight)), 1);
+});
+
+test('the banner re-checks itself rather than trusting the page load', () => {
+  // The three things that take a stale notice down on an open page. Losing any
+  // one of them is silent: the banner simply stays up.
+  assert.ok(/setTimeout\(function \(\) \{ apply\(\); tick\(\); \}/.test(MAIN),
+    'the midnight timer is gone — an open page keeps yesterday\'s notice');
+  assert.ok(/visibilitychange/.test(MAIN),
+    'nothing re-checks when a backgrounded tab comes back, where timers are throttled');
+  assert.ok(/shownFor !== today/.test(MAIN),
+    'a page crossing into a SECOND closed day would keep naming the first');
+});
+
+/* ---------------------------------------------------------------
    api/send.js — the half a guest cannot see, and the half that counts
 
    global.fetch is replaced before the handler loads, so nothing is ever sent.

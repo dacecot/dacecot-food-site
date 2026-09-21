@@ -59,7 +59,13 @@
        itself the next morning, with no rebuild in between.
 
        Edmonton's date, not the visitor's: a guest reading this from Toronto
-       at 12:30 AM is not looking at tomorrow's restaurant. */
+       at 12:30 AM is not looking at tomorrow's restaurant.
+
+       And it does not only check on load. A phone left open on the menu page
+       overnight would otherwise still say "closed today" over breakfast, so
+       the check re-runs on a timer that lands ON midnight in Edmonton, and
+       again whenever the tab is brought back to the front — the case a
+       throttled background timer misses. */
     (function closureBanner() {
       var bar = document.getElementById('site-closure');
       var raw = document.getElementById('site-closures');
@@ -75,24 +81,51 @@
         } catch (e) { /* unreadable list: fall through to whatever was baked in */ }
       }
 
-      var today = edmontonToday();
       // No usable date (ancient browser, no Intl) — leave the baked-in state
       // alone rather than guessing with the visitor's clock.
-      if (!today) return;
+      if (!edmontonToday()) return;
 
       var announcement = document.getElementById('site-announcement');
-      var shut = closed.indexOf(today) > -1;
-      if (shut) {
-        var text = bar.querySelector('.site-closure-text');
-        if (text && !text.textContent.trim()) text.textContent = closureText(today);
-        bar.removeAttribute('hidden');
-        // A "closed today" line above an "order delivery tonight" line reads
-        // as two restaurants. The closure wins.
-        if (announcement) announcement.setAttribute('hidden', '');
-      } else {
-        bar.setAttribute('hidden', '');
-        if (announcement) announcement.removeAttribute('hidden');
+      var shownFor = null;
+
+      function apply() {
+        var today = edmontonToday();
+        if (!today) return;
+        var shut = closed.indexOf(today) > -1;
+        if (shut) {
+          // Re-written per day, not just when empty: a page open across
+          // midnight into a second closed day must name the new one.
+          var text = bar.querySelector('.site-closure-text');
+          if (text && shownFor !== today) text.textContent = closureText(today);
+          bar.removeAttribute('hidden');
+          // A "closed today" line above an "order delivery tonight" line reads
+          // as two restaurants. The closure wins.
+          if (announcement) announcement.setAttribute('hidden', '');
+          shownFor = today;
+        } else {
+          bar.setAttribute('hidden', '');
+          if (announcement) announcement.removeAttribute('hidden');
+          shownFor = null;
+        }
       }
+
+      apply();
+
+      /* Re-check on a timer that converges on midnight: a minute apart while
+         the day is young, then exactly the remaining seconds as midnight
+         approaches, so the banner goes at 12:00 AM rather than up to a minute
+         later. Each tick recomputes, so a laptop that slept through the
+         rollover corrects itself on the next one. */
+      (function tick() {
+        var wait = Math.max(1000, Math.min(msToEdmontonMidnight() + 500, 60000));
+        setTimeout(function () { apply(); tick(); }, wait);
+      })();
+
+      // A background tab's timers are throttled to the point of uselessness;
+      // this is the check that actually fires when she reopens the phone.
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) apply();
+      });
 
       function edmontonToday() {
         try {
@@ -100,6 +133,22 @@
             timeZone: 'America/Edmonton', year: 'numeric', month: '2-digit', day: '2-digit'
           }).format(new Date());
         } catch (e) { return ''; }
+      }
+
+      /* Milliseconds until the next midnight IN EDMONTON. Read off the
+         restaurant's own wall clock rather than computed from a UTC offset,
+         so the twice-yearly DST shift needs no special case. */
+      function msToEdmontonMidnight() {
+        try {
+          var parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'America/Edmonton', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+          }).format(new Date()).split(':');
+          var h = +parts[0], mi = +parts[1], s = +parts[2];
+          // 24:00:00 is how some engines render midnight itself.
+          if (h === 24) h = 0;
+          var elapsed = ((h * 60 + mi) * 60 + s) * 1000;
+          return Math.max(0, 86400000 - elapsed);
+        } catch (e) { return 60000; }
       }
 
       // Same sentence the generator writes, for the day it did not build for.

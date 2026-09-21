@@ -281,6 +281,20 @@ test('the banner is visible exactly on a closed day, and hidden otherwise', () =
   });
 });
 
+test('a closure reason reaches the page it was written for, and no other day', () => {
+  const reasons = hours.closureReasons(content);
+  const cfg = embedded(read('index.html'), 'site-closures');
+  assert.deepStrictEqual(cfg.reasons || {}, reasons,
+    'the page ships a different set of reasons than the CMS holds');
+  Object.keys(cfg.reasons || {}).forEach((iso) => {
+    assert.ok(closed.indexOf(iso) > -1, iso + ' has a reason but is not a closed day');
+  });
+  if (shutToday && reasons[todayEdmonton]) {
+    assert.ok(read('index.html').indexOf('for ' + reasons[todayEdmonton] + '.') > -1,
+      'today’s closure has a reason that never made it into the banner');
+  }
+});
+
 test('on a closed day the banner names the day, and the announcement stands down', () => {
   if (!shutToday) {
     // Open day: the notice must carry no leftover sentence to flash on load.

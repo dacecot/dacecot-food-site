@@ -53,6 +53,44 @@ test('isClosedOn matches the day in any format, and nothing else', () => {
   assert.ok(!hours.isClosedOn(fakeContent([]), '2026-09-15'), 'no closures means nothing is closed');
 });
 
+test('a closure line can carry its reason, and the date still parses', () => {
+  const c = fakeContent(['2026-09-21 | deep cleaning', '2026-10-05 — family day', '2026-11-01 - staff training', '2026-12-25']);
+  assert.deepStrictEqual(hours.closedDates(c), ['2026-09-21', '2026-10-05', '2026-11-01', '2026-12-25'],
+    'a reason on the line must not cost us the closure itself');
+  assert.deepStrictEqual(hours.closureReasons(c), {
+    '2026-09-21': 'deep cleaning',
+    '2026-10-05': 'family day',
+    '2026-11-01': 'staff training'
+  }, 'a pipe and a spaced dash both separate a date from its reason');
+  assert.strictEqual(hours.closureReason(c, 'Monday, September 21, 2026'), 'deep cleaning',
+    'the reason must be findable by the same day written any other way');
+  assert.strictEqual(hours.closureReason(c, '2026-12-25'), '', 'a bare date has no reason to report');
+  assert.ok(hours.isClosedOn(c, '2026-09-21'), 'a line with a reason still shuts the day');
+});
+
+test('a reason belongs to its own day and cannot bleed onto another', () => {
+  // The whole point of writing the reason on the date line: "deep cleaning"
+  // must not survive into the next closure, which is exactly what a single
+  // "closure reason" setting would do.
+  const c = fakeContent(['2026-09-21 | deep cleaning', '2026-12-25']);
+  assert.strictEqual(hours.closureReason(c, '2026-12-25'), '',
+    'Christmas inherited the reason from a September closure');
+});
+
+test('a reason too long for the banner is dropped, not shown cut in half', () => {
+  const long = 'x'.repeat(200);
+  const c = fakeContent(['2026-09-21 | ' + long]);
+  assert.deepStrictEqual(hours.closedDates(c), ['2026-09-21'], 'the day is still closed');
+  assert.strictEqual(hours.closureReason(c, '2026-09-21'), '');
+});
+
+test('splitClosure leaves a plain date exactly as it found it', () => {
+  ['2026-09-15', 'Monday, September 15, 2026', '09/15/2026'].forEach((d) => {
+    assert.deepStrictEqual(hours.splitClosure(d), { date: d, reason: '' },
+      d + ' was mangled by the reason parser');
+  });
+});
+
 test('closureLabel reads like a date a guest would recognise', () => {
   assert.strictEqual(hours.closureLabel('2026-09-15'), 'Tuesday, September 15');
   assert.strictEqual(hours.closureLabel('2026-12-25'), 'Friday, December 25');

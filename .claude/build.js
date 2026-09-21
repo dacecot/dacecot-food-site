@@ -224,6 +224,8 @@ const PICKUP_HOURS = hours.windows(content);
    re-checks on submit, because a page left open overnight still carries
    yesterday's list. */
 const CLOSED_DATES = hours.closedDates(content);
+// Why each of those days is shut, where the line said so ("… | deep cleaning").
+const CLOSURE_REASONS = hours.closureReasons(content);
 
 /* "Today", on the restaurant's clock, at the moment this build ran. Edmonton
    and not the build machine: a build that happens to run from a UTC box after
@@ -248,13 +250,18 @@ const BUILD_TODAY = (() => {
    nobody has to remember to remove it, and a stale "we're closed" on an open
    day costs more than the banner ever earns. */
 function closureText(iso) {
-  return 'We’re closed today (' + hours.closureLabel(iso) + '). Online reservations and pasta-shop pickups are paused for the day — back at our regular hours.';
+  // "for deep cleaning" when the closure line gave a reason, nothing when it
+  // did not — a guest reading a reason is far more forgiving than one reading
+  // a locked door, and a wrong reason is worse than none.
+  const why = content.esc(CLOSURE_REASONS[iso] || '');
+  return 'We’re closed today (' + hours.closureLabel(iso) + ')' + (why ? ' for ' + why : '') +
+    '. Online reservations and pasta-shop pickups are paused for the day — back at our regular hours.';
 }
 
 function closureBanner(closedToday) {
   const text = closedToday ? closureText(BUILD_TODAY) : '';
   return `  <div class="site-banner site-banner--closed" id="site-closure" role="region" aria-label="Closure notice"${closedToday ? '' : ' hidden'} style="background:#ad5217;color:#f9f7ef;text-align:center;padding:10px 16px;font-size:0.92rem;line-height:1.45;font-weight:600;"><span class="site-closure-text">${text}</span></div>
-  <script id="site-closures" type="application/json">${JSON.stringify({ closed: CLOSED_DATES })}</script>
+  <script id="site-closures" type="application/json">${JSON.stringify({ closed: CLOSED_DATES, reasons: CLOSURE_REASONS }).replace(/</g, '\\u003c')}</script>
 `;
 }
 

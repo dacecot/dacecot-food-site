@@ -66,10 +66,12 @@
       if (!bar) return;
 
       var closed = [];
+      var reasons = {};
       if (raw) {
         try {
           var cfg = JSON.parse(raw.textContent || '{}');
           if (Array.isArray(cfg.closed)) closed = cfg.closed;
+          if (cfg.reasons && typeof cfg.reasons === 'object') reasons = cfg.reasons;
         } catch (e) { /* unreadable list: fall through to whatever was baked in */ }
       }
 
@@ -107,7 +109,9 @@
         var q = String(iso).split('-');
         var d = new Date(Date.UTC(+q[0], +q[1] - 1, +q[2]));
         var label = WD[d.getUTCDay()] + ', ' + MO[d.getUTCMonth()] + ' ' + d.getUTCDate();
-        return 'We\u2019re closed today (' + label + '). Online reservations and pasta-shop pickups are paused for the day \u2014 back at our regular hours.';
+        // "for deep cleaning", when that day's line gave a reason.
+        var why = reasons[iso] ? ' for ' + reasons[iso] : '';
+        return 'We\u2019re closed today (' + label + ')' + why + '. Online reservations and pasta-shop pickups are paused for the day \u2014 back at our regular hours.';
       }
     })();
 

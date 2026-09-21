@@ -79,9 +79,12 @@ module.exports = async (req, res) => {
     const when = data.reservation_date || data.pickup_day;
     if (when && hours.isClosedOn(content, when)) {
       const phone = String(content.get('phone') || '').trim();
+      // Same reason the banner gives, so the page and the refusal cannot tell
+      // a guest two different stories about the same day.
+      const why = hours.closureReason(content, when);
       return res.status(409).json({
         success: false,
-        error: 'We’re closed on ' + hours.closureLabel(R.parseDate(when)) + ' — please choose another day' +
+        error: 'We’re closed on ' + hours.closureLabel(R.parseDate(when)) + (why ? ' for ' + why : '') + ' — please choose another day' +
           (phone ? ', or call us at ' + phone + ' and we’ll help you find a time.' : '.')
       });
     }

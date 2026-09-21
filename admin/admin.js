@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var app = document.getElementById('app');
-  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, dirty: {}, mustChange: false, canChange: false };
+  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, saving: null, dirty: {}, mustChange: false, canChange: false };
 
   /* ---------- helpers ---------- */
   function h(tag, attrs, kids) {
@@ -93,7 +93,7 @@
     api('content').then(function (r) {
       if (r.status !== 200) { renderLogin(false); return; }
       state.groups = r.body.groups; state.content = r.body.content || {}; state.base = JSON.parse(JSON.stringify(state.content));
-      state.store = r.body.store; state.active = '__reservations'; state.dirty = {};
+      state.store = r.body.store; state.saving = r.body.saving || null; state.active = '__reservations'; state.dirty = {};
       renderShell();
     });
   }
@@ -170,6 +170,12 @@
     // (a change can't be stored) — warn loudly instead of blocking her out.
     if (state.mustChange && !state.canChange) {
       main.appendChild(h('div', { class: 'notice', text: '⚠ You are using the shared starting password. As soon as the database is connected you will be asked to set your own.' }));
+    }
+    // Publishing is broken (usually an expired or under-permissioned GitHub
+    // token). Say so on arrival — the alternative is her writing the edit,
+    // pressing Save, and finding out then.
+    if (state.saving && state.saving.ok === false && state.saving.reason) {
+      main.appendChild(h('div', { class: 'notice', text: '⚠ ' + state.saving.reason + ' Reservations, classes, orders and contacts are unaffected — it is only Site Content that cannot publish.' }));
     }
     if (state.active === '__orders') renderOrders(main);
     else if (state.active === '__reservations') renderReservations(main);

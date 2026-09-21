@@ -53,6 +53,44 @@ test('isClosedOn matches the day in any format, and nothing else', () => {
   assert.ok(!hours.isClosedOn(fakeContent([]), '2026-09-15'), 'no closures means nothing is closed');
 });
 
+test('a closure line can carry its reason, and the date still parses', () => {
+  const c = fakeContent(['2026-09-21 | deep cleaning', '2026-10-05 — family day', '2026-11-01 - staff training', '2026-12-25']);
+  assert.deepStrictEqual(hours.closedDates(c), ['2026-09-21', '2026-10-05', '2026-11-01', '2026-12-25'],
+    'a reason on the line must not cost us the closure itself');
+  assert.deepStrictEqual(hours.closureReasons(c), {
+    '2026-09-21': 'deep cleaning',
+    '2026-10-05': 'family day',
+    '2026-11-01': 'staff training'
+  }, 'a pipe and a spaced dash both separate a date from its reason');
+  assert.strictEqual(hours.closureReason(c, 'Monday, September 21, 2026'), 'deep cleaning',
+    'the reason must be findable by the same day written any other way');
+  assert.strictEqual(hours.closureReason(c, '2026-12-25'), '', 'a bare date has no reason to report');
+  assert.ok(hours.isClosedOn(c, '2026-09-21'), 'a line with a reason still shuts the day');
+});
+
+test('a reason belongs to its own day and cannot bleed onto another', () => {
+  // The whole point of writing the reason on the date line: "deep cleaning"
+  // must not survive into the next closure, which is exactly what a single
+  // "closure reason" setting would do.
+  const c = fakeContent(['2026-09-21 | deep cleaning', '2026-12-25']);
+  assert.strictEqual(hours.closureReason(c, '2026-12-25'), '',
+    'Christmas inherited the reason from a September closure');
+});
+
+test('a reason too long for the banner is dropped, not shown cut in half', () => {
+  const long = 'x'.repeat(200);
+  const c = fakeContent(['2026-09-21 | ' + long]);
+  assert.deepStrictEqual(hours.closedDates(c), ['2026-09-21'], 'the day is still closed');
+  assert.strictEqual(hours.closureReason(c, '2026-09-21'), '');
+});
+
+test('splitClosure leaves a plain date exactly as it found it', () => {
+  ['2026-09-15', 'Monday, September 15, 2026', '09/15/2026'].forEach((d) => {
+    assert.deepStrictEqual(hours.splitClosure(d), { date: d, reason: '' },
+      d + ' was mangled by the reason parser');
+  });
+});
+
 test('closureLabel reads like a date a guest would recognise', () => {
   assert.strictEqual(hours.closureLabel('2026-09-15'), 'Tuesday, September 15');
   assert.strictEqual(hours.closureLabel('2026-12-25'), 'Friday, December 25');
@@ -64,6 +102,82 @@ test('a weekly closed day is NOT a one-off closure', () => {
   const c = { list: () => [], get: (k) => (k === 'hoursWed' ? 'closed' : '12:00-15:00') };
   assert.deepStrictEqual(hours.closedDates(c), []);
   assert.strictEqual(hours.parseDay('closed').length, 0, 'the weekly value still parses as closed');
+});
+
+/* ---------------------------------------------------------------
+   js/main.js — the clock the banner comes down by
+
+   The banner must clear at midnight in EDMONTON, on a page that has been open
+   since the day before. Both halves of that are easy to get wrong and
+   impossible to notice: a UTC "today" takes the notice down six hours early,
+   and a helper that quietly went missing would leave a page open overnight
+   still saying "closed today" over breakfast.
+
+   There is no DOM here, so the two pure functions are lifted out of the
+   shipped file and run as themselves. Reading the real js/main.js is the
+   point: a test against a copy of this logic would pass forever after someone
+   deleted the original.
+   --------------------------------------------------------------- */
+
+const MAIN = fs.readFileSync(path.join(__dirname, '../js/main.js'), 'utf8');
+
+function lift(name) {
+  const re = new RegExp('function ' + name + '\\(\\) \\{[\\s\\S]*?\\n      \\}');
+  const src = re.exec(MAIN);
+  assert.ok(src, name + '() is gone from js/main.js — the banner has no clock');
+  return new Function('return (' + src[0] + ')')();
+}
+
+// Stand the clock at a chosen instant, in UTC, and run fn.
+function at(utcIso, fn) {
+  const Real = Date;
+  const fixed = Real.parse(utcIso);
+  function Fake(...args) {
+    return args.length ? new Real(...args) : new Real(fixed);
+  }
+  Fake.prototype = Real.prototype;
+  Fake.now = () => fixed;
+  Fake.parse = Real.parse;
+  Fake.UTC = Real.UTC;
+  global.Date = Fake;
+  try { return fn(); } finally { global.Date = Real; }
+}
+
+test('"today" is the restaurant\'s day, not UTC\'s', () => {
+  const edmontonToday = lift('edmontonToday');
+  // 11:30 PM Monday in Edmonton is already Tuesday in UTC. The banner has to
+  // still be up: the doors are shut for another half hour.
+  assert.strictEqual(at('2026-09-22T05:30:00Z', edmontonToday), '2026-09-21',
+    'a UTC today would have taken the notice down six hours early');
+  // One minute past midnight, Edmonton: a new day, banner gone.
+  assert.strictEqual(at('2026-09-22T06:01:00Z', edmontonToday), '2026-09-22');
+});
+
+test('the re-check lands on midnight in Edmonton, not a minute after', () => {
+  const msToMidnight = lift('msToEdmontonMidnight');
+  const mins = (ms) => Math.round(ms / 60000);
+
+  // 11:59 PM Monday (MDT, UTC-6) — one minute of closure left.
+  assert.strictEqual(mins(at('2026-09-22T05:59:00Z', msToMidnight)), 1);
+  // Midnight itself — a full day ahead.
+  assert.strictEqual(mins(at('2026-09-22T06:00:00Z', msToMidnight)), 24 * 60);
+  // Mid-afternoon: the tick caps at a minute anyway, but the number it works
+  // from has to be right or the final approach never converges.
+  assert.strictEqual(mins(at('2026-09-21T21:00:00Z', msToMidnight)), 9 * 60);
+
+  // Standard time (UTC-7 in January) — read off the wall clock, so no case.
+  assert.strictEqual(mins(at('2026-01-13T06:59:00Z', msToMidnight)), 1);
+});
+
+test('the banner re-checks itself rather than trusting the page load', () => {
+  // The three things that take a stale notice down on an open page. Losing any
+  // one of them is silent: the banner simply stays up.
+  assert.ok(/setTimeout\(function \(\) \{ apply\(\); tick\(\); \}/.test(MAIN),
+    'the midnight timer is gone — an open page keeps yesterday\'s notice');
+  assert.ok(/visibilitychange/.test(MAIN),
+    'nothing re-checks when a backgrounded tab comes back, where timers are throttled');
+  assert.ok(/shownFor !== today/.test(MAIN),
+    'a page crossing into a SECOND closed day would keep naming the first');
 });
 
 /* ---------------------------------------------------------------

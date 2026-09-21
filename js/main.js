@@ -50,6 +50,120 @@
       });
     });
 
+    /* ---- "Closed today" banner -------------------------------------
+       The closure list (CMS "Days we are closed") ships on every page as
+       #site-closures, and the banner itself is baked in by the build when
+       the build ran on a closed day — so with JS off the notice is still
+       there. This re-checks the list against the RESTAURANT's today, which
+       is what makes the banner appear on the morning of a closure and clear
+       itself the next morning, with no rebuild in between.
+
+       Edmonton's date, not the visitor's: a guest reading this from Toronto
+       at 12:30 AM is not looking at tomorrow's restaurant.
+
+       And it does not only check on load. A phone left open on the menu page
+       overnight would otherwise still say "closed today" over breakfast, so
+       the check re-runs on a timer that lands ON midnight in Edmonton, and
+       again whenever the tab is brought back to the front — the case a
+       throttled background timer misses. */
+    (function closureBanner() {
+      var bar = document.getElementById('site-closure');
+      var raw = document.getElementById('site-closures');
+      if (!bar) return;
+
+      var closed = [];
+      var reasons = {};
+      if (raw) {
+        try {
+          var cfg = JSON.parse(raw.textContent || '{}');
+          if (Array.isArray(cfg.closed)) closed = cfg.closed;
+          if (cfg.reasons && typeof cfg.reasons === 'object') reasons = cfg.reasons;
+        } catch (e) { /* unreadable list: fall through to whatever was baked in */ }
+      }
+
+      // No usable date (ancient browser, no Intl) — leave the baked-in state
+      // alone rather than guessing with the visitor's clock.
+      if (!edmontonToday()) return;
+
+      var announcement = document.getElementById('site-announcement');
+      var shownFor = null;
+
+      function apply() {
+        var today = edmontonToday();
+        if (!today) return;
+        var shut = closed.indexOf(today) > -1;
+        if (shut) {
+          // Re-written per day, not just when empty: a page open across
+          // midnight into a second closed day must name the new one.
+          var text = bar.querySelector('.site-closure-text');
+          if (text && shownFor !== today) text.textContent = closureText(today);
+          bar.removeAttribute('hidden');
+          // A "closed today" line above an "order delivery tonight" line reads
+          // as two restaurants. The closure wins.
+          if (announcement) announcement.setAttribute('hidden', '');
+          shownFor = today;
+        } else {
+          bar.setAttribute('hidden', '');
+          if (announcement) announcement.removeAttribute('hidden');
+          shownFor = null;
+        }
+      }
+
+      apply();
+
+      /* Re-check on a timer that converges on midnight: a minute apart while
+         the day is young, then exactly the remaining seconds as midnight
+         approaches, so the banner goes at 12:00 AM rather than up to a minute
+         later. Each tick recomputes, so a laptop that slept through the
+         rollover corrects itself on the next one. */
+      (function tick() {
+        var wait = Math.max(1000, Math.min(msToEdmontonMidnight() + 500, 60000));
+        setTimeout(function () { apply(); tick(); }, wait);
+      })();
+
+      // A background tab's timers are throttled to the point of uselessness;
+      // this is the check that actually fires when she reopens the phone.
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) apply();
+      });
+
+      function edmontonToday() {
+        try {
+          return new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Edmonton', year: 'numeric', month: '2-digit', day: '2-digit'
+          }).format(new Date());
+        } catch (e) { return ''; }
+      }
+
+      /* Milliseconds until the next midnight IN EDMONTON. Read off the
+         restaurant's own wall clock rather than computed from a UTC offset,
+         so the twice-yearly DST shift needs no special case. */
+      function msToEdmontonMidnight() {
+        try {
+          var parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'America/Edmonton', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+          }).format(new Date()).split(':');
+          var h = +parts[0], mi = +parts[1], s = +parts[2];
+          // 24:00:00 is how some engines render midnight itself.
+          if (h === 24) h = 0;
+          var elapsed = ((h * 60 + mi) * 60 + s) * 1000;
+          return Math.max(0, 86400000 - elapsed);
+        } catch (e) { return 60000; }
+      }
+
+      // Same sentence the generator writes, for the day it did not build for.
+      function closureText(iso) {
+        var WD = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        var MO = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        var q = String(iso).split('-');
+        var d = new Date(Date.UTC(+q[0], +q[1] - 1, +q[2]));
+        var label = WD[d.getUTCDay()] + ', ' + MO[d.getUTCMonth()] + ' ' + d.getUTCDate();
+        // "for deep cleaning", when that day's line gave a reason.
+        var why = reasons[iso] ? ' for ' + reasons[iso] : '';
+        return 'We\u2019re closed today (' + label + ')' + why + '. Online reservations and pasta-shop pickups are paused for the day \u2014 back at our regular hours.';
+      }
+    })();
+
     /* ---- FAQ accordion ---- */
     document.querySelectorAll('.faq-q').forEach(function (q) {
       q.addEventListener('click', function () {

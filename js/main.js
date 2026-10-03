@@ -462,6 +462,52 @@
         .catch(function () { /* ticker is progressive enhancement — booking still works */ });
     })();
 
+    /* ---- Gift cards: exact-amount dialog + analytics ----
+       Square's preset buttons can't show $45 or $95, so a fixed-value card
+       says the exact amount BEFORE the guest leaves for Square. Events carry
+       the card slug and displayed value only — never anything about the
+       buyer or recipient. */
+    (function () {
+      var grid = document.querySelector('.gift-grid');
+      if (!grid) return;
+      function track(name, el) {
+        try { window.va && window.va('event', { name: name, data: { slug: el.getAttribute('data-gift-slug') || el.getAttribute('data-gift-card'), value: el.getAttribute('data-gift-value') } }); } catch (e) {}
+      }
+
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (!en.isIntersecting) return;
+            track('card_view', en.target);
+            io.unobserve(en.target);   // once per card per visit
+          });
+        }, { threshold: 0.5 });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-gift-card]'), function (c) { io.observe(c); });
+      }
+
+      Array.prototype.forEach.call(document.querySelectorAll('[data-gift-go]'), function (a) {
+        a.addEventListener('click', function () { track('gift_card_click', a); });
+      });
+
+      var dlg = document.querySelector('[data-gift-dialog]');
+      var go = dlg && dlg.querySelector('[data-gift-continue]');
+      var current = null;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-gift-open]'), function (b) {
+        b.addEventListener('click', function () {
+          current = b;
+          dlg.querySelector('[data-gift-dialog-title]').textContent = b.getAttribute('data-gift-title');
+          dlg.querySelector('[data-gift-dialog-amount]').textContent = b.getAttribute('data-gift-exact');
+          if (typeof dlg.showModal === 'function') dlg.showModal();
+          else { track('gift_card_click', b); window.open(go.href, '_blank', 'noopener'); }
+        });
+      });
+      if (dlg) {
+        go.addEventListener('click', function () { if (current) track('gift_card_click', current); dlg.close(); });
+        dlg.querySelector('[data-gift-close]').addEventListener('click', function () { dlg.close(); });
+        dlg.addEventListener('close', function () { if (current) current.focus(); });
+      }
+    })();
+
     /* ---- Cancel a reservation (link from the confirmation email) ----
        Loading the page only LOOKS the booking up. Mail scanners open every
        link in an email, so the cancel itself waits for the guest's click. */

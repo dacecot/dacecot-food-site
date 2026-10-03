@@ -34,3 +34,21 @@ CREATE TABLE IF NOT EXISTS site_settings (
 
 CREATE INDEX IF NOT EXISTS idx_submissions_payment_status ON submissions (payment_status);
 CREATE INDEX IF NOT EXISTS idx_submissions_created_at     ON submissions (created_at DESC);
+
+-- Site analytics, counted by the site itself (no cookies, no third party).
+-- One row per page view or gift-card interaction. `visitor` is a hash of a
+-- secret + the day + IP + browser: it tells two visits apart on the same day
+-- and changes every day, so nobody can be followed across days. The raw IP is
+-- never stored. `day` is the Edmonton calendar day.
+CREATE TABLE IF NOT EXISTS site_events (
+  id      bigserial   PRIMARY KEY,
+  at      timestamptz NOT NULL DEFAULT now(),
+  day     date        NOT NULL,
+  kind    text        NOT NULL,   -- 'view' | 'gift_view' | 'gift_click'
+  path    text,
+  ref     text,
+  device  text,
+  visitor text,
+  slug    text
+);
+CREATE INDEX IF NOT EXISTS idx_site_events_day ON site_events (day);

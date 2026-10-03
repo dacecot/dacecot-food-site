@@ -30,6 +30,15 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     if (!auth.requireAuth(req, res, false)) return;
     const q = parseQuery(req);
+    // ?sub=analytics&days=7|30|90 → the site's own visit counts (lib/analytics.js).
+    if (q.sub === 'analytics') {
+      try {
+        return res.status(200).json(await require('../../lib/analytics').summary(q.days));
+      } catch (e) {
+        console.error('analytics summary failed', e && e.message);
+        return res.status(500).json({ error: 'Could not load analytics.' });
+      }
+    }
     // ?sub=contacts → deduplicated people across every submission type.
     if (q.sub === 'contacts') {
       try {

@@ -155,6 +155,9 @@
     nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__contacts' ? ' active' : ''), onclick: function () { state.active = '__contacts'; renderShell(); } }, [
       h('span', { class: 'ic', text: '👥' }), h('span', { text: 'Contacts' })
     ]));
+    nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__analytics' ? ' active' : ''), onclick: function () { state.active = '__analytics'; renderShell(); } }, [
+      h('span', { class: 'ic', text: '📈' }), h('span', { text: 'Analytics' })
+    ]));
     state.groups.forEach(function (g) {
       nav.appendChild(h('button', { class: 'navbtn' + (state.active === g.id ? ' active' : ''), onclick: function () { state.active = g.id; renderShell(); } }, [
         h('span', { class: 'ic', text: g.icon || '•' }), h('span', { text: g.title })
@@ -181,6 +184,7 @@
     else if (state.active === '__reservations') renderReservations(main);
     else if (state.active === '__classes') renderClasses(main);
     else if (state.active === '__contacts') renderContacts(main);
+    else if (state.active === '__analytics') renderAnalytics(main);
     else renderGroup(main, state.groups.filter(function (g) { return g.id === state.active; })[0]);
 
     app.innerHTML = ''; app.appendChild(h('div', { class: 'shell' }, [nav, main]));
@@ -758,6 +762,121 @@
   }
 
   /* ---------- contacts (every guest, deduplicated) ---------- */
+  /* ---------- Analytics (the site's own counts — lib/analytics.js) ---------- */
+  var analyticsDays = 30;
+  function renderAnalytics(main) {
+    main.appendChild(h('div', { class: 'page-head' }, [
+      h('h1', { text: 'Analytics' }),
+      h('p', { text: 'Who is visiting the website, what they look at, and which gift cards they click. Counted by the site itself — no cookies, and nobody is tracked from one day to the next.' })
+    ]));
+    var row = h('div', { class: 'filter-row' }, []);
+    [7, 30, 90].forEach(function (d) {
+      row.appendChild(h('button', {
+        class: 'btn btn--sm' + (d === analyticsDays ? '' : ' btn--ghost'), text: 'Last ' + d + ' days',
+        'aria-pressed': d === analyticsDays ? 'true' : 'false',
+        onclick: function () { analyticsDays = d; renderShell(); }
+      }));
+    });
+    main.appendChild(row);
+    var wrap = h('div', {}, [h('div', { class: 'boot', text: 'Loading…' })]);
+    main.appendChild(wrap);
+
+    api('orders?sub=analytics&days=' + analyticsDays).then(function (r) {
+      wrap.innerHTML = '';
+      if (r.status !== 200) { wrap.appendChild(h('div', { class: 'card', text: (r.body && r.body.error) || 'Could not load analytics.' })); return; }
+      drawAnalytics(wrap, r.body);
+    }).catch(function () { wrap.innerHTML = ''; wrap.appendChild(h('div', { class: 'card', text: 'Could not load analytics.' })); });
+  }
+
+  function niceDay(iso, opts) {
+    var p = String(iso).split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-CA', opts || { month: 'short', day: 'numeric' });
+  }
+  function change(now, before) {
+    if (!before) return now ? 'new this period' : '';
+    var d = Math.round(((now - before) / before) * 100);
+    return (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + Math.abs(d) + '% vs the previous ' + analyticsDays + ' days';
+  }
+  function tile(label, value, sub) {
+    return h('div', { class: 'an-tile' }, [
+      h('div', { class: 'an-tile__label', text: label }),
+      h('div', { class: 'an-tile__value', text: String(value) }),
+      sub ? h('div', { class: 'an-tile__sub', text: sub }) : null
+    ]);
+  }
+  function table(head, rows) {
+    var t = h('table', { class: 'an-table' }, []);
+    t.appendChild(h('thead', {}, [h('tr', {}, head.map(function (c, i) { return h('th', { text: c, class: i ? 'num' : '' }); }))]));
+    var tb = h('tbody', {}, []);
+    rows.forEach(function (r) { tb.appendChild(h('tr', {}, r.map(function (c, i) { return h('td', { text: String(c), class: i ? 'num' : '' }); }))); });
+    t.appendChild(tb);
+    return t;
+  }
+  function section(title, help, body) {
+    return h('div', { class: 'card an-card' }, [h('h3', { class: 'card-title', text: title }), help ? h('p', { class: 'help', text: help }) : null, body]);
+  }
+
+  // Daily visitors: one series, so no legend — the title names it. Each bar
+  // carries its own hover/focus tooltip; the exact numbers are in the table below.
+  function dailyChart(daily) {
+    var max = Math.max.apply(null, daily.map(function (d) { return d.visitors; }).concat([1]));
+    var chart = h('div', { class: 'an-chart', role: 'img', 'aria-label': 'Visitors per day' }, []);
+    var tip = h('div', { class: 'an-tip', hidden: true }, []);
+    daily.forEach(function (d) {
+      var label = niceDay(d.day, { weekday: 'short', month: 'short', day: 'numeric' }) + ': ' + d.visitors + ' visitor' + (d.visitors === 1 ? '' : 's') + ', ' + d.views + ' page view' + (d.views === 1 ? '' : 's');
+      var col = h('div', { class: 'an-col', tabindex: '0', 'aria-label': label }, [
+        h('div', { class: 'an-bar' + (d.visitors ? '' : ' an-bar--zero'), style: 'height:' + (d.visitors ? Math.max(3, Math.round((d.visitors / max) * 100)) : 0) + '%' })
+      ]);
+      function show() { tip.textContent = label; tip.hidden = false; tip.style.left = (col.offsetLeft + col.offsetWidth / 2) + 'px'; }
+      function hide() { tip.hidden = true; }
+      col.addEventListener('mouseenter', show); col.addEventListener('focus', show);
+      col.addEventListener('mouseleave', hide); col.addEventListener('blur', hide);
+      chart.appendChild(col);
+    });
+    var axis = h('div', { class: 'an-axis' }, [
+      h('span', { text: niceDay(daily[0].day) }),
+      h('span', { text: 'peak ' + max + ' visitors / day' }),
+      h('span', { text: niceDay(daily[daily.length - 1].day) })
+    ]);
+    return h('div', { class: 'an-chart-wrap' }, [tip, chart, axis]);
+  }
+
+  function drawAnalytics(wrap, a) {
+    if (a.countingSince) {
+      wrap.appendChild(h('p', { class: 'res-totals', text: 'Counting since ' + niceDay(a.countingSince, { month: 'long', day: 'numeric', year: 'numeric' }) + '. Showing ' + niceDay(a.range.since) + ' – ' + niceDay(a.range.until) + '.' }));
+    } else {
+      wrap.appendChild(h('div', { class: 'notice', text: 'No visits counted yet. Numbers appear here as soon as people visit the website.' }));
+    }
+
+    wrap.appendChild(h('div', { class: 'an-tiles' }, [
+      tile('Visitors', a.totals.visitors, change(a.totals.visitors, a.previous.visitors)),
+      tile('Page views', a.totals.views, change(a.totals.views, a.previous.views)),
+      tile('Gift card page visitors', a.gifts.pageVisitors, a.gifts.pageViews + ' page views'),
+      tile('Clicks to buy a gift card', a.gifts.clicks, 'opened Square checkout')
+    ]));
+
+    wrap.appendChild(section('Visitors per day', 'Hover or tab onto a day for its numbers.', dailyChart(a.daily)));
+
+    wrap.appendChild(section('Gift cards',
+      '“Clicks to Square” means the guest opened the Square checkout for that card. Square has the actual sales.',
+      a.gifts.cards.length
+        ? table(['Gift card', 'Seen', 'Clicks to Square', 'Click rate'], a.gifts.cards.map(function (c) { return [c.title + ' (' + c.price + ')', c.views, c.clicks, c.views ? c.rate + '%' : '—']; }))
+        : h('p', { class: 'help', text: 'No gift cards are on the site.' })));
+
+    var grid = h('div', { class: 'an-grid' }, [
+      section('Top pages', null, a.pages.length ? table(['Page', 'Views', 'Visitors'], a.pages.map(function (p) { return [p.label, p.views, p.visitors]; })) : h('p', { class: 'help', text: 'No page views in this period.' })),
+      section('Where visitors come from', '“Direct” means they typed the address, used a bookmark, or the app they came from didn’t say.',
+        a.sources.length ? table(['Source', 'Visitors'], a.sources.map(function (s) { return [s.source, s.visitors]; })) : h('p', { class: 'help', text: 'Nothing yet.' })),
+      section('Devices', null, a.devices.length ? table(['Device', 'Visitors', 'Share'], a.devices.map(function (d) { return [d.device, d.visitors, d.share + '%']; })) : h('p', { class: 'help', text: 'Nothing yet.' }))
+    ]);
+    wrap.appendChild(grid);
+
+    wrap.appendChild(h('details', { class: 'an-raw' }, [
+      h('summary', { text: 'Daily numbers as a table' }),
+      table(['Day', 'Visitors', 'Page views'], a.daily.slice().reverse().map(function (d) { return [niceDay(d.day, { weekday: 'short', month: 'short', day: 'numeric' }), d.visitors, d.views]; }))
+    ]));
+  }
+
   function renderContacts(main) {
     main.appendChild(h('div', { class: 'page-head' }, [
       h('h1', { text: 'Contacts' }),

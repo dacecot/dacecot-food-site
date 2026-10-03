@@ -64,13 +64,14 @@ async function run() {
   await test('every offered duration pauses for exactly that long', async () => {
     // The five buttons Erika sees. If one of them silently did nothing, the
     // Reserve page would keep taking bookings while the card said "paused".
-    for (const o of pause.OPTIONS) {
+    // "rest of today" ends at midnight, not after a length — test/guest-cancel.test.js covers it.
+    for (const o of pause.OPTIONS.filter((x) => typeof x.minutes === 'number')) {
       const s = await pause.pause(o.minutes, T0);
       assert.strictEqual(s.paused, true, o.label + ' did not pause');
       assert.strictEqual(Date.parse(s.until), mins(o.minutes), o.label + ' ended at the wrong time');
       assert.strictEqual(s.minutesLeft, o.minutes, o.label + ' reported the wrong time left');
     }
-    assert.deepStrictEqual(pause.OPTIONS.map((o) => o.minutes), [30, 60, 120, 180, 240],
+    assert.deepStrictEqual(pause.OPTIONS.map((o) => o.minutes), [30, 60, 120, 180, 240, 'today'],
       'the offered durations changed — the admin buttons and this list must agree');
   });
 
@@ -231,7 +232,7 @@ async function run() {
     await pause.pause(30);
     const r = await getStatus();
     assert.deepStrictEqual(Object.keys(r._j), ['reservations']);
-    assert.deepStrictEqual(Object.keys(r._j.reservations).sort(), ['minutesLeft', 'paused', 'until', 'untilLabel']);
+    assert.deepStrictEqual(Object.keys(r._j.reservations).sort(), ['forToday', 'minutesLeft', 'paused', 'until', 'untilLabel']);
     await pause.resume();
   });
 

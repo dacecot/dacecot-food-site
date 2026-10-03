@@ -370,6 +370,10 @@ test('Pasta con Erika is the drop-in price, not a retyped number', () => {
   assert.ok(gifts.indexOf('$45 per guest') > -1);
 });
 
+test('no per-package pasta price on the gift card page (Haruun, 2026-10-02)', () => {
+  assert.strictEqual(gifts.indexOf('9.95'), -1, 'a shop price in gift-card copy goes stale the day the price changes');
+});
+
 test('every card has real alt text and an image that exists', () => {
   cardsOnPage().forEach((html) => {
     const img = /<img src="([^"]+)"[^>]*alt="([^"]*)"/.exec(html);

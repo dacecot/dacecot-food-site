@@ -222,3 +222,30 @@ textarea { min-height: 96px; resize: vertical; }
   .assistant { height: auto; max-height: none; }
   .chat-log { max-height: 50dvh; }
 }
+
+/* ---------- Analytics ---------- */
+.an-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 0 0 18px; }
+.an-tile { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+.an-tile__label { font-size: 0.82rem; color: var(--muted); }
+.an-tile__value { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--brown); line-height: 1.15; margin-top: 4px; }
+.an-tile__sub { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+.an-card { margin-bottom: 18px; }
+.an-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.an-grid .an-card { margin-bottom: 0; }
+.an-chart-wrap { position: relative; padding-top: 34px; }
+.an-chart { display: flex; align-items: flex-end; gap: 2px; height: 160px; border-bottom: 1px solid var(--line); }
+.an-col { flex: 1; height: 100%; display: flex; align-items: flex-end; cursor: default; outline: none; }
+.an-col:focus-visible { box-shadow: inset 0 0 0 2px var(--gold); border-radius: 4px; }
+.an-bar { width: 100%; background: var(--terracotta); border-radius: 4px 4px 0 0; min-height: 0; }
+.an-col:hover .an-bar, .an-col:focus .an-bar { filter: brightness(0.85); }
+.an-tip { position: absolute; top: 0; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: 0.8rem; padding: 5px 9px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 2; }
+.an-axis { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+.an-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.an-table th { text-align: left; font-weight: 600; color: var(--muted); font-size: 0.8rem; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.an-table td { padding: 7px 8px; border-bottom: 1px solid var(--line); color: var(--ink); }
+.an-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.an-table tr:last-child td { border-bottom: 0; }
+.an-raw { margin: 18px 0 30px; }
+.an-raw summary { cursor: pointer; color: var(--terracotta); font-weight: 600; margin-bottom: 10px; }
+@media (max-width: 1100px) { .an-grid { grid-template-columns: 1fr 1fr; } .an-tiles { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px) { .an-grid, .an-tiles { grid-template-columns: 1fr; } }

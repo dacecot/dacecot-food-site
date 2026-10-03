@@ -61,6 +61,19 @@ module.exports = async (req, res) => {
      is cancelled whether or not mail can go out. */
   let pre = req.body;
   if (typeof pre === 'string') { try { pre = JSON.parse(pre); } catch (e) { pre = null; } }
+  /* Site analytics beacon (lib/analytics.js). Always answers 204 — a page view
+     must never surface an error to a guest. A loose per-IP cap stops one
+     script from flooding the table. */
+  if (pre && pre.action === 'track') {
+    try {
+      const rl = require('../lib/cms/ratelimit');
+      const lim = await rl.hit('track:' + rl.clientIp(req), { limit: 240, windowSec: 600 });
+      if (lim.ok) await require('../lib/analytics').track(pre, req);
+    } catch (e) { console.error('track failed', e && e.message); }
+    res.statusCode = 204;
+    return res.end ? res.end() : res.status(204).json({});
+  }
+
   if (pre && (pre.action === 'cancel_lookup' || pre.action === 'cancel_confirm')) {
     try {
       const out = await require('../lib/orders/guest-cancel').handle(pre);

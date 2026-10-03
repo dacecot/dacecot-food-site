@@ -462,6 +462,21 @@
         .catch(function () { /* ticker is progressive enhancement — booking still works */ });
     })();
 
+    /* ---- Site analytics: one beacon per page view (lib/analytics.js) ----
+       No cookies and nothing stored in the browser. sendBeacon survives the
+       page closing and never delays it. The cancel page is skipped — its
+       address carries a booking id and signature. */
+    function siteBeacon(payload) {
+      try {
+        var body = JSON.stringify(Object.assign({ action: 'track' }, payload));
+        if (navigator.sendBeacon) navigator.sendBeacon('/api/send', new Blob([body], { type: 'application/json' }));
+        else fetch('/api/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true });
+      } catch (e) { /* analytics must never break the page */ }
+    }
+    if (!document.querySelector('[data-guest-cancel]')) {
+      siteBeacon({ kind: 'view', path: window.location.pathname, ref: document.referrer || '' });
+    }
+
     /* ---- Gift cards: exact-amount dialog + analytics ----
        Square's preset buttons can't show $45 or $95, so a fixed-value card
        says the exact amount BEFORE the guest leaves for Square. Events carry
@@ -470,9 +485,22 @@
     (function () {
       var grid = document.querySelector('.gift-grid');
       if (!grid) return;
+      // Cards seen this visit go in one beacon when the page is left; a click
+      // to Square goes immediately (the guest is about to leave).
+      var seen = [];
       function track(name, el) {
-        try { window.va && window.va('event', { name: name, data: { slug: el.getAttribute('data-gift-slug') || el.getAttribute('data-gift-card'), value: el.getAttribute('data-gift-value') } }); } catch (e) {}
+        var slug = el.getAttribute('data-gift-slug') || el.getAttribute('data-gift-card');
+        if (name === 'card_view') { if (seen.indexOf(slug) < 0) seen.push(slug); }
+        else siteBeacon({ kind: 'gift', click: slug });
+        try { window.va && window.va('event', { name: name, data: { slug: slug, value: el.getAttribute('data-gift-value') } }); } catch (e) {}
       }
+      function flushSeen() {
+        if (!seen.length) return;
+        siteBeacon({ kind: 'gift', views: seen });
+        seen = [];
+      }
+      window.addEventListener('pagehide', flushSeen);
+      document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flushSeen(); });
 
       if ('IntersectionObserver' in window) {
         var io = new IntersectionObserver(function (entries) {

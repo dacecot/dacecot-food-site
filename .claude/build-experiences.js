@@ -722,9 +722,8 @@ const giftCard = (c) => {
   const img = `images/gift-cards/${c.slug}`;
   const hasLarge = fs.existsSync(path.join(ROOT, img + '-1280.webp'));
   const srcset = hasLarge ? ` srcset="${img}-640.webp 640w, ${img}-1280.webp 1280w" sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"` : '';
-  const exactLine = c.exact
-    ? `<p class="gift-card__amount"><strong>On Square, enter:</strong> ${c.exact.map(giftEsc).join(' · ')}</p>`
-    : `<p class="gift-card__amount">${giftEsc(c.squareNote)}</p>`;
+  // No separate amount box: the price line and description already say it,
+  // and fixed cards repeat the exact amount in the dialog before Square.
   const cta = c.exact
     ? `<button type="button" class="btn btn--terra gift-card__btn" data-gift-open data-gift-slug="${c.slug}" data-gift-value="${giftEsc(c.value)}" data-gift-title="${giftEsc(c.title)}" data-gift-exact="${giftEsc(c.exact.join(' · '))}">${giftEsc(c.button)}</button>`
     : `<a class="btn btn--terra gift-card__btn" href="${GIFT.SQUARE_GIFT_URL}" target="_blank" rel="noopener" data-gift-go data-gift-slug="${c.slug}" data-gift-value="${giftEsc(c.value)}">${giftEsc(c.button)}<span class="sr-only"> (opens Square in a new tab)</span></a>`;
@@ -734,7 +733,6 @@ const giftCard = (c) => {
               <h2 class="gift-card__title">${giftEsc(c.title)}</h2>
               <p class="gift-card__price">${giftEsc(c.price)}</p>
               <p class="gift-card__desc">${giftEsc(c.desc)}</p>
-              ${exactLine}
               ${cta}
             </div>
           </article>`;

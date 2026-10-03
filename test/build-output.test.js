@@ -360,7 +360,7 @@ test('every fixed card tells the guest the exact amount before Square', () => {
       return;
     }
     assert.ok(html.indexOf('data-gift-exact="' + expected[slug] + '"') > -1, slug + ': dialog amount wrong');
-    assert.ok(html.indexOf('On Square, enter:') > -1, slug + ': the amount must be visible on the card too');
+    assert.strictEqual(html.indexOf('gift-card__amount'), -1, slug + ': the separate amount box was removed (Haruun, 2026-10-02)');
   });
   assert.ok(/<dialog[^>]*data-gift-dialog/.test(gifts), 'the exact-amount dialog is missing');
 });

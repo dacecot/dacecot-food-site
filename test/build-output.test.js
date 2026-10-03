@@ -324,6 +324,75 @@ test('each configured closure is literally present in both pages', () => {
   }
 });
 
+/* ---------------------------------------------------------------
+   Gift Cards page — Erika's handoff, checked against what is served.
+   Expectations are written out here (not read back from lib/giftcards.js)
+   wherever the page could otherwise agree with itself.
+   --------------------------------------------------------------- */
+const gifts = read('gift-cards.html');
+const GIFT = require('../lib/giftcards');
+const cardsOnPage = () => gifts.split('<article class="gift-card"').slice(1);
+
+test('the seven ready gift cards are on the page; the two held ones are not', () => {
+  const slugs = (gifts.match(/data-gift-card="([^"]+)"/g) || []).map((m) => m.slice(16, -1));
+  assert.deepStrictEqual(slugs, ['gift-for-your-table', 'one-bag-fresh-pasta', 'pasta-and-sauce',
+    'happy-pasta-birthday', 'pasta-for-two-anniversary', 'the-pasta-pantry', 'pasta-con-erika']);
+  assert.strictEqual(gifts.indexOf('Dinner at Da Cecot'), -1, 'held until the artwork is fixed');
+  assert.strictEqual(gifts.indexOf('Sunday Pasta Class'), -1, 'held until the artwork is fixed');
+});
+
+test('every way to buy goes to the one verified Square gift page', () => {
+  assert.strictEqual(GIFT.SQUARE_GIFT_URL, 'https://app.squareup.com/gift/ML1Z8KZJ63H3K/order');
+  const hrefs = (gifts.match(/href="https:\/\/app\.squareup\.com[^"]*"/g) || []);
+  assert.ok(hrefs.length >= 4, 'flexible cards + the dialog all link to Square: ' + hrefs.length);
+  hrefs.forEach((h) => assert.strictEqual(h, 'href="' + GIFT.SQUARE_GIFT_URL + '"', 'an invented Square link: ' + h));
+});
+
+test('every fixed card tells the guest the exact amount before Square', () => {
+  const expected = {
+    'one-bag-fresh-pasta': '$10', 'pasta-and-sauce': '$25', 'the-pasta-pantry': '$50',
+    'pasta-con-erika': '$45 for one · $90 for two'
+  };
+  cardsOnPage().forEach((html) => {
+    const slug = /data-gift-card="([^"]+)"/.exec(html)[1];
+    if (!expected[slug]) {
+      assert.ok(/data-gift-go/.test(html), slug + ' is flexible and should go straight to Square');
+      return;
+    }
+    assert.ok(html.indexOf('data-gift-exact="' + expected[slug] + '"') > -1, slug + ': dialog amount wrong');
+    assert.ok(html.indexOf('On Square, enter:') > -1, slug + ': the amount must be visible on the card too');
+  });
+  assert.ok(/<dialog[^>]*data-gift-dialog/.test(gifts), 'the exact-amount dialog is missing');
+});
+
+test('Pasta con Erika is the drop-in price, not a retyped number', () => {
+  assert.strictEqual(PRICES.DROP_IN_PRICE_CENTS, 4500, 'if the drop-in price changes, the gift card must follow it');
+  assert.ok(gifts.indexOf('$45 per guest') > -1);
+});
+
+test('every card has real alt text and an image that exists', () => {
+  cardsOnPage().forEach((html) => {
+    const img = /<img src="([^"]+)"[^>]*alt="([^"]*)"/.exec(html);
+    assert.ok(img, 'card without an image');
+    assert.ok(img[2].length > 20, 'alt text too thin: ' + img[2]);
+    assert.ok(fs.existsSync(path.join(ROOT, img[1])), 'image missing on disk: ' + img[1]);
+  });
+});
+
+test('Gift Cards is in the nav and footer of every page, and in the sitemap', () => {
+  ['index.html', 'menu.html', 'reservations.html', 'visit-us.html', 'gift-cards.html'].forEach((f) => {
+    assert.ok(count(read(f), 'href="gift-cards.html"') >= 2, f + ' is missing the nav or footer link');
+  });
+  assert.ok(read('sitemap.xml').indexOf('/gift-cards.html') > -1);
+});
+
+test('analytics loads on public pages but never on the cancel page', () => {
+  assert.ok(read('index.html').indexOf('/_vercel/insights/script.js') > -1);
+  assert.ok(gifts.indexOf('/_vercel/insights/script.js') > -1);
+  assert.strictEqual(read('cancel-reservation.html').indexOf('insights'), -1,
+    'the cancel page address carries a booking id and signature — it must not be reported anywhere');
+});
+
 if (failures.length) {
   console.error('\n' + failures.length + ' FAILED, ' + passed + ' passed\n');
   failures.forEach((f) => console.error('  ✗ ' + f.name + '\n      ' + f.message));

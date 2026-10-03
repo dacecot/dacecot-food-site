@@ -127,6 +127,7 @@ function header(active) {
         </li>
         ${link('pasta-shop', 'Pasta Shop &amp; Meals', 'pasta-shop')}
         ${link('our-story', 'Our Story', 'our-story')}
+        ${link('gift-cards', 'Gift Cards', 'gift-cards')}
         ${link('reservations', 'Reserve', 'reservations')}
         ${link('visit-us', 'Visit Us', 'visit-us')}
         <li class="nav-drawer-foot">
@@ -178,6 +179,7 @@ function footer() {
         <a href="experiences.html">Experiences</a>
         <a href="pasta-shop.html">Pasta Shop &amp; Meals</a>
         <a href="our-story.html">Our Story</a>
+        <a href="gift-cards.html">Gift Cards</a>
         <a href="visit-us.html">Visit Us</a>
         <a href="partnerships.html">Catering &amp; Wholesale</a>
         <a href="reservations.html">Reserve a Table</a>
@@ -364,6 +366,9 @@ function page(opts) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="css/styles.min.css?v=${VERSION}">
+  <!-- Vercel Web Analytics (cookieless). va() queues events until the script loads. -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 ${schemaBlocks}
 </head>
 <body>

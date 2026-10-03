@@ -647,7 +647,7 @@ ${expHero('cat-h1', 'Catering', 'Handcrafted Italian catering for events, office
 const ALL_SLUGS = [
   'index', 'menu', 'experiences', 'sunday-pasta-classes',
   'private-events', 'catering', 'pasta-shop',
-  'our-story', 'visit-us', 'reservations', 'partnerships'
+  'our-story', 'visit-us', 'reservations', 'partnerships', 'gift-cards'
 ];
 
 // pages array order matches push order; write each
@@ -712,6 +712,73 @@ const notFound = page({
 });
 fs.writeFileSync(path.join(ROOT, '404.html'), notFound.replace('<meta name="robots" content="index, follow">', '<meta name="robots" content="noindex, follow">'), 'utf8');
 
+/* Gift Cards — Erika's catalogue (lib/giftcards.js); Square sells and delivers.
+   Flexible cards go straight to Square. Fixed-value cards first open a dialog
+   with the exact amount to type in, because Square's preset buttons can't show
+   $45 or $95. Rendered real HTML text — the price is never only inside the art. */
+const GIFT = require('../lib/giftcards');
+const giftEsc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const giftCard = (c) => {
+  const img = `images/gift-cards/${c.slug}`;
+  const hasLarge = fs.existsSync(path.join(ROOT, img + '-1280.webp'));
+  const srcset = hasLarge ? ` srcset="${img}-640.webp 640w, ${img}-1280.webp 1280w" sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"` : '';
+  const exactLine = c.exact
+    ? `<p class="gift-card__amount"><strong>On Square, enter:</strong> ${c.exact.map(giftEsc).join(' · ')}</p>`
+    : `<p class="gift-card__amount">${giftEsc(c.squareNote)}</p>`;
+  const cta = c.exact
+    ? `<button type="button" class="btn btn--terra gift-card__btn" data-gift-open data-gift-slug="${c.slug}" data-gift-value="${giftEsc(c.value)}" data-gift-title="${giftEsc(c.title)}" data-gift-exact="${giftEsc(c.exact.join(' · '))}">${giftEsc(c.button)}</button>`
+    : `<a class="btn btn--terra gift-card__btn" href="${GIFT.SQUARE_GIFT_URL}" target="_blank" rel="noopener" data-gift-go data-gift-slug="${c.slug}" data-gift-value="${giftEsc(c.value)}">${giftEsc(c.button)}<span class="sr-only"> (opens Square in a new tab)</span></a>`;
+  return `          <article class="gift-card" data-gift-card="${c.slug}" data-gift-value="${giftEsc(c.value)}">
+            <div class="gift-card__art"><img src="${img}-640.webp"${srcset} width="640" height="400" alt="${giftEsc(c.alt)}" loading="lazy" decoding="async"></div>
+            <div class="gift-card__body">
+              <h2 class="gift-card__title">${giftEsc(c.title)}</h2>
+              <p class="gift-card__price">${giftEsc(c.price)}</p>
+              <p class="gift-card__desc">${giftEsc(c.desc)}</p>
+              ${exactLine}
+              ${cta}
+            </div>
+          </article>`;
+};
+const giftPage = page({
+  slug: 'gift-cards',
+  active: 'gift-cards',
+  title: 'Gift Cards | da Cecot Food, Edmonton',
+  description: 'Give the gift of Da Cecot: eGift cards for fresh pasta, sauces, dinner and hands-on pasta experiences in Edmonton. Delivered by email through Square.',
+  ogImage: 'images/gift-cards/gift-for-your-table-640.webp',
+  schema: [breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'gift-cards', label: 'Gift Cards' }])],
+  body: `    <section class="section section--brown">
+      <div class="container text-center narrow reveal">
+        <span class="label">eGift Cards</span>
+        <h1>Give the Gift of Da Cecot</h1>
+        <p>From fresh pasta for home to an evening around our table, choose a gift made to bring people closer.</p>
+      </div>
+    </section>
+    <section class="section section--cream">
+      <div class="container">
+        <ol class="gift-steps">
+          <li><strong>Choose a card</strong> below.</li>
+          <li><strong>Buy it on Square</strong> — our secure checkout. For a fixed gift, enter the exact amount shown on the card.</li>
+          <li><strong>Square emails the eGift card</strong> to the person you choose.</li>
+        </ol>
+        <div class="gift-grid">
+${GIFT.live().map(giftCard).join('\n')}
+        </div>
+        <p class="gift-note">Da Cecot eGift cards hold a dollar value. Each card describes what that amount is meant for; the recipient can apply it to eligible Da Cecot purchases. Questions about a gift card? Email <a href="mailto:info@dacecotfood.com">info@dacecotfood.com</a> or call (825) 888-4218.</p>
+      </div>
+    </section>
+    <dialog class="gift-dialog" data-gift-dialog aria-labelledby="gift-dialog-title">
+      <h2 id="gift-dialog-title" data-gift-dialog-title>Before you go to Square</h2>
+      <p>On the Square purchase page, enter the exact gift value shown here:</p>
+      <p class="gift-dialog__amount" data-gift-dialog-amount></p>
+      <p class="gift-dialog__help">Square shows a few preset amounts — use the custom amount field for this one.</p>
+      <div class="gift-dialog__actions">
+        <a class="btn btn--terra" href="${GIFT.SQUARE_GIFT_URL}" target="_blank" rel="noopener" data-gift-continue>Continue to Square<span class="sr-only"> (opens in a new tab)</span></a>
+        <button type="button" class="btn btn--outline" data-gift-close>Back</button>
+      </div>
+    </dialog>`
+});
+fs.writeFileSync(path.join(ROOT, 'gift-cards.html'), giftPage, 'utf8');
+
 /* Cancel-a-reservation page — opened from the button in the confirmation email.
    Opening it changes nothing (mail scanners open every link); js/main.js looks
    the booking up and only the button on the page cancels. Not in the sitemap,
@@ -738,7 +805,9 @@ const cancelPage = page({
       </div>
     </section>`
 });
-fs.writeFileSync(path.join(ROOT, 'cancel-reservation.html'), cancelPage.replace('<meta name="robots" content="index, follow">', '<meta name="robots" content="noindex, nofollow">'), 'utf8');
+fs.writeFileSync(path.join(ROOT, 'cancel-reservation.html'), cancelPage.replace('<meta name="robots" content="index, follow">', '<meta name="robots" content="noindex, nofollow">')
+  // No analytics here: the address carries the booking id and its signature.
+  .replace(/  <!-- Vercel Web Analytics[\s\S]*?insights\/script\.js"><\/script>\n/, ''), 'utf8');
 
 /* minify CSS */
 function minifyCss(css) {

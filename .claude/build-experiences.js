@@ -712,6 +712,34 @@ const notFound = page({
 });
 fs.writeFileSync(path.join(ROOT, '404.html'), notFound.replace('<meta name="robots" content="index, follow">', '<meta name="robots" content="noindex, follow">'), 'utf8');
 
+/* Cancel-a-reservation page — opened from the button in the confirmation email.
+   Opening it changes nothing (mail scanners open every link); js/main.js looks
+   the booking up and only the button on the page cancels. Not in the sitemap,
+   noindex: it is useless without a signed link. */
+const cancelPage = page({
+  slug: 'cancel-reservation',
+  active: '',
+  title: 'Cancel Your Reservation | da Cecot Food, Edmonton',
+  description: 'Cancel a table reservation at da Cecot Food, Edmonton, from the link in your confirmation email.',
+  ogImage: IMG.pasta,
+  schema: [],
+  body: `    <section class="section section--cream" style="min-height:60vh;">
+      <div class="container narrow">
+        <div class="booking" data-guest-cancel style="text-align:center;">
+          <h1 style="margin-top:0;" data-gc-title>Cancel your reservation</h1>
+          <p data-gc-msg>Looking up your reservation…</p>
+          <div data-gc-details hidden style="margin:18px 0;"></div>
+          <p data-gc-actions hidden style="margin-top:22px;">
+            <button type="button" class="btn btn--terra" data-gc-confirm>Yes, cancel my reservation</button>
+          </p>
+          <p style="opacity:0.85; margin-top:18px;" data-gc-help>Questions, or want a different time? Call <a href="tel:+18258884218" style="color:var(--terracotta); font-weight:600;">(825) 888-4218</a>.</p>
+          <noscript><p>This page needs JavaScript. To cancel, please call us at (825) 888-4218.</p></noscript>
+        </div>
+      </div>
+    </section>`
+});
+fs.writeFileSync(path.join(ROOT, 'cancel-reservation.html'), cancelPage.replace('<meta name="robots" content="index, follow">', '<meta name="robots" content="noindex, nofollow">'), 'utf8');
+
 /* minify CSS */
 function minifyCss(css) {
   return css

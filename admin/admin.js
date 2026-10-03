@@ -349,8 +349,11 @@
       card.appendChild(h('h3', { class: 'card-title', text: '⏸  Online reservations are paused' }));
       card.appendChild(h('p', {
         class: 'help',
-        text: 'The Reserve page is not taking new table requests. It reopens on its own at ' + edmClock(st.until) +
-          ' — about ' + st.minutesLeft + ' more minute' + (st.minutesLeft === 1 ? '' : 's') +
+        text: 'The Reserve page is not taking new table requests. ' +
+          (st.forToday
+            ? 'It reopens on its own at midnight'
+            : 'It reopens on its own at ' + edmClock(st.until) +
+              ' — about ' + st.minutesLeft + ' more minute' + (st.minutesLeft === 1 ? '' : 's')) +
           '. Bookings already in your book are not affected, and pasta classes and pasta-shop pickups are still running.'
       }));
       row.appendChild(h('button', { class: 'btn btn--sm', text: 'Resume now', onclick: function () { sendPause(card, { action: 'resume' }, 'Online reservations are open again.', st); } }));
@@ -361,7 +364,7 @@
       options.forEach(function (o) {
         more.appendChild(h('button', {
           class: 'btn btn--sm btn--ghost', text: o.label,
-          onclick: function () { sendPause(card, { action: 'pause', minutes: o.minutes }, 'Paused for ' + o.label + '.', st); }
+          onclick: function () { sendPause(card, { action: 'pause', minutes: o.minutes }, o.minutes === 'today' ? 'Paused until midnight.' : 'Paused for ' + o.label + '.', st); }
         }));
       });
       card.appendChild(more);
@@ -376,7 +379,7 @@
     options.forEach(function (o) {
       row.appendChild(h('button', {
         class: 'btn btn--sm btn--ghost', text: 'Pause ' + o.label,
-        onclick: function () { sendPause(card, { action: 'pause', minutes: o.minutes }, 'Online reservations paused for ' + o.label + '.', st); }
+        onclick: function () { sendPause(card, { action: 'pause', minutes: o.minutes }, 'Online reservations paused ' + (o.minutes === 'today' ? 'for the rest of today.' : 'for ' + o.label + '.'), st); }
       }));
     });
     card.appendChild(row);
@@ -481,7 +484,7 @@
             ]),
             h('span', { class: 'res-party', text: d.party_size || '' }),
             d.cancelled
-              ? h('span', { class: 'chip chip--err', text: 'Cancelled' })
+              ? h('span', { class: 'chip chip--err', text: d.cancelled_by === 'guest' ? 'Cancelled by guest' : 'Cancelled' })
               : d.approval_status === 'pending'
                 ? h('span', { class: 'res-approve' }, [
                     h('span', { class: 'chip chip--warn', text: 'Awaiting approval' }),

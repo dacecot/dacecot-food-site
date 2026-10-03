@@ -3,7 +3,7 @@
 //        → { days:[{date,count,covers,reservations}], tables, view, today }
 //   GET  ?pause=1                                            → { ok, pause } only (cheap, for the pause card)
 //   POST { action:'assign',   id, table_id|null, force? }   seat / unseat with conflict checks
-//        { action:'pause',    minutes }                     pause online reservations (30/60/120/180/240)
+//        { action:'pause',    minutes }                     pause online reservations (30/60/120/180/240, or 'today' = until midnight)
 //        { action:'resume'    }                             lift the pause now
 //        { action:'add',      reservation:{name,phone,email,date,time,party,notes} }  manual (phone) booking — no email sent
 //        { action:'import',   csv:'…' }                     Wix CSV migration — no emails sent

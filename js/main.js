@@ -462,6 +462,82 @@
         .catch(function () { /* ticker is progressive enhancement — booking still works */ });
     })();
 
+    /* ---- Cancel a reservation (link from the confirmation email) ----
+       Loading the page only LOOKS the booking up. Mail scanners open every
+       link in an email, so the cancel itself waits for the guest's click. */
+    (function () {
+      var box = document.querySelector('[data-guest-cancel]');
+      if (!box) return;
+      var q = new URLSearchParams(window.location.search);
+      var ref = { r: q.get('r') || '', t: q.get('t') || '' };
+      var title = box.querySelector('[data-gc-title]');
+      var msg = box.querySelector('[data-gc-msg]');
+      var details = box.querySelector('[data-gc-details]');
+      var actions = box.querySelector('[data-gc-actions]');
+      var btn = box.querySelector('[data-gc-confirm]');
+
+      function post(action) {
+        return fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ action: action, r: ref.r, t: ref.t })
+        }).then(function (r) { return r.json().then(function (j) { j._status = r.status; return j; }); });
+      }
+      function showBooking(b) {
+        if (!b) return;
+        details.innerHTML = '';
+        [['Date', b.date], ['Time', b.time], ['Party size', b.partySize]].forEach(function (pair) {
+          if (!pair[1]) return;
+          var p = document.createElement('p');
+          p.style.margin = '4px 0';
+          var s = document.createElement('strong');
+          s.textContent = pair[0] + ': ';
+          p.appendChild(s);
+          p.appendChild(document.createTextNode(pair[1]));
+          details.appendChild(p);
+        });
+        details.hidden = false;
+      }
+      function done(b, already, emailed) {
+        showBooking(b);
+        title.textContent = 'Your reservation is cancelled';
+        msg.textContent = already
+          ? 'This reservation was already cancelled — there is nothing else you need to do.'
+          : 'Done — we have let the restaurant know' + (emailed ? ', and a confirmation is on its way to your inbox' : '') + '. We hope to see you another time!';
+        actions.hidden = true;
+      }
+
+      if (!ref.r || !ref.t) { msg.textContent = 'This cancellation link isn’t complete. Please use the button in your confirmation email, or call us.'; return; }
+
+      post('cancel_lookup').then(function (j) {
+        if (!j.ok) { msg.textContent = j.error || 'We couldn’t find that reservation. Please call us.'; return; }
+        showBooking(j.booking);
+        if (j.reason === 'cancelled') return done(j.booking, true);
+        if (!j.canCancel) {
+          msg.textContent = j.reason === 'too_late'
+            ? 'Your reservation is less than ' + j.cutoffHours + ' hours away, so it can’t be cancelled online. Please give us a call — thank you!'
+            : 'This reservation can’t be cancelled online. Please give us a call.';
+          return;
+        }
+        msg.textContent = (j.booking.firstName ? 'Ciao ' + j.booking.firstName + ' — ' : '') + 'do you want to cancel this reservation?';
+        actions.hidden = false;
+      }).catch(function () { msg.textContent = 'We couldn’t load your reservation. Please try again in a minute, or call us.'; });
+
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.textContent = 'Cancelling…';
+        post('cancel_confirm').then(function (j) {
+          if (j.ok && j.cancelled) return done(j.booking, j.already, j.guestEmailed);
+          msg.textContent = j.error || 'We couldn’t cancel that online. Please call us.';
+          actions.hidden = true;
+        }).catch(function () {
+          btn.disabled = false;
+          btn.textContent = 'Yes, cancel my reservation';
+          msg.textContent = 'That didn’t go through — please try again, or call us.';
+        });
+      });
+    })();
+
     /* ---- Reservations paused (set from the site manager, mid-service) ----
        The page is static and was built long before Erika pressed pause, so the
        state has to come from the server at load. If this fetch fails we leave
@@ -479,7 +555,10 @@
           var p = s && s.reservations;
           if (!p || !p.paused) return;
           var when = pausedBox.querySelector('[data-res-paused-until]');
-          if (when && p.untilLabel) when.textContent = ' — we will be back online around ' + p.untilLabel;
+          if (when && p.forToday) {
+            // "For a moment" reads wrong for a whole evening — say what it is.
+            when.parentNode.textContent = 'We are not taking new online table requests for the rest of today. Online booking opens again tomorrow.';
+          } else if (when && p.untilLabel) when.textContent = ' — we will be back online around ' + p.untilLabel;
           formBox.hidden = true;
           pausedBox.hidden = false;
         })

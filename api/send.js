@@ -55,6 +55,22 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
+  /* A guest cancelling their own table from the confirmation email. Routed
+     through this handler because the Hobby plan caps serverless functions and
+     this is the guest-facing one. Handled before the email check: the booking
+     is cancelled whether or not mail can go out. */
+  let pre = req.body;
+  if (typeof pre === 'string') { try { pre = JSON.parse(pre); } catch (e) { pre = null; } }
+  if (pre && (pre.action === 'cancel_lookup' || pre.action === 'cancel_confirm')) {
+    try {
+      const out = await require('../lib/orders/guest-cancel').handle(pre);
+      return res.status(out.status).json(out.body);
+    } catch (e) {
+      console.error('guest cancel failed', e && e.stack || e);
+      return res.status(500).json({ ok: false, error: 'Something went wrong on our side. Please call us at (825) 888-4218 to cancel.' });
+    }
+  }
+
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.error('RESEND_API_KEY is not set');
@@ -390,6 +406,19 @@ module.exports = async (req, res) => {
         ? 'Thank you for booking with us! For larger tables we double-check the room first — we’ll confirm your reservation shortly by email.'
         : 'Thank you for booking with us — this email is your confirmation. Please let us know about any changes.';
       subjectLine = bigParty ? 'We’ve received your table request — da Cecot Food' : subjectLine;
+      /* Self-serve cancel. Null when the booking was not stored or the link
+         cannot be signed — then the email keeps only the reply-or-call line. */
+      const cancelLink = submissionId ? require('../lib/orders/guest-cancel').cancelUrl(submissionId) : null;
+      const cancelHours = require('../lib/orders/guest-cancel').CUTOFF_HOURS;
+      const cancelHtml = cancelLink
+        ? '<p style="font-size:14px;line-height:1.6;color:#555;margin:20px 0 10px">Can’t make it? You can cancel online up to ' + cancelHours + ' hours before your reservation:</p>' +
+          '<table role="presentation" style="margin:0 0 6px"><tr><td style="border-radius:8px;background:#4a1e18">' +
+          '<a href="' + esc(cancelLink) + '" style="display:inline-block;padding:12px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#fff;text-decoration:none;border-radius:8px">Cancel my reservation</a>' +
+          '</td></tr></table>'
+        : '';
+      const cancelText = cancelLink
+        ? '\n\nCan’t make it? Cancel online up to ' + cancelHours + ' hours before your reservation:\n' + cancelLink
+        : '';
       custHtml =
         '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;max-width:560px;margin:0 auto">' +
           '<h2 style="font-family:Georgia,\'Times New Roman\',serif;color:#4a1e18;font-size:22px;margin:0 0 4px">da Cecot Food</h2>' +
@@ -408,7 +437,10 @@ module.exports = async (req, res) => {
           line('Name', data.name) +
           line('Phone', data.phone) +
           line('Email', data.email) +
-          '<p style="font-size:14px;line-height:1.6;color:#555;margin:20px 0 18px">Need to change or cancel? Just reply to this email or call us at (825) 888-4218. A presto!</p>' +
+          cancelHtml +
+          '<p style="font-size:14px;line-height:1.6;color:#555;margin:20px 0 18px">' +
+            (cancelLink ? 'Need to change your booking, or it’s less than ' + cancelHours + ' hours away? Just reply to this email or call us at (825) 888-4218. A presto!' : 'Need to change or cancel? Just reply to this email or call us at (825) 888-4218. A presto!') +
+          '</p>' +
           '<p style="font-size:12px;color:#999;margin:0">da Cecot Food Inc · Whyte Avenue, Edmonton · dacecotfood.com</p>' +
         '</div>';
       custText = headline + '\n\nHi ' + firstName + ',\n' + opening + '\n\n' +
@@ -416,7 +448,8 @@ module.exports = async (req, res) => {
         (String(data.notes || '').trim() ? '\nNotes: ' + data.notes : '') +
         '\n\nRestaurant info:\nDa Cecot Food Inc\n' + ADDR + '\n+1 825-888-4218' +
         '\n\nGuest details:\nName: ' + (data.name || '') + '\nPhone: ' + (data.phone || '') + '\nEmail: ' + (data.email || '') +
-        '\n\nNeed to change or cancel? Reply to this email or call (825) 888-4218. A presto!';
+        cancelText +
+        (cancelLink ? '\n\nNeed to change your booking? Reply to this email or call (825) 888-4218. A presto!' : '\n\nNeed to change or cancel? Reply to this email or call (825) 888-4218. A presto!');
     } else {
       /* Explicit cream ground + white card, matching lib/orders/mailer.js. The
          body used to set only a text colour, so a dark-mode mail client left

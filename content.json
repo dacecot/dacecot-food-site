@@ -23,5 +23,6 @@
   "closedDates": [
     "2026-09-15",
     "2026-09-21 | deep cleaning"
-  ]
+  ],
+  "firstSundayClosed": false
 }

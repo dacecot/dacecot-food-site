@@ -228,6 +228,11 @@ const PICKUP_HOURS = hours.windows(content);
 const CLOSED_DATES = hours.closedDates(content);
 // Why each of those days is shut, where the line said so ("… | deep cleaning").
 const CLOSURE_REASONS = hours.closureReasons(content);
+/* Days the restaurant is open but takes no online table bookings (a buyout, a
+   private event). Reservation picker ONLY — pickups run as normal and no banner
+   goes up. api/send.js re-checks on submit. */
+const NO_RES_DATES = hours.noReservationDates(content);
+const NO_RES_REASONS = hours.noReservationReasons(content);
 
 /* "Today", on the restaurant's clock, at the moment this build ran. Edmonton
    and not the build machine: a build that happens to run from a UTC box after
@@ -798,7 +803,7 @@ pages.push(page({
         <div class="booking" data-res-form>
           <form data-formsubmit data-subject="Table Reservation — da Cecot" aria-label="Table reservation request">
             <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
-            <script id="service-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED, buffer: 60, closed: CLOSED_DATES })}</script>
+            <script id="service-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED, buffer: 60, closed: CLOSED_DATES, noRes: NO_RES_DATES, noResReasons: NO_RES_REASONS }).replace(/</g, '\\u003c')}</script>
             <div class="form-row">
               <div class="field"><label for="res-date">Date</label><input type="date" id="res-date" name="reservation_date" required></div>
               <div class="field"><label for="res-time">Time</label><select id="res-time" name="reservation_time" data-res-time required disabled><option value="">Pick a date first</option></select></div>

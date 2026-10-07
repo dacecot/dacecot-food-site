@@ -119,6 +119,27 @@ module.exports = async (req, res) => {
     }
   } catch (e) { console.error('closure check failed (allowing through)', e && e.message); }
 
+  // Days with no online reservations (CMS). Open for business, so ONLY a table
+  // booking is turned away — a pickup on the same day goes through. Re-checked
+  // here for the same reason as a closure: the page embeds the list at build.
+  if (data.reservation_date) {
+    try {
+      const content = require('../lib/cms/content');
+      const hours = require('../lib/cms/hours');
+      const R = require('../lib/orders/reservations');
+      if (hours.isNoReservationOn(content, data.reservation_date)) {
+        const phone = String(content.get('phone') || '').trim();
+        const why = hours.noReservationReason(content, data.reservation_date);
+        return res.status(409).json({
+          success: false,
+          error: 'We’re not taking online reservations on ' + hours.closureLabel(R.parseDate(data.reservation_date)) +
+            (why ? ' (' + why + ')' : '') + ' — please choose another day' +
+            (phone ? ', or call us at ' + phone + '.' : '.')
+        });
+      }
+    } catch (e) { console.error('no-reservation-day check failed (allowing through)', e && e.message); }
+  }
+
   // Table reservations require name, phone and email — enforce server-side too
   // (the form marks them required, but the API must not trust the client).
   if (/table reservation/i.test(String(data._subject || '')) || data.reservation_date) {

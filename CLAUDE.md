@@ -27,7 +27,10 @@ Custom **static** rebuild of dacecotfood.com (authentic Italian comfort-food pas
 - JSON-LD: Restaurant (home), Restaurant+LocalBusiness (contact), Event (classes/drop-in), Service (experiences/private-events/catering), FAQPage, BreadcrumbList. "What is…" answer paragraphs + FAQ accordions for AI Overviews.
 
 ## Deploy
-- Deploying to **Vercel** (`.vercel` present; `.vercel` in .gitignore). Git repo initialized — do NOT push unless asked.
+- **Live site = Erika's fork `dacecot/dacecot-food-site`** (her GitHub user account), built by a Vercel project in **her** Vercel account, which auto-deploys on every push to the fork's `master`. Work happens here in `haruun-beep/dacecot-food-site`, then Haruun pushes it up to the fork. Pushing to `haruun-beep` alone changes nothing live.
+- `.vercel/project.json` points at `da-cecot/dacecot-food-site`, which is **NOT** the live site (it builds `haruun-beep` master). To check what's live, look at the fork's commits/deployments (`gh api repos/dacecot/dacecot-food-site/deployments`) or the CSS `?v=` stamp on www.dacecotfood.com.
+- **Her admin saves commit to the fork** (`GITHUB_REPO=dacecot/dacecot-food-site`, token from HER GitHub account, Contents R/W). So the fork can be ahead of us. **Before every push to the fork: `git pull https://github.com/dacecot/dacecot-food-site.git master`. Never force-push the fork**, because that deletes her edits.
+- Do NOT push unless asked.
 
 ## Local preview
 - `node .claude/static-server.js` → http://localhost:4321.

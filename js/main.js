@@ -660,6 +660,7 @@
       var BUFFER = 60; // last reservation this many minutes before close
       var resFirstSunClosed = true;
       var resClosed = []; // one-off closures: ['YYYY-MM-DD', …]
+      var resNoRes = [], resNoResWhy = {}; // open, but no online bookings that day
       try {
         var shRaw = document.getElementById('service-hours');
         if (shRaw) {
@@ -668,6 +669,8 @@
           if (typeof shCfg.buffer === 'number') BUFFER = shCfg.buffer;
           resFirstSunClosed = !!shCfg.firstSundayClosed;
           if (Array.isArray(shCfg.closed)) resClosed = shCfg.closed;
+          if (Array.isArray(shCfg.noRes)) resNoRes = shCfg.noRes;
+          if (shCfg.noResReasons && typeof shCfg.noResReasons === 'object') resNoResWhy = shCfg.noResReasons;
         }
       } catch (e) {}
       var WD_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -704,6 +707,14 @@
           timeSel.innerHTML = '<option value="">Closed — choose another day</option>';
           timeSel.disabled = true;
           if (msg) msg.textContent = "We're closed on " + longDate(v) + " — please choose another day, or give us a call and we'll help.";
+          return;
+        }
+        // Open that day, but the online book is shut (a private event, a buyout).
+        if (resNoRes.indexOf(v) > -1) {
+          timeSel.innerHTML = '<option value="">No online bookings — choose another day</option>';
+          timeSel.disabled = true;
+          if (msg) msg.textContent = "We're not taking online reservations on " + longDate(v) +
+            (resNoResWhy[v] ? ' (' + resNoResWhy[v] + ')' : '') + " — please choose another day, or give us a call.";
           return;
         }
         var p = v.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]);

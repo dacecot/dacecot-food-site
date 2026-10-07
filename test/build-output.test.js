@@ -235,6 +235,18 @@ test('the reservation picker was built with the closure list', () => {
     'the reservation form does not know which days we are closed');
 });
 
+test('the reservation picker was built with the no-reservation days', () => {
+  const cfg = embedded(reservations, 'service-hours');
+  assert.deepStrictEqual(cfg.noRes, hours.noReservationDates(content),
+    'the Reserve page will offer a day Erika has blocked');
+  assert.deepStrictEqual(cfg.noResReasons, hours.noReservationReasons(content));
+});
+
+test('the pickup picker does NOT carry the no-reservation days', () => {
+  const cfg = embedded(pastaShop, 'pickup-hours');
+  assert.ok(!('noRes' in cfg), 'a private event would stop pasta pickups on a day the doors are open');
+});
+
 test('the pasta-shop pickup picker was built with the same list', () => {
   const cfg = embedded(pastaShop, 'pickup-hours');
   assert.deepStrictEqual(cfg.closed, closed,

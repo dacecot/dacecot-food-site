@@ -234,6 +234,24 @@
         var errorEl = form.querySelector('.form-error');
         var label = btn ? btn.textContent : '';
 
+        /* The server says WHY it refused ("Only 4 seats left for that class",
+           "That class is fully booked", "closed that day") and the guest needs
+           to read it — the generic "Something went wrong, email us" line sent
+           a guest with a fixable booking off to write an email instead of
+           dropping one seat. The built-in text stays as the fallback for a
+           network failure or a reply with no reason in it, and is restored on
+           the next attempt so a stale reason never outlives the request. */
+        if (errorEl && errorEl.dataset.generic == null) errorEl.dataset.generic = errorEl.textContent;
+        function showError(reason) {
+          if (!errorEl) return;
+          var why = typeof reason === 'string' ? reason.trim() : '';
+          errorEl.textContent = why
+            ? why + ' If you need a hand, call us at (825) 888-4218 or email info@dacecotfood.com.'
+            : errorEl.dataset.generic;
+          errorEl.classList.add('show');
+        }
+        if (errorEl) errorEl.classList.remove('show');
+
         if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
 
         // Optional Square checkout: open a tab now (within the click gesture) so
@@ -264,11 +282,11 @@
                 else { window.location.href = payUrl; }
               }
             } else {
-              if (errorEl) errorEl.classList.add('show');
+              showError(r && r.error);
               if (payWin) payWin.close();
             }
           })
-          .catch(function () { if (errorEl) errorEl.classList.add('show'); if (payWin) payWin.close(); })
+          .catch(function () { showError(''); if (payWin) payWin.close(); })
           .finally(function () { if (btn) { btn.disabled = false; btn.textContent = label; } });
       });
     });
@@ -367,6 +385,52 @@
       orderModal.querySelectorAll('[data-order-close]').forEach(function (c) { c.addEventListener('click', closeOrder); });
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !orderModal.hidden) closeOrder(); });
     }
+
+    /* ---- Class / drop-in date pills: drop the ones already in the past ----
+       The pills are baked in at BUILD time, and the site only rebuilds on a
+       push — so a page built on a Tuesday still offers that week's Sunday a
+       week later, reading "12 of 12 seats left". The server then refuses it
+       ("no longer available") and the guest is left with an error for a date
+       the page itself put in front of them. Judged against Edmonton's date,
+       like every other date on the site; a pill for today stays, since the
+       server treats today as bookable too. Runs BEFORE the availability
+       ticker below so a removed pill never gets a seat count. If the pill that
+       carried `required` goes, the next live one takes it, so "pick a date" is
+       still enforced. */
+    (function () {
+      var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      var today;
+      try {
+        today = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Edmonton', year: 'numeric', month: '2-digit', day: '2-digit'
+        }).format(new Date());
+      } catch (e) { return; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) return;
+      // 'Sunday, October 11, 2026' -> '2026-10-11'; anything else -> '' (left alone).
+      function isoOf(label) {
+        var m = /^\w+, (\w+) (\d{1,2}), (\d{4})$/.exec(String(label || '').trim());
+        if (!m) return '';
+        var mi = MONTHS.indexOf(m[1]);
+        if (mi < 0) return '';
+        return m[3] + '-' + String(mi + 1).replace(/^(\d)$/, '0$1') + '-' + String(m[2]).replace(/^(\d)$/, '0$1');
+      }
+      ['class_date', 'class_date_2', 'drop_in_date'].forEach(function (name) {
+        var pills = [].slice.call(document.querySelectorAll('.date-pill input[name="' + name + '"]'));
+        var lostRequired = false;
+        pills.forEach(function (input) {
+          var iso = isoOf(input.value);
+          if (!iso || iso >= today) return;
+          if (input.required) lostRequired = true;
+          var label = input.closest('.date-pill');
+          if (label && label.parentNode) label.parentNode.removeChild(label);
+          else input.disabled = true;
+        });
+        if (lostRequired) {
+          var next = document.querySelector('.date-pill input[name="' + name + '"]:not([disabled])');
+          if (next) next.required = true;
+        }
+      });
+    })();
 
     /* ---- Sunday class: live availability ticker + 1st/2nd choice ---- */
     (function () {

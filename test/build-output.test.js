@@ -409,6 +409,52 @@ test('analytics loads on public pages but never on the cancel page', () => {
     'the cancel page address carries a booking id and signature — it must not be reported anywhere');
 });
 
+/* ---------------------------------------------------------------
+   js/main.js — a refused booking tells the guest WHY (2026-10-15)
+
+   A guest asked for 5 seats on a Sunday with 4 left. api/send.js answered
+   409 with "Only 4 seats left for that class — please lower your guest count",
+   and the page threw that away and showed "Something went wrong — email us".
+   She emailed. These read the served script rather than drive a browser (the
+   repo has no DOM harness), so they pin the two lines that matter: the reply's
+   `error` reaches the .form-error element, and a date pill already in the past
+   (the pages are built at push time and go stale) is taken off the form against
+   Edmonton's date, not the visitor's.
+   --------------------------------------------------------------- */
+
+const mainJs = read('js/main.js');
+const submitHandler = (() => {
+  const at = mainJs.indexOf("form[data-formsubmit]");
+  const end = mainJs.indexOf("/* ----", at + 1);
+  return mainJs.slice(at, end > -1 ? end : at + 4000);
+})();
+
+test('the submit handler puts the server\'s refusal reason in front of the guest', () => {
+  assert.ok(submitHandler.indexOf('r.error') > -1,
+    'the refused reply\'s `error` is never read — the guest gets the generic line whatever the server said');
+  assert.ok(/errorEl\.textContent\s*=/.test(submitHandler),
+    'nothing writes into .form-error, so the built-in "Something went wrong" is all a guest can ever see');
+});
+
+test('the generic error text is kept as the fallback, not deleted', () => {
+  assert.ok(submitHandler.indexOf('dataset.generic') > -1,
+    'no fallback kept: a network failure (no reply, no reason) would show an empty error box');
+  assert.ok(classes.indexOf('Something went wrong — please call us at (825) 888-4218') > -1,
+    'the built page lost its fallback error text');
+});
+
+test('past date pills are removed on load, judged by Edmonton\'s date', () => {
+  const at = mainJs.indexOf('drop the ones already in the past');
+  assert.ok(at > -1, 'no past-pill pass: a page built last week still offers last Sunday as bookable');
+  const block = mainJs.slice(at, mainJs.indexOf('live availability ticker', at));
+  assert.ok(block.indexOf("timeZone: 'America/Edmonton'") > -1, 'past pills judged by the visitor\'s clock, not the restaurant\'s');
+  ['class_date', 'class_date_2', 'drop_in_date'].forEach((name) => {
+    assert.ok(block.indexOf("'" + name + "'") > -1, 'the ' + name + ' pills are never checked');
+  });
+  assert.ok(block.indexOf('required = true') > -1,
+    'if the required pill is the one removed, nothing enforces "pick a date" any more');
+});
+
 if (failures.length) {
   console.error('\n' + failures.length + ' FAILED, ' + passed + ' passed\n');
   failures.forEach((f) => console.error('  ✗ ' + f.name + '\n      ' + f.message));

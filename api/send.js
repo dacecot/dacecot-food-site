@@ -49,6 +49,33 @@ async function sendEmail(key, { to, subject, html, text, replyTo }) {
   }
 }
 
+// Build and dispatch the admin notification (bell + push) for a captured
+// submission. Deep-links (`link`) match the admin's own view names.
+async function notifyNewSubmission(rec) {
+  if (!rec) return;
+  const dispatch = require('../lib/notify/dispatch');
+  const d = rec.details || {};
+  const name = rec.name || 'A guest';
+  const join = (parts) => parts.filter(Boolean).join(' · ');
+  let kind = 'inquiry', title = 'New inquiry', body = name, link = 'orders';
+  if (rec.type === 'reservation') {
+    const pending = d.approval_status === 'pending';
+    kind = pending ? 'reservation_request' : 'reservation';
+    title = pending ? 'Table request — needs your approval' : 'New reservation';
+    body = join([name, d.party_size, join([d.reservation_date, d.reservation_time])]);
+    link = pending ? 'reservations:requests' : 'reservations';
+  } else if (rec.type === 'class') {
+    kind = 'class'; title = 'New class booking';
+    body = join([name, d.guests, d.class_date]); link = 'classes';
+  } else if (rec.type === 'order') {
+    kind = 'order'; title = 'New pasta-shop order';
+    body = join([name, d.item, d.quantity ? '× ' + d.quantity : '', d.pickup_day]); link = 'orders';
+  } else if (rec.type === 'wholesale') {
+    kind = 'wholesale'; title = 'New wholesale enquiry'; body = name; link = 'orders';
+  }
+  await dispatch.notify({ kind: kind, title: title, body: body, link: link });
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -154,26 +181,22 @@ module.exports = async (req, res) => {
     try {
       const tablesLib = require('../lib/orders/tables');
       const ordersStore = require('../lib/orders/store');
+      const content = require('../lib/cms/content');
+      const capacity = require('../lib/orders/capacity');
       const R = require('../lib/orders/reservations');
       const tbls = await tablesLib.list();
-      const capacity = tbls.reduce((sum, t) => sum + (Number(t.seats) || 0), 0);
-      if (capacity > 0) {
+      const total = capacity.totalSeats(tbls, content);
+      if (total > 0) {
         await ordersStore.init();
         const reqDate = R.parseDate(data.reservation_date);
         const reqTime = R.parseTime(data.reservation_time);
         const party = parseInt(String(data.party_size || '').replace(/[^\d]/g, ''), 10) || 1;
         if (reqDate) {
-          const all = await ordersStore.list({ type: 'reservation' });
-          const overlapping = all.filter((s) => {
-            const det = s.details || {};
-            if (det.cancelled) return false;
-            if (R.parseDate(det.reservation_date) !== reqDate) return false;
-            const t = R.parseTime(det.reservation_time);
-            if (reqTime == null || t == null) return true; // unknown times: count them (safe)
-            return Math.abs(t - reqTime) < 120;
-          });
-          const seated = overlapping.reduce((sum, s) => sum + (parseInt(String(s.details.party_size || '').replace(/[^\d]/g, ''), 10) || 1), 0);
-          if (seated + party > capacity) {
+          // One shared pool: overlapping reservations AND a Sunday class both
+          // draw down the room's seats for the requested window.
+          const list = await ordersStore.list({});
+          const left = capacity.reservationSeatsLeft({ list, tables: tbls, content, dateISO: reqDate, timeMin: reqTime });
+          if (party > left) {
             return res.status(409).json({
               success: false,
               error: 'We’re fully booked around that time — please try a different time or day, or call us at (825) 888-4218 and we’ll do our best to fit you in.'
@@ -220,7 +243,9 @@ module.exports = async (req, res) => {
           success: false,
           error: schedule.isFull(data.class_date, list)
             ? 'That class is fully booked — please choose another Sunday.'
-            : 'That class date is no longer available — please refresh the page and pick one of the upcoming Sundays.'
+            : schedule.isClosed(data.class_date, list)
+              ? 'Booking has closed for that Sunday — classes close a few days before. Please choose a later Sunday.'
+              : 'That class date is no longer available — please refresh the page and pick one of the upcoming Sundays.'
         });
       }
       if (String(data.class_date_2 || '').trim()) {
@@ -229,7 +254,9 @@ module.exports = async (req, res) => {
             success: false,
             error: schedule.isFull(data.class_date_2, list)
               ? 'Your 2nd-choice Sunday is fully booked — please pick another one (or leave it blank).'
-              : 'Your 2nd-choice date is no longer available — please refresh the page and pick another Sunday (or leave it blank).'
+              : schedule.isClosed(data.class_date_2, list)
+                ? 'Booking has closed for your 2nd-choice Sunday — please pick a later one (or leave it blank).'
+                : 'Your 2nd-choice date is no longer available — please refresh the page and pick another Sunday (or leave it blank).'
           });
         }
         if (schedule.sameDay(data.class_date, data.class_date_2)) {
@@ -244,18 +271,22 @@ module.exports = async (req, res) => {
 
   // Sunday pasta classes have a hard capacity — reject bookings that would
   // overfill the class (the page shows live availability, but never trust it).
+  // Capped by BOTH the teaching cap (classMax) and the physical room: a class
+  // guest and a reservation share one seat (lib/orders/capacity.js).
   if (/class booking/i.test(String(data._subject || '')) && data.class_date) {
     try {
       const ordersStore = require('../lib/orders/store');
+      const tablesLib = require('../lib/orders/tables');
+      const content = require('../lib/cms/content');
+      const capacity = require('../lib/orders/capacity');
+      const R = require('../lib/orders/reservations');
       await ordersStore.init();
       let max = 12;
-      try { const content = require('../lib/cms/content'); const n = Number(content.get('classMax')); if (Number.isFinite(n) && n > 0) max = n; } catch (e) {}
+      try { const n = Number(content.get('classMax')); if (Number.isFinite(n) && n > 0) max = n; } catch (e) {}
       const requested = parseInt(String(data.guests || '').replace(/[^\d]/g, ''), 10) || 1;
-      const existing = await ordersStore.list({ type: 'class' });
-      const booked = existing
-        .filter((s) => s.details && !s.details.cancelled && String(s.details.class_date || '').trim() === String(data.class_date).trim())
-        .reduce((sum, s) => sum + (parseInt(String(s.details.guests || '').replace(/[^\d]/g, ''), 10) || 1), 0);
-      const left = Math.max(0, max - booked);
+      let tbls = []; try { tbls = await tablesLib.list(); } catch (e) {}
+      const list = await ordersStore.list({});
+      const left = capacity.classSeatsLeft({ list, tables: tbls, content, dateISO: R.parseDate(data.class_date), classMax: max });
       if (requested > left) {
         return res.status(409).json({
           success: false,
@@ -275,6 +306,8 @@ module.exports = async (req, res) => {
     await ordersStore.init();
     const rec = await ordersStore.record(normalize(data));
     submissionId = rec && rec.id;
+    // Raise a notification for Erika's bell (+ push, when enabled). Best-effort.
+    try { await notifyNewSubmission(rec); } catch (e) { console.error('notify failed (non-blocking)', e && e.message); }
   } catch (e) { console.error('order capture failed (non-blocking)', e && e.message); }
 
   const subject = String(data._subject || 'New message — da Cecot Food').slice(0, 200);

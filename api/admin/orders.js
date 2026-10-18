@@ -39,6 +39,16 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Could not load analytics.' });
       }
     }
+    // ?sub=notify → the notification bell feed (recent + unread count).
+    if (q.sub === 'notify') {
+      try {
+        const notify = require('../../lib/notify/notifications');
+        const [items, unread] = await Promise.all([notify.list({ limit: 40 }), notify.unreadCount()]);
+        let push = { configured: false, publicKey: '' };
+        try { const wp = require('../../lib/notify/webpush'); push = { configured: wp.configured(), publicKey: wp.publicKey() }; } catch (e) {}
+        return res.status(200).json({ ok: true, items, unread, push });
+      } catch (e) { return res.status(502).json({ error: 'Could not load notifications: ' + (e && e.message || e) }); }
+    }
     // ?sub=contacts → deduplicated people across every submission type.
     if (q.sub === 'contacts') {
       try {
@@ -115,6 +125,23 @@ module.exports = async (req, res) => {
 
     const id = String(body.id || '').trim();
     const action = String(body.action || '').trim();
+
+    // Notification bell: mark read / mark all read, and save/remove a push
+    // subscription (?sub=notify). Grouped here to add no new serverless file.
+    if (parseQuery(req).sub === 'notify') {
+      const notify = require('../../lib/notify/notifications');
+      try {
+        if (action === 'read') { await notify.markRead(Array.isArray(body.ids) ? body.ids : [body.id].filter(Boolean)); return res.status(200).json({ ok: true, unread: await notify.unreadCount() }); }
+        if (action === 'read_all') { await notify.markAllRead(); return res.status(200).json({ ok: true, unread: 0 }); }
+        if (action === 'subscribe' || action === 'unsubscribe' || action === 'vapid') {
+          const push = require('../../lib/notify/webpush');
+          if (action === 'vapid') return res.status(200).json({ ok: true, key: push.publicKey() });
+          if (action === 'subscribe') { await push.save(body.subscription); return res.status(200).json({ ok: true }); }
+          await push.remove(body.subscription); return res.status(200).json({ ok: true });
+        }
+        return res.status(400).json({ error: "Unknown notify action." });
+      } catch (e) { return res.status(502).json({ error: 'Notification update failed: ' + (e && e.message || e) }); }
+    }
 
     /* push_class — an under-filled Sunday can't run, so move its guests to the
        2nd choice each of them picked. Acts on a whole class date, not one id.
@@ -199,6 +226,13 @@ module.exports = async (req, res) => {
       } else if (action === 'mark_fulfilled') {
         const details = Object.assign({}, existing.details, { fulfilled: true, fulfilled_at: new Date().toISOString() });
         updated = await store.update(id, { details });
+      } else if (action === 'no_show') {
+        // A no-show frees the seat (capacity.js ignores it) and is kept on the
+        // guest's record. No email — telling a no-show they no-showed helps no one.
+        if (existing.type !== 'reservation') return res.status(400).json({ error: 'No-show applies to reservations only.' });
+        const details = Object.assign({}, existing.details, { no_show: true, no_show_at: new Date().toISOString() });
+        updated = await store.update(id, { details });
+        emailed = 'marked no-show';
       } else if (action === 'cancel') {
         const details = Object.assign({}, existing.details, { cancelled: true, cancelled_at: new Date().toISOString() });
         updated = await store.update(id, { details });

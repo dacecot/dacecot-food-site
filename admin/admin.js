@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var app = document.getElementById('app');
-  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, saving: null, dirty: {}, mustChange: false, canChange: false };
+  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, saving: null, dirty: {}, mustChange: false, canChange: false, unread: 0, notifications: [], _bellTimer: null, pushConfigured: false, vapidKey: '', pushOn: false, deferredInstall: null, _pwaInit: false };
 
   /* ---------- helpers ---------- */
   function h(tag, attrs, kids) {
@@ -95,7 +95,145 @@
       state.groups = r.body.groups; state.content = r.body.content || {}; state.base = JSON.parse(JSON.stringify(state.content));
       state.store = r.body.store; state.saving = r.body.saving || null; state.active = '__reservations'; state.dirty = {};
       renderShell();
+      startBell();
     });
+  }
+
+  /* ---------- notification bell ---------- */
+  function refreshUnread() {
+    return api('orders?sub=notify').then(function (r) {
+      if (r.status === 200 && r.body && r.body.ok) {
+        var prev = state.unread;
+        state.unread = r.body.unread || 0;
+        state.notifications = r.body.items || [];
+        if (r.body.push) { state.pushConfigured = !!r.body.push.configured; state.vapidKey = r.body.push.publicKey || ''; }
+        // Only touch the badge if the count changed and we're not already on the
+        // notifications view (which re-renders itself).
+        if (prev !== state.unread && state.active !== '__notifications') {
+          var badgeHost = document.querySelector('.navbtn--bell');
+          if (badgeHost) renderShell();
+        }
+      }
+    }).catch(function () {});
+  }
+  function startBell() {
+    refreshUnread();
+    if (!state._bellTimer) state._bellTimer = setInterval(refreshUnread, 60000);
+    initPwa();
+  }
+
+  /* ---------- PWA: install prompt + web push (Android) ---------- */
+  function urlB64ToU8(s) {
+    var pad = '='.repeat((4 - (s.length % 4)) % 4);
+    var b = (s + pad).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(b); var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+  function initPwa() {
+    if (state._pwaInit) return; state._pwaInit = true;
+    if ('serviceWorker' in navigator) {
+      // Default scope = the script's directory (/admin/). We don't need to
+      // control the page (no offline cache), only a registration to push to, so
+      // this avoids the broader-scope rejection and needs no special header.
+      navigator.serviceWorker.register('/admin/sw.js').then(function (reg) {
+        state._swreg = reg;
+        return reg.pushManager.getSubscription();
+      }).then(function (sub) { state.pushOn = !!sub; if (state.active === '__notifications') renderShell(); }).catch(function () {});
+      navigator.serviceWorker.addEventListener('message', function (ev) {
+        if (ev.data && ev.data.notif != null) goToLink(ev.data.notif);
+      });
+    }
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault(); state.deferredInstall = e;
+      if (state.active === '__notifications') renderShell();
+    });
+    window.addEventListener('appinstalled', function () { state.deferredInstall = null; });
+    // A notification tap may open /admin#<link>.
+    if (location.hash && location.hash.length > 1) {
+      setTimeout(function () { goToLink(location.hash.slice(1)); }, 50);
+    }
+  }
+  function installApp() {
+    var e = state.deferredInstall; if (!e) return;
+    e.prompt(); e.userChoice.then(function () { state.deferredInstall = null; renderShell(); });
+  }
+  function enablePush(btn) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { toast('This browser can’t send phone alerts.', 'err'); return; }
+    if (!state.pushConfigured || !state.vapidKey) { toast('Phone alerts aren’t switched on yet — ask your developer to add the keys.', 'err'); return; }
+    if (btn) btn.disabled = true;
+    var regP = state._swreg ? Promise.resolve(state._swreg) : navigator.serviceWorker.register('/admin/sw.js');
+    regP.then(function (reg) {
+      state._swreg = reg;
+      return Notification.requestPermission().then(function (perm) {
+        if (perm !== 'granted') { toast('Alerts are blocked — allow notifications for this site in your browser settings.', 'err'); return null; }
+        return reg.pushManager.getSubscription().then(function (existing) {
+          return existing || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(state.vapidKey) });
+        });
+      });
+    }).then(function (sub) {
+      if (!sub) return;
+      return api('orders?sub=notify', { method: 'POST', csrf: true, body: { action: 'subscribe', subscription: sub } }).then(function (r) {
+        if (r.status === 200 && r.body.ok) { state.pushOn = true; toast('Phone alerts are on for this device.', 'ok'); renderShell(); }
+        else toast('Could not turn on alerts — please try again.', 'err');
+      });
+    }).catch(function () { toast('Could not turn on alerts — please try again.', 'err'); })
+      .finally(function () { if (btn) btn.disabled = false; });
+  }
+  // Jump to the view a notification points at (e.g. 'reservations:requests').
+  function goToLink(link) {
+    var parts = String(link || '').split(':');
+    var view = parts[0];
+    if (view === 'reservations') { state.active = '__reservations'; if (parts[1]) resView = parts[1]; }
+    else if (view === 'classes') state.active = '__classes';
+    else if (view === 'orders') state.active = '__orders';
+    else state.active = '__orders';
+    renderShell();
+  }
+
+  function renderNotifications(main) {
+    main.appendChild(h('div', { class: 'page-head' }, [
+      h('h1', { text: 'Alerts' }),
+      h('p', { text: 'New reservations, orders, class bookings and reminders — newest first.' })
+    ]));
+    var items = state.notifications || [];
+
+    // Install + phone-alerts controls (shown when the device/browser supports them).
+    var controls = h('div', { class: 'pwa-controls' }, []);
+    if (state.deferredInstall) {
+      controls.appendChild(h('button', { class: 'btn btn--sm', text: '📲 Install this app', onclick: function () { installApp(); } }));
+    }
+    var canPush = ('serviceWorker' in navigator) && ('PushManager' in window);
+    if (canPush) {
+      if (state.pushOn) controls.appendChild(h('span', { class: 'pwa-ok', text: '🔔 Phone alerts on for this device' }));
+      else if (state.pushConfigured) controls.appendChild(h('button', { class: 'btn btn--sm btn--green', text: 'Turn on phone alerts', onclick: function () { enablePush(this); } }));
+      else controls.appendChild(h('span', { class: 'help', text: 'Phone alerts can be switched on once your developer adds the keys.' }));
+    }
+    if (controls.childNodes.length) main.appendChild(controls);
+
+    var head = h('div', { class: 'filter-row' }, [
+      h('button', { class: 'btn btn--sm btn--ghost', text: 'Mark all read', onclick: function () {
+        api('orders?sub=notify', { method: 'POST', csrf: true, body: { action: 'read_all' } }).then(function () { state.unread = 0; refreshUnread().then(function () { renderShell(); }); });
+      } })
+    ]);
+    main.appendChild(head);
+
+    if (!items.length) { main.appendChild(h('div', { class: 'card', text: 'No alerts yet — new bookings will show up here.' })); return; }
+    var list = h('div', { class: 'card res-day' }, []);
+    items.forEach(function (n) {
+      var when = ''; try { when = new Date(n.at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) {}
+      list.appendChild(h('div', { class: 'notif' + (n.read ? '' : ' notif--unread'), onclick: function () {
+        if (!n.read) api('orders?sub=notify', { method: 'POST', csrf: true, body: { action: 'read', ids: [n.id] } }).then(function () { refreshUnread(); });
+        goToLink(n.link);
+      } }, [
+        h('div', { class: 'notif__main' }, [
+          h('strong', { text: n.title }),
+          n.body ? h('span', { class: 'notif__body', text: n.body }) : null
+        ]),
+        h('span', { class: 'notif__when', text: when })
+      ]));
+    });
+    main.appendChild(list);
   }
 
   /* ---------- forced password change (first login on the starting password) ---------- */
@@ -142,6 +280,10 @@
   function renderShell() {
     var nav = h('nav', { class: 'side' }, []);
     nav.appendChild(h('div', { class: 'logo', text: 'da Cecot' }));
+    // The notification bell — new reservations, orders, class bookings, cutoffs.
+    var bellKids = [h('span', { class: 'ic', text: '🔔' }), h('span', { text: 'Alerts' })];
+    if (state.unread > 0) bellKids.push(h('span', { class: 'bell-badge', text: state.unread > 99 ? '99+' : String(state.unread) }));
+    nav.appendChild(h('button', { class: 'navbtn navbtn--bell' + (state.active === '__notifications' ? ' active' : ''), onclick: function () { state.active = '__notifications'; renderShell(); } }, bellKids));
     // Reservations + Orders first — the day-to-day views.
     nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__reservations' ? ' active' : ''), onclick: function () { state.active = '__reservations'; renderShell(); } }, [
       h('span', { class: 'ic', text: '🍽️' }), h('span', { text: 'Reservations' })
@@ -180,7 +322,8 @@
     if (state.saving && state.saving.ok === false && state.saving.reason) {
       main.appendChild(h('div', { class: 'notice', text: '⚠ ' + state.saving.reason + ' Reservations, classes, orders and contacts are unaffected — it is only Site Content that cannot publish.' }));
     }
-    if (state.active === '__orders') renderOrders(main);
+    if (state.active === '__notifications') renderNotifications(main);
+    else if (state.active === '__orders') renderOrders(main);
     else if (state.active === '__reservations') renderReservations(main);
     else if (state.active === '__classes') renderClasses(main);
     else if (state.active === '__contacts') renderContacts(main);
@@ -418,7 +561,7 @@
 
     var tabs = h('div', { class: 'filter-row' }, []);
     var requestsBtn;
-    [['today', 'Today'], ['week', 'This Week'], ['upcoming', 'All Upcoming'], ['past', 'Past'], ['requests', 'Requests'], ['__plan', 'Floor Plan'], ['__addimport', 'Add / Import']].forEach(function (t) {
+    [['today', 'Today'], ['week', 'This Week'], ['upcoming', 'All Upcoming'], ['past', 'Past'], ['requests', 'Requests'], ['__floor', 'Floor Status'], ['__reports', 'Reports'], ['__plan', 'Floor Plan'], ['__addimport', 'Add / Import']].forEach(function (t) {
       var b = h('button', { class: 'btn btn--sm ' + (resView === t[0] ? '' : 'btn--ghost'), onclick: function () { resView = t[0]; renderShell(); } }, [t[1]]);
       if (t[0] === 'requests') requestsBtn = b;
       tabs.appendChild(b);
@@ -428,6 +571,8 @@
     var wrap = h('div', {}, [h('div', { class: 'boot', text: 'Loading…' })]);
     main.appendChild(wrap);
 
+    if (resView === '__floor') { renderFloorStatus(wrap); return; }
+    if (resView === '__reports') { renderReports(wrap); return; }
     if (resView === '__plan') { renderFloorPlan(wrap); return; }
     if (resView === '__addimport') { renderAddImport(wrap); return; }
 
@@ -479,7 +624,8 @@
             else { panel.setAttribute('hidden', ''); caret.textContent = '▾'; }
           } });
 
-          var row = h('div', { class: 'res-row' + (d.cancelled ? ' res-row--cancelled' : '') }, [
+          var inactive = d.cancelled || d.no_show;
+          var row = h('div', { class: 'res-row' + (inactive ? ' res-row--cancelled' : '') }, [
             h('span', { class: 'res-time', text: d.reservation_time || '—' }),
             h('span', { class: 'res-name' }, [
               h('strong', { text: o.name || 'Unknown' }),
@@ -489,6 +635,8 @@
             h('span', { class: 'res-party', text: d.party_size || '' }),
             d.cancelled
               ? h('span', { class: 'chip chip--err', text: d.cancelled_by === 'guest' ? 'Cancelled by guest' : 'Cancelled' })
+              : d.no_show
+              ? h('span', { class: 'chip chip--err', text: 'No-show' })
               : d.approval_status === 'pending'
                 ? h('span', { class: 'res-approve' }, [
                     h('span', { class: 'chip chip--warn', text: 'Awaiting approval' }),
@@ -501,7 +649,7 @@
                   ])
                 : h('button', { class: 'btn btn--sm ' + (table ? 'btn--ghost' : 'btn--green'), text: table ? '🪑 ' + table.name : 'Seat', onclick: function () { openSeatPicker(o, r.body.tables, tablesById, day); } }),
             caret,
-            d.cancelled ? null : h('span', { class: 'res-more' }, [
+            inactive ? null : h('span', { class: 'res-more' }, [
               h('button', { class: 'btn btn--sm btn--ghost', text: '⋯', onclick: function () { openResActions(o); } })
             ])
           ]);
@@ -535,6 +683,10 @@
         var nd = window.prompt('New date (the guest will be emailed):', d.reservation_date || '');
         if (nd == null || !nd.trim()) return;
         m.close(); resAction(o.id, 'reschedule', { new_date: nd.trim() });
+      } }),
+      h('button', { class: 'btn btn--full btn--ghost', style: 'margin-top:10px', text: 'Mark no-show', onclick: function () {
+        if (!window.confirm('Mark ' + (o.name || 'this guest') + ' as a no-show? This frees the seat and is kept on their record. No email is sent.')) return;
+        m.close(); resAction(o.id, 'no_show');
       } }),
       h('button', { class: 'btn btn--full btn--danger', style: 'margin-top:10px', text: 'Cancel this reservation', onclick: function () {
         if (!window.confirm('Cancel ' + (o.name || 'this reservation') + (o.email ? ' and email the guest?' : '?'))) return;
@@ -581,6 +733,101 @@
         else toast((r.body && r.body.error) || 'Could not seat.', 'err');
       }).catch(function () { toast('Network error.', 'err'); });
     }
+  }
+
+  /* ---- reports: covers, no-shows, turns, class fill ---- */
+  function renderReports(wrap) {
+    api('reservations?sub=reports').then(function (r) {
+      wrap.innerHTML = '';
+      if (r.status !== 200 || !r.body.ok) { wrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load reports.' })); return; }
+      var b = r.body;
+      function stat(label, value, sub) { return h('div', { class: 'floorstat' }, [h('strong', { text: String(value) }), h('span', { text: label }), sub ? h('em', { class: 'floorstat__sub', text: sub }) : null]); }
+
+      wrap.appendChild(h('h3', { class: 'card-title', text: 'Covers' }));
+      wrap.appendChild(h('div', { class: 'floorstats' }, [
+        stat('covers today', b.covers.today, b.covers.resToday + ' booking' + (b.covers.resToday === 1 ? '' : 's')),
+        stat('covers this week', b.covers.week, b.covers.resWeek + ' booking' + (b.covers.resWeek === 1 ? '' : 's')),
+        stat('seated now', b.floor.coversNow, b.floor.occupied + ' table' + (b.floor.occupied === 1 ? '' : 's'))
+      ]));
+
+      wrap.appendChild(h('h3', { class: 'card-title', style: 'margin-top:18px', text: 'Service' }));
+      wrap.appendChild(h('div', { class: 'floorstats' }, [
+        stat('no-show rate', b.noShow.ratePct + '%', b.noShow.count + ' of ' + b.noShow.of + ' · 30 days'),
+        stat('turns today', b.floor.turnsToday, 'tables cleared'),
+        stat('avg turn', b.floor.avgTurnMin == null ? '–' : b.floor.avgTurnMin + ' min', 'time at table'),
+        stat('free now', b.floor.free, 'of ' + (b.floor.free + b.floor.occupied) + ' tables')
+      ]));
+
+      if (b.classFill && b.classFill.length) {
+        wrap.appendChild(h('h3', { class: 'card-title', style: 'margin-top:18px', text: 'Sunday class fill' }));
+        var card = h('div', { class: 'card' }, []);
+        b.classFill.forEach(function (c) {
+          var pct = c.max ? Math.min(100, Math.round(c.booked / c.max * 100)) : 0;
+          card.appendChild(h('div', { class: 'fillrow' }, [
+            h('span', { class: 'fillrow__label', text: c.label }),
+            h('div', { class: 'fillbar' }, [h('div', { class: 'fillbar__in' + (c.full ? ' fillbar__in--full' : ''), style: 'width:' + pct + '%' })]),
+            h('span', { class: 'fillrow__n', text: c.booked + '/' + c.max + (c.closed ? ' · closed' : c.full ? ' · full' : '') })
+          ]));
+        });
+        wrap.appendChild(card);
+      }
+    }).catch(function () { wrap.innerHTML = ''; wrap.appendChild(h('div', { class: 'notice', text: 'Could not load reports.' })); });
+  }
+
+  /* ---- floor status: live seat / clear + room metric ---- */
+  function renderFloorStatus(wrap) {
+    api('reservations?sub=tables').then(function (r) {
+      wrap.innerHTML = '';
+      if (r.status !== 200 || !r.body.ok) { wrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load the floor.' })); return; }
+      var tbls = r.body.tables || [];
+      var s = r.body.summary || {};
+
+      if (!tbls.length) {
+        wrap.appendChild(h('div', { class: 'notice', text: 'No tables yet — add them in the Floor Plan tab, then seat and clear them here during service.' }));
+        return;
+      }
+
+      // Live room metric.
+      function stat(label, value) { return h('div', { class: 'floorstat' }, [h('strong', { text: String(value) }), h('span', { text: label })]); }
+      wrap.appendChild(h('div', { class: 'floorstats' }, [
+        stat('free', s.free == null ? '–' : s.free),
+        stat('occupied', s.occupied == null ? '–' : s.occupied),
+        stat('covers now', s.coversNow == null ? '–' : s.coversNow),
+        stat('turns today', s.turnsToday == null ? '–' : s.turnsToday),
+        stat('avg turn', s.avgTurnMin == null ? '–' : s.avgTurnMin + ' min')
+      ]));
+
+      function since(iso) {
+        try { var m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 1 ? 'just now' : m + ' min'; } catch (e) { return ''; }
+      }
+      function act(id, action, extra, done) {
+        api('reservations?sub=tables', { method: 'POST', csrf: true, body: Object.assign({ action: action, id: id }, extra || {}) }).then(function (rr) {
+          if (rr.status === 200 && rr.body.ok) { renderShell(); }
+          else { toast((rr.body && rr.body.error) || 'Could not update.', 'err'); if (done) done(); }
+        }).catch(function () { toast('Network error.', 'err'); if (done) done(); });
+      }
+
+      var grid = h('div', { class: 'floorgrid' }, []);
+      tbls.forEach(function (t) {
+        var occ = t.status === 'occupied';
+        var tile = h('div', { class: 'tabletile ' + (occ ? 'tabletile--occ' : 'tabletile--free') }, [
+          h('div', { class: 'tabletile__name', text: t.name }),
+          h('div', { class: 'tabletile__meta', text: t.seats + ' seats' + (occ && t.occupied_party ? ' · ' + t.occupied_party + ' seated' : '') }),
+          occ ? h('div', { class: 'tabletile__since', text: t.occupied_at ? 'for ' + since(t.occupied_at) : 'occupied' }) : null,
+          occ
+            ? h('button', { class: 'btn btn--sm btn--green', text: 'Clear table', onclick: function (e) { e.stopPropagation(); this.disabled = true; act(t.id, 'clear'); } })
+            : h('button', { class: 'btn btn--sm', text: 'Seat', onclick: function (e) {
+                e.stopPropagation();
+                var p = window.prompt('How many guests at ' + t.name + '? (optional)', String(t.seats));
+                if (p === null) return;
+                act(t.id, 'occupy', { party: p });
+              } })
+        ]);
+        grid.appendChild(tile);
+      });
+      wrap.appendChild(grid);
+      wrap.appendChild(h('p', { class: 'res-totals', text: 'Tap Seat when guests sit down, Clear when they leave — the counts above update live, and each turn is timed for your records.' }));
+    }).catch(function () { wrap.innerHTML = ''; wrap.appendChild(h('div', { class: 'notice', text: 'Could not load the floor.' })); });
   }
 
   /* ---- floor plan editor ---- */

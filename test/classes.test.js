@@ -90,7 +90,7 @@ test('labels match the exact format stored on bookings', () => {
 });
 
 test('isBookable accepts any format naming a scheduled day, rejects others', () => {
-  const list = schedule.upcoming({ from: FROM, count: 5 });
+  const list = schedule.upcoming({ from: FROM, count: 5, today: '2000-01-01' });
   assert.ok(schedule.isBookable('Sunday, September 20, 2026', list));
   assert.ok(schedule.isBookable('2026-09-20', list), 'ISO form of a scheduled date');
   assert.ok(!schedule.isBookable('2026-10-04', list), 'a closed first Sunday');
@@ -118,7 +118,7 @@ test('a full Sunday stays on the list, flagged, while a blacked-out one leaves',
 });
 
 test('a full Sunday is not bookable, and isFull says why', () => {
-  const list = schedule.upcoming({ from: FROM, count: 5, fullDates: ['2026-09-20'] });
+  const list = schedule.upcoming({ from: FROM, count: 5, today: '2000-01-01', fullDates: ['2026-09-20'] });
   assert.ok(!schedule.isBookable('Sunday, September 20, 2026', list), 'the server must refuse a sold-out Sunday');
   assert.ok(!schedule.isBookable('2026-09-20', list), 'and in ISO form too');
   assert.ok(schedule.isFull('2026-09-20', list), 'isFull separates "sold out" from "not on the schedule"');
@@ -140,7 +140,7 @@ test('the CMS wiring reads classFullDates', () => {
   // typo in the key name would fail open — every date bookable, silently.
   const content = require('../lib/cms/content');
   const stored = content.list('classFullDates');
-  const list = schedule.fromContent(content, { from: FROM, count: 9 });
+  const list = schedule.fromContent(content, { from: FROM, count: 9, today: '2000-01-01' });
   stored.forEach((d) => {
     const hit = list.find((x) => schedule.sameDay(x.label, d));
     if (!hit) return; // outside the shown window — nothing to assert
@@ -359,7 +359,7 @@ async function emailTests() {
      blackouts and the fully-booked Sundays; plain upcoming() does not, so it
      can hand back a date api/send.js then refuses — failing these tests for a
      reason that has nothing to do with the confirmation emails they check. */
-  const days = schedule.fromContent(require('../lib/cms/content'), { count: 6 }).filter((d) => !d.full);
+  const days = schedule.fromContent(require('../lib/cms/content'), { count: 6 }).filter((d) => !d.full && !d.closed);
   assert.ok(days.length >= 2, 'need two bookable Sundays to test 1st/2nd choice — is every shown Sunday blacked out or full?');
 
   await (async () => {

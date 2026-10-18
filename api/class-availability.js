@@ -18,9 +18,17 @@ module.exports = async (req, res) => {
   try {
     await store.init();
     const max = classMax();
-    const all = await store.list({ type: 'class' });
+    const content = require('../lib/cms/content');
+    const capacity = require('../lib/orders/capacity');
+    const R = require('../lib/orders/reservations');
+    const tablesLib = require('../lib/orders/tables');
+    let tbls = []; try { tbls = await tablesLib.list(); } catch (e) {}
+    // All submissions: classes AND reservations, because a class shares the
+    // room's seats with reservations in its window (lib/orders/capacity.js).
+    const all = await store.list({});
     const dates = {};
     for (const s of all) {
+      if (s.type !== 'class') continue;
       const d = s.details || {};
       if (d.cancelled) continue;
       const date = String(d.class_date || '').trim();
@@ -28,8 +36,15 @@ module.exports = async (req, res) => {
       const guests = parseInt(String(d.guests || '').replace(/[^\d]/g, ''), 10) || 1;
       if (!dates[date]) dates[date] = { booked: 0, left: max };
       dates[date].booked += guests;
-      dates[date].left = Math.max(0, max - dates[date].booked);
     }
+    // Seats left per date via the shared pool (classMax AND the room minus any
+    // reservations in the class sitting). classSeatsLeft already nets off the
+    // guests booked, so this is the remaining count.
+    Object.keys(dates).forEach((label) => {
+      const iso = R.parseDate(label);
+      const left = iso ? capacity.classSeatsLeft({ list: all, tables: tbls, content, dateISO: iso, classMax: max }) : null;
+      dates[label].left = Number.isFinite(left) ? left : Math.max(0, max - dates[label].booked);
+    });
     // A Sunday marked fully booked in the CMS reports zero seats whatever the
     // bookings say. Without this the page would fetch the live count and
     // quietly re-open a date Erika had closed — the build-time pill says sold

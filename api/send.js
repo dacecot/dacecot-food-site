@@ -154,26 +154,22 @@ module.exports = async (req, res) => {
     try {
       const tablesLib = require('../lib/orders/tables');
       const ordersStore = require('../lib/orders/store');
+      const content = require('../lib/cms/content');
+      const capacity = require('../lib/orders/capacity');
       const R = require('../lib/orders/reservations');
       const tbls = await tablesLib.list();
-      const capacity = tbls.reduce((sum, t) => sum + (Number(t.seats) || 0), 0);
-      if (capacity > 0) {
+      const total = capacity.totalSeats(tbls, content);
+      if (total > 0) {
         await ordersStore.init();
         const reqDate = R.parseDate(data.reservation_date);
         const reqTime = R.parseTime(data.reservation_time);
         const party = parseInt(String(data.party_size || '').replace(/[^\d]/g, ''), 10) || 1;
         if (reqDate) {
-          const all = await ordersStore.list({ type: 'reservation' });
-          const overlapping = all.filter((s) => {
-            const det = s.details || {};
-            if (det.cancelled) return false;
-            if (R.parseDate(det.reservation_date) !== reqDate) return false;
-            const t = R.parseTime(det.reservation_time);
-            if (reqTime == null || t == null) return true; // unknown times: count them (safe)
-            return Math.abs(t - reqTime) < 120;
-          });
-          const seated = overlapping.reduce((sum, s) => sum + (parseInt(String(s.details.party_size || '').replace(/[^\d]/g, ''), 10) || 1), 0);
-          if (seated + party > capacity) {
+          // One shared pool: overlapping reservations AND a Sunday class both
+          // draw down the room's seats for the requested window.
+          const list = await ordersStore.list({});
+          const left = capacity.reservationSeatsLeft({ list, tables: tbls, content, dateISO: reqDate, timeMin: reqTime });
+          if (party > left) {
             return res.status(409).json({
               success: false,
               error: 'We’re fully booked around that time — please try a different time or day, or call us at (825) 888-4218 and we’ll do our best to fit you in.'
@@ -248,18 +244,22 @@ module.exports = async (req, res) => {
 
   // Sunday pasta classes have a hard capacity — reject bookings that would
   // overfill the class (the page shows live availability, but never trust it).
+  // Capped by BOTH the teaching cap (classMax) and the physical room: a class
+  // guest and a reservation share one seat (lib/orders/capacity.js).
   if (/class booking/i.test(String(data._subject || '')) && data.class_date) {
     try {
       const ordersStore = require('../lib/orders/store');
+      const tablesLib = require('../lib/orders/tables');
+      const content = require('../lib/cms/content');
+      const capacity = require('../lib/orders/capacity');
+      const R = require('../lib/orders/reservations');
       await ordersStore.init();
       let max = 12;
-      try { const content = require('../lib/cms/content'); const n = Number(content.get('classMax')); if (Number.isFinite(n) && n > 0) max = n; } catch (e) {}
+      try { const n = Number(content.get('classMax')); if (Number.isFinite(n) && n > 0) max = n; } catch (e) {}
       const requested = parseInt(String(data.guests || '').replace(/[^\d]/g, ''), 10) || 1;
-      const existing = await ordersStore.list({ type: 'class' });
-      const booked = existing
-        .filter((s) => s.details && !s.details.cancelled && String(s.details.class_date || '').trim() === String(data.class_date).trim())
-        .reduce((sum, s) => sum + (parseInt(String(s.details.guests || '').replace(/[^\d]/g, ''), 10) || 1), 0);
-      const left = Math.max(0, max - booked);
+      let tbls = []; try { tbls = await tablesLib.list(); } catch (e) {}
+      const list = await ordersStore.list({});
+      const left = capacity.classSeatsLeft({ list, tables: tbls, content, dateISO: R.parseDate(data.class_date), classMax: max });
       if (requested > left) {
         return res.status(409).json({
           success: false,

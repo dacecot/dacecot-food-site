@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var app = document.getElementById('app');
-  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, saving: null, dirty: {}, mustChange: false, canChange: false };
+  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, saving: null, dirty: {}, mustChange: false, canChange: false, unread: 0, notifications: [], _bellTimer: null };
 
   /* ---------- helpers ---------- */
   function h(tag, attrs, kids) {
@@ -95,7 +95,70 @@
       state.groups = r.body.groups; state.content = r.body.content || {}; state.base = JSON.parse(JSON.stringify(state.content));
       state.store = r.body.store; state.saving = r.body.saving || null; state.active = '__reservations'; state.dirty = {};
       renderShell();
+      startBell();
     });
+  }
+
+  /* ---------- notification bell ---------- */
+  function refreshUnread() {
+    return api('orders?sub=notify').then(function (r) {
+      if (r.status === 200 && r.body && r.body.ok) {
+        var prev = state.unread;
+        state.unread = r.body.unread || 0;
+        state.notifications = r.body.items || [];
+        // Only touch the badge if the count changed and we're not already on the
+        // notifications view (which re-renders itself).
+        if (prev !== state.unread && state.active !== '__notifications') {
+          var badgeHost = document.querySelector('.navbtn--bell');
+          if (badgeHost) renderShell();
+        }
+      }
+    }).catch(function () {});
+  }
+  function startBell() {
+    refreshUnread();
+    if (!state._bellTimer) state._bellTimer = setInterval(refreshUnread, 60000);
+  }
+  // Jump to the view a notification points at (e.g. 'reservations:requests').
+  function goToLink(link) {
+    var parts = String(link || '').split(':');
+    var view = parts[0];
+    if (view === 'reservations') { state.active = '__reservations'; if (parts[1]) resView = parts[1]; }
+    else if (view === 'classes') state.active = '__classes';
+    else if (view === 'orders') state.active = '__orders';
+    else state.active = '__orders';
+    renderShell();
+  }
+
+  function renderNotifications(main) {
+    main.appendChild(h('div', { class: 'page-head' }, [
+      h('h1', { text: 'Alerts' }),
+      h('p', { text: 'New reservations, orders, class bookings and reminders — newest first.' })
+    ]));
+    var items = state.notifications || [];
+    var head = h('div', { class: 'filter-row' }, [
+      h('button', { class: 'btn btn--sm btn--ghost', text: 'Mark all read', onclick: function () {
+        api('orders?sub=notify', { method: 'POST', csrf: true, body: { action: 'read_all' } }).then(function () { state.unread = 0; refreshUnread().then(function () { renderShell(); }); });
+      } })
+    ]);
+    main.appendChild(head);
+
+    if (!items.length) { main.appendChild(h('div', { class: 'card', text: 'No alerts yet — new bookings will show up here.' })); return; }
+    var list = h('div', { class: 'card res-day' }, []);
+    items.forEach(function (n) {
+      var when = ''; try { when = new Date(n.at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) {}
+      list.appendChild(h('div', { class: 'notif' + (n.read ? '' : ' notif--unread'), onclick: function () {
+        if (!n.read) api('orders?sub=notify', { method: 'POST', csrf: true, body: { action: 'read', ids: [n.id] } }).then(function () { refreshUnread(); });
+        goToLink(n.link);
+      } }, [
+        h('div', { class: 'notif__main' }, [
+          h('strong', { text: n.title }),
+          n.body ? h('span', { class: 'notif__body', text: n.body }) : null
+        ]),
+        h('span', { class: 'notif__when', text: when })
+      ]));
+    });
+    main.appendChild(list);
   }
 
   /* ---------- forced password change (first login on the starting password) ---------- */
@@ -142,6 +205,10 @@
   function renderShell() {
     var nav = h('nav', { class: 'side' }, []);
     nav.appendChild(h('div', { class: 'logo', text: 'da Cecot' }));
+    // The notification bell — new reservations, orders, class bookings, cutoffs.
+    var bellKids = [h('span', { class: 'ic', text: '🔔' }), h('span', { text: 'Alerts' })];
+    if (state.unread > 0) bellKids.push(h('span', { class: 'bell-badge', text: state.unread > 99 ? '99+' : String(state.unread) }));
+    nav.appendChild(h('button', { class: 'navbtn navbtn--bell' + (state.active === '__notifications' ? ' active' : ''), onclick: function () { state.active = '__notifications'; renderShell(); } }, bellKids));
     // Reservations + Orders first — the day-to-day views.
     nav.appendChild(h('button', { class: 'navbtn' + (state.active === '__reservations' ? ' active' : ''), onclick: function () { state.active = '__reservations'; renderShell(); } }, [
       h('span', { class: 'ic', text: '🍽️' }), h('span', { text: 'Reservations' })
@@ -180,7 +247,8 @@
     if (state.saving && state.saving.ok === false && state.saving.reason) {
       main.appendChild(h('div', { class: 'notice', text: '⚠ ' + state.saving.reason + ' Reservations, classes, orders and contacts are unaffected — it is only Site Content that cannot publish.' }));
     }
-    if (state.active === '__orders') renderOrders(main);
+    if (state.active === '__notifications') renderNotifications(main);
+    else if (state.active === '__orders') renderOrders(main);
     else if (state.active === '__reservations') renderReservations(main);
     else if (state.active === '__classes') renderClasses(main);
     else if (state.active === '__contacts') renderContacts(main);

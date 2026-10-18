@@ -49,6 +49,33 @@ async function sendEmail(key, { to, subject, html, text, replyTo }) {
   }
 }
 
+// Build and dispatch the admin notification (bell + push) for a captured
+// submission. Deep-links (`link`) match the admin's own view names.
+async function notifyNewSubmission(rec) {
+  if (!rec) return;
+  const dispatch = require('../lib/notify/dispatch');
+  const d = rec.details || {};
+  const name = rec.name || 'A guest';
+  const join = (parts) => parts.filter(Boolean).join(' · ');
+  let kind = 'inquiry', title = 'New inquiry', body = name, link = 'orders';
+  if (rec.type === 'reservation') {
+    const pending = d.approval_status === 'pending';
+    kind = pending ? 'reservation_request' : 'reservation';
+    title = pending ? 'Table request — needs your approval' : 'New reservation';
+    body = join([name, d.party_size, join([d.reservation_date, d.reservation_time])]);
+    link = pending ? 'reservations:requests' : 'reservations';
+  } else if (rec.type === 'class') {
+    kind = 'class'; title = 'New class booking';
+    body = join([name, d.guests, d.class_date]); link = 'classes';
+  } else if (rec.type === 'order') {
+    kind = 'order'; title = 'New pasta-shop order';
+    body = join([name, d.item, d.quantity ? '× ' + d.quantity : '', d.pickup_day]); link = 'orders';
+  } else if (rec.type === 'wholesale') {
+    kind = 'wholesale'; title = 'New wholesale enquiry'; body = name; link = 'orders';
+  }
+  await dispatch.notify({ kind: kind, title: title, body: body, link: link });
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -279,6 +306,8 @@ module.exports = async (req, res) => {
     await ordersStore.init();
     const rec = await ordersStore.record(normalize(data));
     submissionId = rec && rec.id;
+    // Raise a notification for Erika's bell (+ push, when enabled). Best-effort.
+    try { await notifyNewSubmission(rec); } catch (e) { console.error('notify failed (non-blocking)', e && e.message); }
   } catch (e) { console.error('order capture failed (non-blocking)', e && e.message); }
 
   const subject = String(data._subject || 'New message — da Cecot Food').slice(0, 200);

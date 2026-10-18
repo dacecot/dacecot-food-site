@@ -29,7 +29,7 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/styles.min.css?v=1792102506664">
+  <link rel="stylesheet" href="css/styles.min.css?v=1792357439433">
   <!-- Vercel Web Analytics (cookieless). va() queues events until the script loads. -->
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
@@ -121,8 +121,8 @@
             <fieldset class="date-picker">
               <legend class="date-picker__legend">1st choice — the class you want</legend>
               <div class="date-picker__grid">
-                <label class="date-pill"><input type="radio" name="class_date" value="Sunday, October 18, 2026" required><span>Sun · Oct 18</span></label>
-                <label class="date-pill"><input type="radio" name="class_date" value="Sunday, October 25, 2026"><span>Sun · Oct 25</span></label>
+                <label class="date-pill date-pill--full" style="opacity:0.45; pointer-events:none;"><input type="radio" name="class_date" value="Sunday, October 18, 2026" disabled data-closed="1"><span>Sun · Oct 18<em style="display:block;font-style:normal;font-size:0.72em;opacity:0.8;margin-top:2px;">Booking closed</em></span></label>
+                <label class="date-pill"><input type="radio" name="class_date" value="Sunday, October 25, 2026" required><span>Sun · Oct 25</span></label>
                 <label class="date-pill"><input type="radio" name="class_date" value="Sunday, November 1, 2026"><span>Sun · Nov 1</span></label>
                 <label class="date-pill"><input type="radio" name="class_date" value="Sunday, November 8, 2026"><span>Sun · Nov 8</span></label>
                 <label class="date-pill"><input type="radio" name="class_date" value="Sunday, November 15, 2026"><span>Sun · Nov 15</span></label>
@@ -136,7 +136,7 @@
             <fieldset class="date-picker date-picker--alt" style="margin-top:20px;">
               <legend class="date-picker__legend">2nd choice — your backup <span style="font-weight:400;opacity:0.7;">(optional, but recommended)</span></legend>
               <div class="date-picker__grid" data-second-choice>
-                <label class="date-pill"><input type="radio" name="class_date_2" value="Sunday, October 18, 2026"><span>Sun · Oct 18</span></label>
+                <label class="date-pill date-pill--full" style="opacity:0.45; pointer-events:none;"><input type="radio" name="class_date_2" value="Sunday, October 18, 2026" disabled data-closed="1"><span>Sun · Oct 18<em style="display:block;font-style:normal;font-size:0.72em;opacity:0.8;margin-top:2px;">Booking closed</em></span></label>
                 <label class="date-pill"><input type="radio" name="class_date_2" value="Sunday, October 25, 2026"><span>Sun · Oct 25</span></label>
                 <label class="date-pill"><input type="radio" name="class_date_2" value="Sunday, November 1, 2026"><span>Sun · Nov 1</span></label>
                 <label class="date-pill"><input type="radio" name="class_date_2" value="Sunday, November 8, 2026"><span>Sun · Nov 8</span></label>
@@ -190,12 +190,12 @@
             <fieldset class="date-picker">
               <legend class="date-picker__legend">Choose your Thursday</legend>
               <div class="date-picker__grid">
-                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, October 15, 2026" required><span>Thu · Oct 15</span></label>
-                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, October 22, 2026"><span>Thu · Oct 22</span></label>
+                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, October 22, 2026" required><span>Thu · Oct 22</span></label>
                 <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, October 29, 2026"><span>Thu · Oct 29</span></label>
                 <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, November 5, 2026"><span>Thu · Nov 5</span></label>
                 <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, November 12, 2026"><span>Thu · Nov 12</span></label>
                 <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, November 19, 2026"><span>Thu · Nov 19</span></label>
+                <label class="date-pill"><input type="radio" name="drop_in_date" value="Thursday, November 26, 2026"><span>Thu · Nov 26</span></label>
               </div>
             </fieldset>
             <div class="field" style="margin-top:22px;">
@@ -307,6 +307,6 @@
   </footer>
 
   <button class="back-to-top" aria-label="Back to top">↑</button>
-  <script src="js/main.js?v=1792102506664"></script>
+  <script src="js/main.js?v=1792357439433"></script>
 </body>
 </html>

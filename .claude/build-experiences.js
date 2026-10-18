@@ -72,12 +72,16 @@ const CLASS_DATES = CLASS_SCHEDULE.map((d) => d.label);
    `required` rides on the first BOOKABLE pill. A disabled radio carrying it
    cannot satisfy the group, which would leave "pick a date" unenforceable. */
 function schedulePills(name, list, required) {
-  const firstBookable = list.findIndex((d) => !d.full);
-  return list.map((d, i) => (
-    d.full
-      ? `<label class="date-pill date-pill--full" style="opacity:0.45; pointer-events:none;"><input type="radio" name="${name}" value="${d.label}" disabled data-sold-out="1"><span>${d.short}<em style="display:block;font-style:normal;font-size:0.72em;opacity:0.8;margin-top:2px;">Fully booked</em></span></label>`
-      : `<label class="date-pill"><input type="radio" name="${name}" value="${d.label}"${i === firstBookable && required ? ' required' : ''}><span>${d.short}</span></label>`
-  )).join('\n                ');
+  const firstBookable = list.findIndex((d) => !d.full && !d.closed);
+  // Disabled pills keep their real value= so main.js can key the live count and
+  // the build tests can locate them; a disabled radio never submits anyway.
+  const greyed = (d, note, flag) =>
+    `<label class="date-pill date-pill--full" style="opacity:0.45; pointer-events:none;"><input type="radio" name="${name}" value="${d.label}" disabled ${flag}><span>${d.short}<em style="display:block;font-style:normal;font-size:0.72em;opacity:0.8;margin-top:2px;">${note}</em></span></label>`;
+  return list.map((d, i) => {
+    if (d.full) return greyed(d, 'Fully booked', 'data-sold-out="1"');
+    if (d.closed) return greyed(d, 'Booking closed', 'data-closed="1"');
+    return `<label class="date-pill"><input type="radio" name="${name}" value="${d.label}"${i === firstBookable && required ? ' required' : ''}><span>${d.short}</span></label>`;
+  }).join('\n                ');
 }
 
 // Same, for plain date strings (the Thursday drop-in still uses these).

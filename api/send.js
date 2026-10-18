@@ -220,7 +220,9 @@ module.exports = async (req, res) => {
           success: false,
           error: schedule.isFull(data.class_date, list)
             ? 'That class is fully booked — please choose another Sunday.'
-            : 'That class date is no longer available — please refresh the page and pick one of the upcoming Sundays.'
+            : schedule.isClosed(data.class_date, list)
+              ? 'Booking has closed for that Sunday — classes close a few days before. Please choose a later Sunday.'
+              : 'That class date is no longer available — please refresh the page and pick one of the upcoming Sundays.'
         });
       }
       if (String(data.class_date_2 || '').trim()) {
@@ -229,7 +231,9 @@ module.exports = async (req, res) => {
             success: false,
             error: schedule.isFull(data.class_date_2, list)
               ? 'Your 2nd-choice Sunday is fully booked — please pick another one (or leave it blank).'
-              : 'Your 2nd-choice date is no longer available — please refresh the page and pick another Sunday (or leave it blank).'
+              : schedule.isClosed(data.class_date_2, list)
+                ? 'Booking has closed for your 2nd-choice Sunday — please pick a later one (or leave it blank).'
+                : 'Your 2nd-choice date is no longer available — please refresh the page and pick another Sunday (or leave it blank).'
           });
         }
         if (schedule.sameDay(data.class_date, data.class_date_2)) {

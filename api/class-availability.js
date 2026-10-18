@@ -38,9 +38,9 @@ module.exports = async (req, res) => {
       const content = require('../lib/cms/content');
       const schedule = require('../lib/classes/schedule');
       schedule.fromContent(content).forEach((d) => {
-        if (!d.full) return;
+        if (!d.full && !d.closed) return;
         const cur = dates[d.label] || { booked: 0, left: max };
-        dates[d.label] = { booked: cur.booked, left: 0, full: true };
+        dates[d.label] = { booked: cur.booked, left: 0, full: !!d.full, closed: !!d.closed };
       });
     } catch (e) { console.error('class full-date overlay failed', e && e.message); }
 

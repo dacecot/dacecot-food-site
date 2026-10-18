@@ -487,6 +487,9 @@
             // re-labelling it here would stack a second tag on top, and reading
             // the live count would quietly re-open a date she closed.
             if (input.dataset.soldOut === '1') { avail[input.value] = 0; return; }
+            // Past its booking cutoff — built greyed with its own "Booking
+            // closed" tag. Leave it; the live count must not re-open it.
+            if (input.dataset.closed === '1') { avail[input.value] = 0; return; }
             avail[input.value] = info.left;
             var label = input.closest('.date-pill');
             var span = label && label.querySelector('span');

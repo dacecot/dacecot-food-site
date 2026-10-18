@@ -29,5 +29,6 @@
   "hoursTue": "closed",
   "hoursThu": "12:00-15:00, 16:00-20:00",
   "hoursSat": "12:00-16:00, 17:00-21:00",
-  "hoursSun": "12:00-16:00, 17:00-21:00"
+  "hoursSun": "12:00-16:00, 17:00-21:00",
+  "classCutoffDaysBefore": 6
 }

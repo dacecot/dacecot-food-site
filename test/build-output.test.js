@@ -168,7 +168,12 @@ test('each full Sunday renders disabled, flagged and labelled', () => {
 test('Sundays that are NOT full stay bookable', () => {
   // The control. A generator that disabled every pill would pass the test above.
   const fullLabels = fullOnPage.map((d) => d.label);
-  const open = pills(classes).filter((p) => !fullLabels.some((l) => p.indexOf('value="' + l + '"') > -1));
+  // Truly-open pills only: neither full (sold out) nor closed (past the booking
+  // cutoff). Both are legitimately disabled; the control is the rest.
+  const open = pills(classes).filter((p) =>
+    !fullLabels.some((l) => p.indexOf('value="' + l + '"') > -1) &&
+    p.indexOf('data-closed="1"') === -1 &&
+    p.indexOf('data-sold-out="1"') === -1);
   assert.ok(open.length > 0, 'every single date pill is disabled — nobody can book anything');
   open.forEach((p) => {
     assert.strictEqual(p.indexOf(' disabled'), -1, 'an open date was rendered disabled: ' + p.slice(0, 120));

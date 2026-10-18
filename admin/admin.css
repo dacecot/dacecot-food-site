@@ -193,6 +193,20 @@ textarea { min-height: 96px; resize: vertical; }
 .card-title { margin: 0 0 12px; color: var(--brown); font-size: 1.1rem; }
 
 /* ---------- Floor plan ---------- */
+/* Floor status — live seat/clear */
+.floorstats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.floorstat { flex: 1 1 auto; min-width: 78px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; text-align: center; }
+.floorstat strong { display: block; font-size: 1.35rem; color: var(--brown); line-height: 1.1; }
+.floorstat span { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.floorgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.tabletile { border-radius: 14px; padding: 14px; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.tabletile--free { background: var(--paper); }
+.tabletile--occ { background: rgba(173, 82, 23, 0.10); border-color: rgba(173, 82, 23, 0.4); }
+.tabletile__name { font-weight: 700; color: var(--brown); font-size: 1.05rem; }
+.tabletile__meta { font-size: 0.82rem; color: var(--muted); }
+.tabletile__since { font-size: 0.78rem; color: var(--terracotta); font-weight: 600; }
+.tabletile .btn { margin-top: 8px; }
+
 .floor-wrap { padding: 10px; }
 .floor { width: 100%; height: auto; display: block; background:
   repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(74,30,24,0.05) 20px),

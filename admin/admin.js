@@ -418,7 +418,7 @@
 
     var tabs = h('div', { class: 'filter-row' }, []);
     var requestsBtn;
-    [['today', 'Today'], ['week', 'This Week'], ['upcoming', 'All Upcoming'], ['past', 'Past'], ['requests', 'Requests'], ['__plan', 'Floor Plan'], ['__addimport', 'Add / Import']].forEach(function (t) {
+    [['today', 'Today'], ['week', 'This Week'], ['upcoming', 'All Upcoming'], ['past', 'Past'], ['requests', 'Requests'], ['__floor', 'Floor Status'], ['__plan', 'Floor Plan'], ['__addimport', 'Add / Import']].forEach(function (t) {
       var b = h('button', { class: 'btn btn--sm ' + (resView === t[0] ? '' : 'btn--ghost'), onclick: function () { resView = t[0]; renderShell(); } }, [t[1]]);
       if (t[0] === 'requests') requestsBtn = b;
       tabs.appendChild(b);
@@ -428,6 +428,7 @@
     var wrap = h('div', {}, [h('div', { class: 'boot', text: 'Loading…' })]);
     main.appendChild(wrap);
 
+    if (resView === '__floor') { renderFloorStatus(wrap); return; }
     if (resView === '__plan') { renderFloorPlan(wrap); return; }
     if (resView === '__addimport') { renderAddImport(wrap); return; }
 
@@ -581,6 +582,62 @@
         else toast((r.body && r.body.error) || 'Could not seat.', 'err');
       }).catch(function () { toast('Network error.', 'err'); });
     }
+  }
+
+  /* ---- floor status: live seat / clear + room metric ---- */
+  function renderFloorStatus(wrap) {
+    api('reservations?sub=tables').then(function (r) {
+      wrap.innerHTML = '';
+      if (r.status !== 200 || !r.body.ok) { wrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load the floor.' })); return; }
+      var tbls = r.body.tables || [];
+      var s = r.body.summary || {};
+
+      if (!tbls.length) {
+        wrap.appendChild(h('div', { class: 'notice', text: 'No tables yet — add them in the Floor Plan tab, then seat and clear them here during service.' }));
+        return;
+      }
+
+      // Live room metric.
+      function stat(label, value) { return h('div', { class: 'floorstat' }, [h('strong', { text: String(value) }), h('span', { text: label })]); }
+      wrap.appendChild(h('div', { class: 'floorstats' }, [
+        stat('free', s.free == null ? '–' : s.free),
+        stat('occupied', s.occupied == null ? '–' : s.occupied),
+        stat('covers now', s.coversNow == null ? '–' : s.coversNow),
+        stat('turns today', s.turnsToday == null ? '–' : s.turnsToday),
+        stat('avg turn', s.avgTurnMin == null ? '–' : s.avgTurnMin + ' min')
+      ]));
+
+      function since(iso) {
+        try { var m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 1 ? 'just now' : m + ' min'; } catch (e) { return ''; }
+      }
+      function act(id, action, extra, done) {
+        api('reservations?sub=tables', { method: 'POST', csrf: true, body: Object.assign({ action: action, id: id }, extra || {}) }).then(function (rr) {
+          if (rr.status === 200 && rr.body.ok) { renderShell(); }
+          else { toast((rr.body && rr.body.error) || 'Could not update.', 'err'); if (done) done(); }
+        }).catch(function () { toast('Network error.', 'err'); if (done) done(); });
+      }
+
+      var grid = h('div', { class: 'floorgrid' }, []);
+      tbls.forEach(function (t) {
+        var occ = t.status === 'occupied';
+        var tile = h('div', { class: 'tabletile ' + (occ ? 'tabletile--occ' : 'tabletile--free') }, [
+          h('div', { class: 'tabletile__name', text: t.name }),
+          h('div', { class: 'tabletile__meta', text: t.seats + ' seats' + (occ && t.occupied_party ? ' · ' + t.occupied_party + ' seated' : '') }),
+          occ ? h('div', { class: 'tabletile__since', text: t.occupied_at ? 'for ' + since(t.occupied_at) : 'occupied' }) : null,
+          occ
+            ? h('button', { class: 'btn btn--sm btn--green', text: 'Clear table', onclick: function (e) { e.stopPropagation(); this.disabled = true; act(t.id, 'clear'); } })
+            : h('button', { class: 'btn btn--sm', text: 'Seat', onclick: function (e) {
+                e.stopPropagation();
+                var p = window.prompt('How many guests at ' + t.name + '? (optional)', String(t.seats));
+                if (p === null) return;
+                act(t.id, 'occupy', { party: p });
+              } })
+        ]);
+        grid.appendChild(tile);
+      });
+      wrap.appendChild(grid);
+      wrap.appendChild(h('p', { class: 'res-totals', text: 'Tap Seat when guests sit down, Clear when they leave — the counts above update live, and each turn is timed for your records.' }));
+    }).catch(function () { wrap.innerHTML = ''; wrap.appendChild(h('div', { class: 'notice', text: 'Could not load the floor.' })); });
   }
 
   /* ---- floor plan editor ---- */

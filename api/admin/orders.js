@@ -226,6 +226,13 @@ module.exports = async (req, res) => {
       } else if (action === 'mark_fulfilled') {
         const details = Object.assign({}, existing.details, { fulfilled: true, fulfilled_at: new Date().toISOString() });
         updated = await store.update(id, { details });
+      } else if (action === 'no_show') {
+        // A no-show frees the seat (capacity.js ignores it) and is kept on the
+        // guest's record. No email — telling a no-show they no-showed helps no one.
+        if (existing.type !== 'reservation') return res.status(400).json({ error: 'No-show applies to reservations only.' });
+        const details = Object.assign({}, existing.details, { no_show: true, no_show_at: new Date().toISOString() });
+        updated = await store.update(id, { details });
+        emailed = 'marked no-show';
       } else if (action === 'cancel') {
         const details = Object.assign({}, existing.details, { cancelled: true, cancelled_at: new Date().toISOString() });
         updated = await store.update(id, { details });

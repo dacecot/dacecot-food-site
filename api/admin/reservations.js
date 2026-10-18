@@ -88,6 +88,52 @@ function mapWixRow(o) {
 
 const tablesHandler = require('../../lib/cms/handlers/tables');
 
+// Simple operational reporting — covers, no-show rate, table turns, class fill.
+async function buildReports() {
+  const tables = require('../../lib/orders/tables');
+  const capacity = require('../../lib/orders/capacity');
+  const schedule = require('../../lib/classes/schedule');
+  const content = require('../../lib/cms/content');
+  const all = await store.list({});
+  const reservations = all.filter((s) => s.type === 'reservation');
+  const party = (r) => { const n = parseInt(String(r.details && r.details.party_size || '').replace(/[^\d]/g, ''), 10); return Number.isFinite(n) && n > 0 ? n : 1; };
+  const active = (r) => r.details && !r.details.cancelled && !r.details.no_show;
+  const today = R.todayISO();
+  const weekEnd = R.addDaysISO(today, 6);
+  const ago30 = R.addDaysISO(today, -30);
+
+  const inRange = (r, a, b) => { const d = R.resDate(r); return d && d >= a && d <= b; };
+  const coversToday = reservations.filter((r) => active(r) && R.resDate(r) === today).reduce((s, r) => s + party(r), 0);
+  const coversWeek = reservations.filter((r) => active(r) && inRange(r, today, weekEnd)).reduce((s, r) => s + party(r), 0);
+  const resToday = reservations.filter((r) => active(r) && R.resDate(r) === today).length;
+  const resWeek = reservations.filter((r) => active(r) && inRange(r, today, weekEnd)).length;
+
+  // No-show rate over the last 30 days: no-shows ÷ (reservations that were due
+  // and not cancelled). Only days that have resolved — today's bookings haven't
+  // happened yet — and cancellations don't count against the rate.
+  const yesterday = R.addDaysISO(today, -1);
+  const due30 = reservations.filter((r) => !(r.details && r.details.cancelled) && inRange(r, ago30, yesterday));
+  const noShows30 = due30.filter((r) => r.details && r.details.no_show).length;
+  const noShowRatePct = due30.length ? Math.round((noShows30 / due30.length) * 100) : 0;
+
+  const floor = await tables.statusSummary();
+
+  const classMax = (() => { const n = Number(content.get('classMax')); return Number.isFinite(n) && n > 0 ? n : 12; })();
+  const classFill = schedule.fromContent(content).slice(0, 6).map((d) => ({
+    label: d.short, full: !!d.full, closed: !!d.closed,
+    booked: classMax - capacity.classSeatsLeft({ list: all, tables: [], content, dateISO: d.iso, classMax: classMax }),
+    max: classMax
+  }));
+
+  return {
+    ok: true, today,
+    covers: { today: coversToday, week: coversWeek, resToday, resWeek },
+    noShow: { ratePct: noShowRatePct, count: noShows30, of: due30.length, days: 30 },
+    floor: { free: floor.free, occupied: floor.occupied, coversNow: floor.coversNow, turnsToday: floor.turnsToday, avgTurnMin: floor.avgTurnMin },
+    classFill
+  };
+}
+
 module.exports = async (req, res) => {
   // ?sub=tables → the floor-plan tables sub-endpoint (kept in this function to
   // stay under Vercel Hobby's 12-function deployment cap).
@@ -98,6 +144,11 @@ module.exports = async (req, res) => {
     const qs = (req.url || '').split('?')[1] || '';
     if (/(?:^|[?&])pause=1(?:&|$)/.test(qs)) {
       return res.status(200).json({ ok: true, pause: await pause.status(), options: pause.OPTIONS });
+    }
+    // ?sub=reports → covers, no-show rate, table turns and class fill.
+    if (/(?:^|[?&])sub=reports(?:&|$)/.test(qs)) {
+      try { return res.status(200).json(await buildReports()); }
+      catch (e) { return res.status(502).json({ error: 'Could not build reports: ' + (e && e.message || e) }); }
     }
     const view = (/view=([a-z]+)/.exec(qs) || [])[1] || 'week';
     try {

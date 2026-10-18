@@ -561,7 +561,7 @@
 
     var tabs = h('div', { class: 'filter-row' }, []);
     var requestsBtn;
-    [['today', 'Today'], ['week', 'This Week'], ['upcoming', 'All Upcoming'], ['past', 'Past'], ['requests', 'Requests'], ['__floor', 'Floor Status'], ['__plan', 'Floor Plan'], ['__addimport', 'Add / Import']].forEach(function (t) {
+    [['today', 'Today'], ['week', 'This Week'], ['upcoming', 'All Upcoming'], ['past', 'Past'], ['requests', 'Requests'], ['__floor', 'Floor Status'], ['__reports', 'Reports'], ['__plan', 'Floor Plan'], ['__addimport', 'Add / Import']].forEach(function (t) {
       var b = h('button', { class: 'btn btn--sm ' + (resView === t[0] ? '' : 'btn--ghost'), onclick: function () { resView = t[0]; renderShell(); } }, [t[1]]);
       if (t[0] === 'requests') requestsBtn = b;
       tabs.appendChild(b);
@@ -572,6 +572,7 @@
     main.appendChild(wrap);
 
     if (resView === '__floor') { renderFloorStatus(wrap); return; }
+    if (resView === '__reports') { renderReports(wrap); return; }
     if (resView === '__plan') { renderFloorPlan(wrap); return; }
     if (resView === '__addimport') { renderAddImport(wrap); return; }
 
@@ -623,7 +624,8 @@
             else { panel.setAttribute('hidden', ''); caret.textContent = '▾'; }
           } });
 
-          var row = h('div', { class: 'res-row' + (d.cancelled ? ' res-row--cancelled' : '') }, [
+          var inactive = d.cancelled || d.no_show;
+          var row = h('div', { class: 'res-row' + (inactive ? ' res-row--cancelled' : '') }, [
             h('span', { class: 'res-time', text: d.reservation_time || '—' }),
             h('span', { class: 'res-name' }, [
               h('strong', { text: o.name || 'Unknown' }),
@@ -633,6 +635,8 @@
             h('span', { class: 'res-party', text: d.party_size || '' }),
             d.cancelled
               ? h('span', { class: 'chip chip--err', text: d.cancelled_by === 'guest' ? 'Cancelled by guest' : 'Cancelled' })
+              : d.no_show
+              ? h('span', { class: 'chip chip--err', text: 'No-show' })
               : d.approval_status === 'pending'
                 ? h('span', { class: 'res-approve' }, [
                     h('span', { class: 'chip chip--warn', text: 'Awaiting approval' }),
@@ -645,7 +649,7 @@
                   ])
                 : h('button', { class: 'btn btn--sm ' + (table ? 'btn--ghost' : 'btn--green'), text: table ? '🪑 ' + table.name : 'Seat', onclick: function () { openSeatPicker(o, r.body.tables, tablesById, day); } }),
             caret,
-            d.cancelled ? null : h('span', { class: 'res-more' }, [
+            inactive ? null : h('span', { class: 'res-more' }, [
               h('button', { class: 'btn btn--sm btn--ghost', text: '⋯', onclick: function () { openResActions(o); } })
             ])
           ]);
@@ -679,6 +683,10 @@
         var nd = window.prompt('New date (the guest will be emailed):', d.reservation_date || '');
         if (nd == null || !nd.trim()) return;
         m.close(); resAction(o.id, 'reschedule', { new_date: nd.trim() });
+      } }),
+      h('button', { class: 'btn btn--full btn--ghost', style: 'margin-top:10px', text: 'Mark no-show', onclick: function () {
+        if (!window.confirm('Mark ' + (o.name || 'this guest') + ' as a no-show? This frees the seat and is kept on their record. No email is sent.')) return;
+        m.close(); resAction(o.id, 'no_show');
       } }),
       h('button', { class: 'btn btn--full btn--danger', style: 'margin-top:10px', text: 'Cancel this reservation', onclick: function () {
         if (!window.confirm('Cancel ' + (o.name || 'this reservation') + (o.email ? ' and email the guest?' : '?'))) return;
@@ -725,6 +733,45 @@
         else toast((r.body && r.body.error) || 'Could not seat.', 'err');
       }).catch(function () { toast('Network error.', 'err'); });
     }
+  }
+
+  /* ---- reports: covers, no-shows, turns, class fill ---- */
+  function renderReports(wrap) {
+    api('reservations?sub=reports').then(function (r) {
+      wrap.innerHTML = '';
+      if (r.status !== 200 || !r.body.ok) { wrap.appendChild(h('div', { class: 'notice', text: (r.body && r.body.error) || 'Could not load reports.' })); return; }
+      var b = r.body;
+      function stat(label, value, sub) { return h('div', { class: 'floorstat' }, [h('strong', { text: String(value) }), h('span', { text: label }), sub ? h('em', { class: 'floorstat__sub', text: sub }) : null]); }
+
+      wrap.appendChild(h('h3', { class: 'card-title', text: 'Covers' }));
+      wrap.appendChild(h('div', { class: 'floorstats' }, [
+        stat('covers today', b.covers.today, b.covers.resToday + ' booking' + (b.covers.resToday === 1 ? '' : 's')),
+        stat('covers this week', b.covers.week, b.covers.resWeek + ' booking' + (b.covers.resWeek === 1 ? '' : 's')),
+        stat('seated now', b.floor.coversNow, b.floor.occupied + ' table' + (b.floor.occupied === 1 ? '' : 's'))
+      ]));
+
+      wrap.appendChild(h('h3', { class: 'card-title', style: 'margin-top:18px', text: 'Service' }));
+      wrap.appendChild(h('div', { class: 'floorstats' }, [
+        stat('no-show rate', b.noShow.ratePct + '%', b.noShow.count + ' of ' + b.noShow.of + ' · 30 days'),
+        stat('turns today', b.floor.turnsToday, 'tables cleared'),
+        stat('avg turn', b.floor.avgTurnMin == null ? '–' : b.floor.avgTurnMin + ' min', 'time at table'),
+        stat('free now', b.floor.free, 'of ' + (b.floor.free + b.floor.occupied) + ' tables')
+      ]));
+
+      if (b.classFill && b.classFill.length) {
+        wrap.appendChild(h('h3', { class: 'card-title', style: 'margin-top:18px', text: 'Sunday class fill' }));
+        var card = h('div', { class: 'card' }, []);
+        b.classFill.forEach(function (c) {
+          var pct = c.max ? Math.min(100, Math.round(c.booked / c.max * 100)) : 0;
+          card.appendChild(h('div', { class: 'fillrow' }, [
+            h('span', { class: 'fillrow__label', text: c.label }),
+            h('div', { class: 'fillbar' }, [h('div', { class: 'fillbar__in' + (c.full ? ' fillbar__in--full' : ''), style: 'width:' + pct + '%' })]),
+            h('span', { class: 'fillrow__n', text: c.booked + '/' + c.max + (c.closed ? ' · closed' : c.full ? ' · full' : '') })
+          ]));
+        });
+        wrap.appendChild(card);
+      }
+    }).catch(function () { wrap.innerHTML = ''; wrap.appendChild(h('div', { class: 'notice', text: 'Could not load reports.' })); });
   }
 
   /* ---- floor status: live seat / clear + room metric ---- */

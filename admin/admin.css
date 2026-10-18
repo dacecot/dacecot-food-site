@@ -193,6 +193,10 @@ textarea { min-height: 96px; resize: vertical; }
 .card-title { margin: 0 0 12px; color: var(--brown); font-size: 1.1rem; }
 
 /* ---------- Floor plan ---------- */
+/* PWA install + alerts controls */
+.pwa-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.pwa-ok { font-size: 0.9rem; color: var(--ok); font-weight: 600; }
+
 /* Notification bell */
 .navbtn--bell { position: relative; }
 .bell-badge { margin-left: auto; background: var(--err); color: #fff; font-size: 0.68rem; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: inline-grid; place-items: center; padding: 0 5px; }

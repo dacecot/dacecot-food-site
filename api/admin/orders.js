@@ -44,7 +44,9 @@ module.exports = async (req, res) => {
       try {
         const notify = require('../../lib/notify/notifications');
         const [items, unread] = await Promise.all([notify.list({ limit: 40 }), notify.unreadCount()]);
-        return res.status(200).json({ ok: true, items, unread });
+        let push = { configured: false, publicKey: '' };
+        try { const wp = require('../../lib/notify/webpush'); push = { configured: wp.configured(), publicKey: wp.publicKey() }; } catch (e) {}
+        return res.status(200).json({ ok: true, items, unread, push });
       } catch (e) { return res.status(502).json({ error: 'Could not load notifications: ' + (e && e.message || e) }); }
     }
     // ?sub=contacts → deduplicated people across every submission type.

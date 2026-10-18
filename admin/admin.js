@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var app = document.getElementById('app');
-  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, saving: null, dirty: {}, mustChange: false, canChange: false, unread: 0, notifications: [], _bellTimer: null };
+  var state = { csrf: null, email: null, groups: null, content: {}, base: {}, active: null, store: null, saving: null, dirty: {}, mustChange: false, canChange: false, unread: 0, notifications: [], _bellTimer: null, pushConfigured: false, vapidKey: '', pushOn: false, deferredInstall: null, _pwaInit: false };
 
   /* ---------- helpers ---------- */
   function h(tag, attrs, kids) {
@@ -106,6 +106,7 @@
         var prev = state.unread;
         state.unread = r.body.unread || 0;
         state.notifications = r.body.items || [];
+        if (r.body.push) { state.pushConfigured = !!r.body.push.configured; state.vapidKey = r.body.push.publicKey || ''; }
         // Only touch the badge if the count changed and we're not already on the
         // notifications view (which re-renders itself).
         if (prev !== state.unread && state.active !== '__notifications') {
@@ -118,6 +119,66 @@
   function startBell() {
     refreshUnread();
     if (!state._bellTimer) state._bellTimer = setInterval(refreshUnread, 60000);
+    initPwa();
+  }
+
+  /* ---------- PWA: install prompt + web push (Android) ---------- */
+  function urlB64ToU8(s) {
+    var pad = '='.repeat((4 - (s.length % 4)) % 4);
+    var b = (s + pad).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(b); var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+  function initPwa() {
+    if (state._pwaInit) return; state._pwaInit = true;
+    if ('serviceWorker' in navigator) {
+      // Default scope = the script's directory (/admin/). We don't need to
+      // control the page (no offline cache), only a registration to push to, so
+      // this avoids the broader-scope rejection and needs no special header.
+      navigator.serviceWorker.register('/admin/sw.js').then(function (reg) {
+        state._swreg = reg;
+        return reg.pushManager.getSubscription();
+      }).then(function (sub) { state.pushOn = !!sub; if (state.active === '__notifications') renderShell(); }).catch(function () {});
+      navigator.serviceWorker.addEventListener('message', function (ev) {
+        if (ev.data && ev.data.notif != null) goToLink(ev.data.notif);
+      });
+    }
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault(); state.deferredInstall = e;
+      if (state.active === '__notifications') renderShell();
+    });
+    window.addEventListener('appinstalled', function () { state.deferredInstall = null; });
+    // A notification tap may open /admin#<link>.
+    if (location.hash && location.hash.length > 1) {
+      setTimeout(function () { goToLink(location.hash.slice(1)); }, 50);
+    }
+  }
+  function installApp() {
+    var e = state.deferredInstall; if (!e) return;
+    e.prompt(); e.userChoice.then(function () { state.deferredInstall = null; renderShell(); });
+  }
+  function enablePush(btn) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { toast('This browser can’t send phone alerts.', 'err'); return; }
+    if (!state.pushConfigured || !state.vapidKey) { toast('Phone alerts aren’t switched on yet — ask your developer to add the keys.', 'err'); return; }
+    if (btn) btn.disabled = true;
+    var regP = state._swreg ? Promise.resolve(state._swreg) : navigator.serviceWorker.register('/admin/sw.js');
+    regP.then(function (reg) {
+      state._swreg = reg;
+      return Notification.requestPermission().then(function (perm) {
+        if (perm !== 'granted') { toast('Alerts are blocked — allow notifications for this site in your browser settings.', 'err'); return null; }
+        return reg.pushManager.getSubscription().then(function (existing) {
+          return existing || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(state.vapidKey) });
+        });
+      });
+    }).then(function (sub) {
+      if (!sub) return;
+      return api('orders?sub=notify', { method: 'POST', csrf: true, body: { action: 'subscribe', subscription: sub } }).then(function (r) {
+        if (r.status === 200 && r.body.ok) { state.pushOn = true; toast('Phone alerts are on for this device.', 'ok'); renderShell(); }
+        else toast('Could not turn on alerts — please try again.', 'err');
+      });
+    }).catch(function () { toast('Could not turn on alerts — please try again.', 'err'); })
+      .finally(function () { if (btn) btn.disabled = false; });
   }
   // Jump to the view a notification points at (e.g. 'reservations:requests').
   function goToLink(link) {
@@ -136,6 +197,20 @@
       h('p', { text: 'New reservations, orders, class bookings and reminders — newest first.' })
     ]));
     var items = state.notifications || [];
+
+    // Install + phone-alerts controls (shown when the device/browser supports them).
+    var controls = h('div', { class: 'pwa-controls' }, []);
+    if (state.deferredInstall) {
+      controls.appendChild(h('button', { class: 'btn btn--sm', text: '📲 Install this app', onclick: function () { installApp(); } }));
+    }
+    var canPush = ('serviceWorker' in navigator) && ('PushManager' in window);
+    if (canPush) {
+      if (state.pushOn) controls.appendChild(h('span', { class: 'pwa-ok', text: '🔔 Phone alerts on for this device' }));
+      else if (state.pushConfigured) controls.appendChild(h('button', { class: 'btn btn--sm btn--green', text: 'Turn on phone alerts', onclick: function () { enablePush(this); } }));
+      else controls.appendChild(h('span', { class: 'help', text: 'Phone alerts can be switched on once your developer adds the keys.' }));
+    }
+    if (controls.childNodes.length) main.appendChild(controls);
+
     var head = h('div', { class: 'filter-row' }, [
       h('button', { class: 'btn btn--sm btn--ghost', text: 'Mark all read', onclick: function () {
         api('orders?sub=notify', { method: 'POST', csrf: true, body: { action: 'read_all' } }).then(function () { state.unread = 0; refreshUnread().then(function () { renderShell(); }); });

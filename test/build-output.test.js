@@ -42,18 +42,6 @@ const pastaShop = read('pasta-shop.html');
 
 const count = (hay, needle) => hay.split(needle).length - 1;
 
-// Literals the pause assertions below compare against. Declared as plain
-// strings so no regex escaping stands between the test and the bytes served.
-const PAUSED_OPEN_TAG = "<div class=\"booking\" data-res-paused";
-const FORM_OPEN_TAG = "<div class=\"booking\" data-res-form";
-const HIDDEN_ATTR = " hidden";
-const TEL_HREF = "href=\"tel:";
-const MAILTO_HREF = "href=\"mailto:";
-const GT = ">";
-const PAUSED_MISSING = "the paused notice is not where main.js looks for it";
-const PAUSED_VISIBLE = "the paused notice ships visible - every guest would see \"booking is paused\": ";
-const NO_PHONE = "no phone number on the paused notice - the guest is told no, with nowhere to go";
-const NO_EMAIL = "no email on the paused notice";
 
 
 // The JSON the pickers read, pulled back out of the page.
@@ -190,62 +178,75 @@ test('the "pick a date" requirement sits on a pill that can be picked', () => {
 });
 
 /* ---------------------------------------------------------------
-   reservations.html — the hooks the mid-service pause needs
+   Table bookings go to OpenTable (Erika, 2026-11-02)
 
-   The pause is set and lifted without a rebuild, so the page cannot know about
-   it at build time — it can only carry the scaffolding for main.js to reveal.
-   If that scaffolding goes missing the page keeps taking bookings that
-   api/send.js then refuses, and nobody notices until a guest complains.
+   The URL below is copied from Erika's email, not read from content.json, so a
+   wrong or emptied reservationUrl fails here instead of shipping. Every
+   booking button on every page must land on it, the old in-house form must be
+   gone from the Reserve page, and guests who booked here before the switch
+   must still be told their booking stands.
    --------------------------------------------------------------- */
 
-test('the reserve page carries both halves of the pause swap', () => {
-  assert.ok(reservations.indexOf('data-res-form') > -1, 'no [data-res-form] — main.js has no form to hide');
-  assert.ok(reservations.indexOf('data-res-paused') > -1, 'no [data-res-paused] — there is nothing to show instead');
-  assert.ok(reservations.indexOf('data-res-paused-until') > -1, 'no slot for the reopening time');
+const OPENTABLE_URL = 'https://www.opentable.ca/r/da-cecot-pastificio-and-italian-comfort-food-reservations-edmonton?restref=1561456&lang=en-CA&ot_source=Restaurant%20website';
+const BOOKING_LABELS = ['Reserve a Table', 'Book a Reservation', 'Reserve on OpenTable'];
+const PUBLIC_PAGES = fs.readdirSync(ROOT).filter((f) => f.endsWith('.html') && f !== 'cancel-reservation.html');
+
+// Every <a> on a page whose text is one of the booking labels, as { href, tag }.
+function bookingLinks(html) {
+  const out = [];
+  const re = /<a\b([^>]*)>([\s\S]*?)<\/a>/g;
+  let m;
+  while ((m = re.exec(html))) {
+    if (BOOKING_LABELS.indexOf(m[2].trim()) === -1) continue;
+    const h = /href="([^"]*)"/.exec(m[1]);
+    out.push({ href: h ? h[1].replace(/&amp;/g, '&') : '', tag: m[0] });
+  }
+  return out;
+}
+
+test('every booking button on every page goes to the OpenTable page', () => {
+  let total = 0;
+  PUBLIC_PAGES.forEach((f) => {
+    bookingLinks(read(f)).forEach((l) => {
+      total++;
+      assert.strictEqual(l.href, OPENTABLE_URL, f + ' has a booking button going somewhere else: ' + l.tag);
+      assert.ok(/target="_blank"/.test(l.tag) && /rel="noopener"/.test(l.tag), f + ' opens OpenTable without target/rel: ' + l.tag);
+    });
+  });
+  // The footer and the mobile drawer alone put two on every page.
+  assert.ok(total >= PUBLIC_PAGES.length * 2, 'only ' + total + ' booking buttons found across ' + PUBLIC_PAGES.length + ' pages');
 });
 
-test('the paused notice is hidden until the server says otherwise', () => {
-  const at = reservations.indexOf(PAUSED_OPEN_TAG);
-  assert.ok(at > -1, PAUSED_MISSING);
-  const tag = reservations.slice(at, reservations.indexOf(GT, at) + 1);
-  assert.ok(tag.indexOf(HIDDEN_ATTR) > -1,
-    PAUSED_VISIBLE + tag);
+test('the home page and the Reserve page each have their own OpenTable button', () => {
+  const home = bookingLinks(read('index.html')).filter((l) => /class="btn btn--/.test(l.tag));
+  const res = bookingLinks(reservations).filter((l) => /Reserve on OpenTable/.test(l.tag));
+  assert.ok(home.length >= 1, 'no Reserve a Table button in the home page body');
+  assert.strictEqual(res.length, 1, 'the Reserve page has no Reserve on OpenTable button');
 });
 
-test('a paused guest is given a way to reach the restaurant', () => {
-  const at = reservations.indexOf(PAUSED_OPEN_TAG);
-  assert.ok(at > -1, PAUSED_MISSING);
-  // The notice runs to the end of the booking card; the next booking card is
-  // the form, so stopping there keeps this to the paused block only.
-  const end = reservations.indexOf(FORM_OPEN_TAG, at);
-  const notice = reservations.slice(at, end > -1 ? end : at + 2000);
-  assert.ok(notice.indexOf(TEL_HREF) > -1, NO_PHONE);
-  assert.ok(notice.indexOf(MAILTO_HREF) > -1, NO_EMAIL);
+test('the old in-house table form is gone from the Reserve page', () => {
+  assert.strictEqual(reservations.indexOf('data-subject="Table Reservation'), -1, 'the Reserve page still posts table bookings to /api/send');
+  assert.strictEqual(reservations.indexOf('name="reservation_date"'), -1, 'the Reserve page still has a reservation date field');
+  assert.strictEqual(reservations.indexOf('id="service-hours"'), -1, 'the Reserve page still embeds the table time picker');
 });
 
-test('main.js actually asks the server whether bookings are paused', () => {
-  const js = read('js/main.js');
-  assert.ok(js.indexOf("fetch('/api/status'") > -1, 'nothing fetches /api/status, so the page can never learn about a pause');
+test('guests who already booked here are told their booking stands', () => {
+  assert.ok(/Already booked with us\?<\/strong> Your reservation still stands/.test(reservations), 'no word for existing bookings on the Reserve page');
+  const at = reservations.indexOf('Already booked with us?');
+  assert.ok(reservations.slice(at, at + 600).indexOf('href="tel:') > -1, 'existing guests are given no number to call');
+});
+
+test('the cancel page for existing bookings is still served', () => {
+  assert.ok(read('cancel-reservation.html').length > 0, 'cancel-reservation.html is empty');
+  assert.ok(read('js/main.js').indexOf('Cancel a reservation (link from the confirmation email)') > -1,
+    'the cancel flow the confirmation emails link to is gone from main.js');
 });
 
 /* ---------------------------------------------------------------
-   reservations.html / pasta-shop.html — the closure reached both pickers
+   pasta-shop.html — the closure reached the pickup picker
    --------------------------------------------------------------- */
 
 const closed = hours.closedDates(content);
-
-test('the reservation picker was built with the closure list', () => {
-  const cfg = embedded(reservations, 'service-hours');
-  assert.deepStrictEqual(cfg.closed, closed,
-    'the reservation form does not know which days we are closed');
-});
-
-test('the reservation picker was built with the no-reservation days', () => {
-  const cfg = embedded(reservations, 'service-hours');
-  assert.deepStrictEqual(cfg.noRes, hours.noReservationDates(content),
-    'the Reserve page will offer a day Erika has blocked');
-  assert.deepStrictEqual(cfg.noResReasons, hours.noReservationReasons(content));
-});
 
 test('the pickup picker does NOT carry the no-reservation days', () => {
   const cfg = embedded(pastaShop, 'pickup-hours');
@@ -329,15 +330,14 @@ test('on a closed day the banner names the day, and the announcement stands down
   }
 });
 
-test('each configured closure is literally present in both pages', () => {
+test('each configured closure is literally present in the pickup page', () => {
   // deepStrictEqual above compares what we parsed back; this compares the bytes
   // actually served, so an empty list can never quietly satisfy both.
   closed.forEach((iso) => {
-    assert.ok(reservations.indexOf(iso) > -1, iso + ' is missing from reservations.html');
     assert.ok(pastaShop.indexOf(iso) > -1, iso + ' is missing from pasta-shop.html');
   });
   if (!closed.length) {
-    assert.ok(reservations.indexOf('"closed":[]') > -1, 'no closures configured, so the page should carry an empty list');
+    assert.ok(pastaShop.indexOf('"closed":[]') > -1, 'no closures configured, so the page should carry an empty list');
   }
 });
 

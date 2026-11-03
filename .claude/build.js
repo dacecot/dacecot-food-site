@@ -32,16 +32,18 @@ const NAP = {
 const MAPS_EMBED = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.mapsQuery) + '&output=embed';
 const MAPS_LINK = 'https://www.google.com/maps?q=' + encodeURIComponent(NAP.mapsQuery);
 
-/* ---- Reservations online booking (Wix) ----
-   Table reservations are handled by the client's Wix reservation page.
-   Paste the live published URL below. The bare dacecotfood.wixsite.com
-   subdomain 404s — the published page lives at the /my-site path.
-   While this is empty, the Reserve page renders a clearly-marked "booking
-   coming soon" pending state (button is non-clickable) and steers guests to
-   phone/email. Set it and re-run `node .claude/build.js` to go live.
-   NOTE: Sunday pasta classes still book + pay $95/guest via Square checkout
-   on the Experiences page — that is intentionally unchanged. */
+/* ---- Table reservations: OpenTable (from 2026-11-03) ----
+   New table bookings go to da Cecot's OpenTable page (`reservationUrl` in
+   content.json, the link Erika sent). Every "Reserve a Table" button links
+   there directly; reservations.html stays as a landing page with the same
+   button, for search results and bookmarks.
+   Bookings already taken on this site are untouched: the admin Reservations
+   tab, api/send.js, the confirmation emails and cancel-reservation.html all
+   keep working for them. Pasta classes still book on the Experiences pages.
+   No URL means no way to book, so the build refuses to run without one. */
 const RESERVATION_BOOKING_URL = content.url('reservationUrl');
+if (!RESERVATION_BOOKING_URL) throw new Error('content.json reservationUrl is missing or not an http(s) URL — the Reserve buttons would go nowhere.');
+const BOOK_ATTRS = `href="${RESERVATION_BOOKING_URL.replace(/&/g, '&amp;')}" target="_blank" rel="noopener"`;
 
 const IMG = {
   hero:       content.get('heroImage') || 'images/food/homepage-hero.jpg',
@@ -132,7 +134,7 @@ function header(active) {
         ${link('visit-us', 'Visit Us', 'visit-us')}
         <li class="nav-drawer-foot">
           <a class="nav-drawer-phone" href="tel:${NAP.phoneHref}">${NAP.phone}</a>
-          <a class="btn btn--green nav-drawer-cta" href="reservations.html">Book a Reservation</a>
+          <a class="btn btn--green nav-drawer-cta" ${BOOK_ATTRS}>Book a Reservation</a>
         </li>
       </ul>
     </nav>
@@ -182,7 +184,7 @@ function footer() {
         <a href="gift-cards.html">Gift Cards</a>
         <a href="visit-us.html">Visit Us</a>
         <a href="partnerships.html">Catering &amp; Wholesale</a>
-        <a href="reservations.html">Reserve a Table</a>
+        <a ${BOOK_ATTRS}>Reserve a Table</a>
       </nav>
       <p class="footer__contact">
         <a href="tel:${NAP.phoneHref}">${NAP.phone}</a>
@@ -416,7 +418,7 @@ pages.push(page({
         <h1 class="hero__brand">${content.text('heroHeading')}</h1>
         <p class="hero__tag">${content.text('heroTag')}</p>
         <div class="btn-group">
-          <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
+          <a ${BOOK_ATTRS} class="btn btn--green">Reserve a Table</a>
           <a href="experiences.html" class="btn btn--brown">Explore Experiences</a>
           <a href="pasta-shop.html" class="btn btn--terra">Order Fresh Pasta</a>
         </div>
@@ -523,7 +525,7 @@ pages.push(page({
               ${hoursTable()}
             </div>
             <div class="btn-group">
-              <a href="reservations.html" class="btn btn--terra">Reserve a Table</a>
+              <a ${BOOK_ATTRS} class="btn btn--terra">Reserve a Table</a>
               <a href="${MAPS_LINK}" target="_blank" rel="noopener" class="btn btn--ghost">Get Directions</a>
             </div>
           </div>
@@ -614,7 +616,7 @@ ${menuCards.map(m => `          <div style="display:flex; flex-direction:column;
             <p style="font-size:0.85em; letter-spacing:0.06em; text-transform:uppercase; opacity:0.75; margin-bottom:12px;">Limited handmade ravioli · Friday &amp; Saturday evenings</p>
             <p>Each week, we prepare a small selection of handmade ravioli inspired by regional Italian traditions, seasonal ingredients, and the creativity of our kitchen.</p>
             <p>Available in limited quantities. Reservations recommended.</p>
-            ${cta('reservations.html', 'Reserve a Table', 'terra')}
+            <div class="btn-wrap"><a ${BOOK_ATTRS} class="btn btn--terra">Reserve a Table</a></div>
           </div>
         </div>
       </div>
@@ -641,7 +643,7 @@ ${menuCards.map(m => `          <div style="display:flex; flex-direction:column;
         <h2 id="menu-cta-h">Come hungry. Leave family.</h2>
         <p>Join us for handmade pasta, warm hospitality, and a table that feels like home.</p>
         <div class="btn-group" style="justify-content:center;">
-          <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
+          <a ${BOOK_ATTRS} class="btn btn--green">Reserve a Table</a>
           <a href="visit-us.html" class="btn btn--outline">Visit Us</a>
         </div>
       </div>
@@ -758,7 +760,7 @@ pages.push(page({
         <h2 id="join-h">Pull up a chair.</h2>
         <p>Come share a meal, learn to make pasta, or simply say hello. There will always be a place for you at our table.</p>
         <div class="btn-group" style="justify-content:center;">
-          <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
+          <a ${BOOK_ATTRS} class="btn btn--green">Reserve a Table</a>
           <a href="visit-us.html" class="btn btn--outline">Visit Us</a>
         </div>
       </div>
@@ -766,14 +768,14 @@ pages.push(page({
 }));
 
 /* ---------- RESERVATIONS ---------- */
-// In-house table reservations: an hours-aware form that emails the restaurant,
-// sends the guest a confirmation, and lands in the /admin Orders & Bookings tab.
-// Times offered come from the CMS hours (embedded as #service-hours JSON).
+// Table reservations are taken on OpenTable (see RESERVATION_BOOKING_URL).
+// This page is the landing spot for search results and bookmarks: one button
+// out, plus a word for guests who booked here before the switch.
 pages.push(page({
   slug: 'reservations',
   active: 'reservations',
   title: 'Reservations | Book a Table at da Cecot, Edmonton',
-  description: 'Reserve a table at da Cecot in Edmonton — lunch, dinner, or Sunday family lunch on Whyte Avenue. Book online in seconds. For pasta classes & special experiences see the Experiences page.',
+  description: 'Reserve a table at da Cecot in Edmonton — lunch, dinner, or Sunday family lunch on Whyte Avenue. Book online with OpenTable. For pasta classes & special experiences see the Experiences page.',
   ogImage: IMG.dining,
   schema: [
     breadcrumbSchema([{ slug: 'index', label: 'Home' }, { slug: 'reservations', label: 'Reservations' }]),
@@ -787,47 +789,11 @@ pages.push(page({
         <p class="lead" style="margin-top:18px;">Book your table at da Cecot for lunch, dinner, or Sunday family lunch. For pasta classes, private dinners, and special experiences, please visit our <a href="experiences.html" style="color:var(--terracotta); font-weight:600;">Experiences page</a>.</p>
       </div>
       <div class="container narrow reveal" style="padding-top:10px;">
-        <!-- Shown instead of the form when Erika has paused online reservations
-             from the site manager. Hidden by default and revealed by main.js
-             from /api/status: the pause starts and ends without a rebuild, so
-             this page cannot know at build time. With JS off the form stays
-             visible and api/send.js turns the booking away with the same
-             message — the server is the one that decides. -->
-        <div class="booking" data-res-paused hidden style="text-align:center;">
-          <h2 style="margin-top:0;">Online booking is paused right now</h2>
-          <p>Our kitchen is catching up, so we have stopped taking new online table requests for a moment<span data-res-paused-until></span>.</p>
-          <p>Give us a call and we will do our best to fit you in.</p>
-          <p style="margin-top:22px;"><a class="btn btn--terra" href="tel:${NAP.phoneHref}">Call ${NAP.phone}</a></p>
-          <p style="opacity:0.85; margin-top:14px;">or email <a href="mailto:${NAP.email}" style="color:var(--terracotta); font-weight:600;">${NAP.email}</a></p>
-        </div>
-        <div class="booking" data-res-form>
-          <form data-formsubmit data-subject="Table Reservation — da Cecot" aria-label="Table reservation request">
-            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
-            <script id="service-hours" type="application/json">${JSON.stringify({ hours: PICKUP_HOURS, firstSundayClosed: FIRST_SUNDAY_CLOSED, buffer: 60, closed: CLOSED_DATES, noRes: NO_RES_DATES, noResReasons: NO_RES_REASONS }).replace(/</g, '\\u003c')}</script>
-            <div class="form-row">
-              <div class="field"><label for="res-date">Date</label><input type="date" id="res-date" name="reservation_date" required></div>
-              <div class="field"><label for="res-time">Time</label><select id="res-time" name="reservation_time" data-res-time required disabled><option value="">Pick a date first</option></select></div>
-            </div>
-            <p class="field__hint" data-res-msg style="margin:-6px 0 14px; font-size:0.85em; color:var(--terracotta); font-weight:600;"></p>
-            <div class="field">
-              <label for="res-guests">Party size</label>
-              <select id="res-guests" name="party_size" required>${Array.from({ length: 6 }, (_, i) => `<option>${i + 1} guest${i ? 's' : ''}</option>`).join('')}</select>
-              <p class="field__hint">More than 6 guests? Call us at <a href="tel:${NAP.phoneHref}">${NAP.phone}</a> — we love big tables.</p>
-            </div>
-            <div class="field">
-              <label for="res-allergies">Allergies or dietary restrictions</label>
-              <input type="text" id="res-allergies" name="allergies" required placeholder='Gluten-free, nut allergy… — or type "None"'>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="res-name">Name</label><input type="text" id="res-name" name="name" required></div>
-              <div class="field"><label for="res-phone">Phone</label><input type="tel" id="res-phone" name="phone" required></div>
-            </div>
-            <div class="field"><label for="res-email">Email</label><input type="email" id="res-email" name="email" required></div>
-            <div class="field"><label for="res-notes">Occasion or notes <span style="font-weight:400;opacity:0.7;">(optional)</span></label><textarea id="res-notes" name="notes" placeholder="Birthday, anniversary, highchair…"></textarea></div>
-            <button type="submit" class="btn btn--green" style="width:100%;">Request My Table</button>
-            <div class="form-success" style="background:rgba(48,99,30,0.12); color:var(--brown); border-color:var(--deep-green);">Grazie! Your table request is in — check your email, a note from us is on its way right now.</div>
-            <div class="form-error" style="color:var(--brown);">Something went wrong — please call us at ${NAP.phone} or email ${NAP.email}.</div>
-          </form>
+        <div class="booking" data-opentable style="text-align:center;">
+          <h2 style="margin-top:0;">Book your table on OpenTable</h2>
+          <p>Pick your date, time and party size on OpenTable and you will get your confirmation straight away.</p>
+          <p style="margin-top:22px;"><a class="btn btn--green" ${BOOK_ATTRS}>Reserve on OpenTable</a></p>
+          <p style="opacity:0.85; margin-top:18px; font-size:0.95em;"><strong>Already booked with us?</strong> Your reservation still stands. To cancel, use the link in your confirmation email, or call <a href="tel:${NAP.phoneHref}" style="color:var(--terracotta); font-weight:600;">${NAP.phone}</a>.</p>
         </div>
         <p class="text-center" style="margin-top:26px; opacity:0.85;">Prefer to call? <a href="tel:${NAP.phoneHref}" style="color:var(--terracotta); font-weight:600;">${NAP.phone}</a> &nbsp;&middot;&nbsp; <a href="mailto:${NAP.email}" style="color:var(--terracotta); font-weight:600;">${NAP.email}</a></p>
       </div>
@@ -882,7 +848,7 @@ pages.push(page({
               ${hoursTable()}
             </div>
             <div class="btn-group">
-              <a href="reservations.html" class="btn btn--green">Reserve a Table</a>
+              <a ${BOOK_ATTRS} class="btn btn--green">Reserve a Table</a>
               <a href="${MAPS_LINK}" target="_blank" rel="noopener" class="btn btn--outline">Get Directions</a>
             </div>
           </div>
@@ -1164,7 +1130,7 @@ pages.push(page({
     <section class="fullbleed hero--parallax" style="background-image:url('${IMG.freshpasta}');" aria-label="Fresh handmade pasta at da Cecot, Edmonton">
       <div class="fullbleed__inner reveal">
         <p class="fullbleed__quote">"The same pasta we serve — now in your kitchen."</p>
-        <div class="btn-wrap"><a href="reservations.html" class="btn btn--green">Reserve a Table</a></div>
+        <div class="btn-wrap"><a ${BOOK_ATTRS} class="btn btn--green">Reserve a Table</a></div>
       </div>
     </section>
 
